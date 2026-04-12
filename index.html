@@ -588,10 +588,11 @@ let geoLayer;
 let pinMarker = null;
 
 function defaultColor(feature) {
-  const cls = feature.properties.CLASS_OF_M;
-  return cls === 'Township' ? '#cccccc' : cls === 'Borough' ? '#a8c66c' : '#c49a6c';
+  const cls = (feature.properties.CLASS_OF_M || '').toUpperCase();
+  if (cls.includes('TWP') || cls === 'TOWNSHIP') return '#cccccc';   // gray
+  if (cls.includes('BOR') || cls === 'BOROUGH')  return '#a8c66c';   // green
+  return '#c49a6c';                                                    // tan (city/other)
 }
-
 function styleForLayer(feature) {
   const saved = getNoteForMuni(feature.properties.MUNICIPAL1);
   const fill = (saved && saved.color) ? saved.color : defaultColor(feature);
@@ -610,11 +611,11 @@ fetch('pa_municipalities.geojson')
       onEachFeature: (feature, layer) => {
         const p = feature.properties;
         layer.bindPopup(
-          `<b>${p.MUNICIPAL1}</b><br>${p.CLASS_OF_M}<br>${p.COUNTY_NAM} County` +
-          `<br><br><a href="#" onclick="openSidebarFor('${escJs(p.MUNICIPAL1)}','${escJs(p.CLASS_OF_M)}','${escJs(p.COUNTY_NAM)}');return false;" ` +
-          `style="font-size:12px;color:#3b82f6;font-weight:600;">✎ Edit notes / color</a>`,
-          { maxWidth: 200 }
-        );
+  `<b>${p.MUNICIPAL1}</b><br>${formatClass(p.CLASS_OF_M)}<br>${p.COUNTY_NAM} County` +
+  `<br><br><a href="#" onclick="openSidebarFor('${escJs(p.MUNICIPAL1)}','${escJs(p.CLASS_OF_M)}','${escJs(p.COUNTY_NAM)}');return false;" ` +
+  `style="font-size:12px;color:#3b82f6;font-weight:600;">✎ Edit notes / color</a>`,
+  { maxWidth: 200 }
+);
         layer.on('click', () => {
           geoLayer.resetStyle();
           layer.setStyle({ color: '#e63946', weight: 2.5, fillOpacity: 0.75 });
@@ -675,10 +676,10 @@ function openSidebarFor(name, cls, county) {
   }
   currentMuni = { name, cls, county };
   document.getElementById('sidebarTitle').textContent = name;
-  document.getElementById('sidebarSub').textContent = `${cls} · ${county} County`;
-  const saved = getNoteForMuni(name);
+  document.getElementById('sidebarSub').textContent = `${formatClass(cls)} · ${county} County`;
+    const saved = getNoteForMuni(name);
   const color = (saved && saved.color) ? saved.color : defaultColor({ properties: { CLASS_OF_M: cls } });
-  const note  = (saved && saved.note)  ? saved.note  : '';
+    const note  = (saved && saved.note)  ? saved.note  : '';
   currentColor = color;
   renderSwatches(color);
   document.getElementById('customColorPicker').value = color;
@@ -689,7 +690,9 @@ function openSidebarFor(name, cls, county) {
   document.getElementById('legend').classList.add('shifted');
   document.getElementById('noteTextarea').focus();
 }
-
+function titleCase(s) {
+  return (s || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('legend').classList.remove('shifted');
@@ -853,6 +856,17 @@ function pointInPolygon(point, polygon) {
     if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) inside = !inside;
   }
   return inside;
+}
+
+function formatClass(cls) {
+  const c = (cls || '').toUpperCase();
+  if (c === 'CITY')           return 'City';
+  if (c.includes('BOR'))      return 'Borough';
+  if (c === '1TWP')           return 'Township (1st Class)';
+  if (c === '2TWP')           return 'Township (2nd Class)';
+  if (c === '3TWP')           return 'Township (3rd Class)';
+  if (c.includes('TWP'))      return 'Township';
+  return cls; // fallback to raw value
 }
 
 
