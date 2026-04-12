@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PA Municipal Map</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; overflow: hidden; }
+    #map { height: 100vh; width: 100vw; }
+
+    /* ── SEARCH ─────────────────────────────────────── */
+    #searchPanel {
+      position: absolute;
+      top: 14px;
+      left: 54px;
+      z-index: 1000;
+      width: 300px;
+    }
+    #searchWrap {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border: 2px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 3px 3px 0 #222;
+    }
+    #searchIcon { padding: 0 10px 0 12px; color: #555; font-size: 16px; user-select: none; }
+    #search {
+      flex: 1; border: none; outline: none; padding: 10px 10px 10px 0;
+      font-family: 'DM Mono', monospace; font-size: 13px; color: #111; background: transparent;
+    }
+    #search::placeholder { color: #aaa; }
+    #clearBtn { display: none; background: none; border: none; cursor: pointer; padding: 0 10px; color: #999; font-size: 18px; line-height: 1; }
+    #clearBtn:hover { color: #333; }
+    #suggestions {
+      display: none; background: #fff; border: 2px solid #222; border-top: none;
+      border-radius: 0 0 8px 8px; overflow: hidden; box-shadow: 3px 3px 0 #222;
+      max-height: 260px; overflow-y: auto;
+    }
+    .suggestion-item { padding: 9px 14px; cursor: pointer; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 2px; }
+    .suggestion-item:first-child { border-top: none; }
+    .suggestion-item:hover { background: #f5f5f5; }
+    .suggestion-name { font-size: 13px; font-weight: 600; color: #111; }
+    .suggestion-sub { font-size: 11px; color: #777; font-family: 'DM Mono', monospace; }
+    #statusMsg { display: none; padding: 8px 14px; font-size: 12px; color: #666; font-family: 'DM Mono', monospace; }
+
+    /* ── NOTES SIDEBAR ──────────────────────────────── */
+    #sidebar {
+      position: absolute;
+      top: 0; right: 0;
+      width: 320px;
+      height: 100vh;
+      background: #fff;
+      border-left: 2px solid #222;
+      box-shadow: -4px 0 16px rgba(0,0,0,0.12);
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+    #sidebar.open { transform: translateX(0); }
+
+    #sidebarHeader {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 20px 20px 16px;
+      border-bottom: 1.5px solid #eee;
+    }
+    #sidebarTitle { font-size: 16px; font-weight: 600; color: #111; line-height: 1.3; }
+    #sidebarSub { font-size: 12px; color: #777; margin-top: 3px; font-family: 'DM Mono', monospace; }
+    #closeBtn {
+      background: none; border: none; cursor: pointer; font-size: 20px;
+      color: #999; padding: 0; line-height: 1; flex-shrink: 0; margin-left: 8px;
+    }
+    #closeBtn:hover { color: #333; }
+
+    #sidebarBody { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+
+    /* Color picker section */
+    .section-label {
+      font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase;
+      letter-spacing: 0.06em; margin-bottom: 10px;
+    }
+    #colorSwatches { display: flex; gap: 8px; flex-wrap: wrap; }
+    .swatch {
+      width: 32px; height: 32px; border-radius: 6px; cursor: pointer;
+      border: 2.5px solid transparent; transition: transform 0.1s, border-color 0.1s;
+    }
+    .swatch:hover { transform: scale(1.12); }
+    .swatch.active { border-color: #222; transform: scale(1.12); }
+
+    #customColorRow { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    #customColorPicker { width: 36px; height: 36px; border: 2px solid #ddd; border-radius: 6px; cursor: pointer; padding: 2px; background: none; }
+    #customColorLabel { font-size: 12px; color: #666; font-family: 'DM Mono', monospace; }
+
+    /* Notes textarea */
+    #noteTextarea {
+      width: 100%; min-height: 120px; resize: vertical;
+      border: 2px solid #ddd; border-radius: 8px;
+      padding: 10px 12px; font-family: 'DM Sans', sans-serif;
+      font-size: 13px; line-height: 1.5; color: #111;
+      outline: none; transition: border-color 0.15s;
+    }
+    #noteTextarea:focus { border-color: #222; }
+
+    /* Status indicator */
+    #statusDot {
+      display: inline-block; width: 7px; height: 7px;
+      border-radius: 50%; background: #ccc; margin-right: 6px;
+      transition: background 0.3s;
+    }
+    #statusDot.saved { background: #4caf50; }
+    #statusText { font-size: 12px; color: #888; font-family: 'DM Mono', monospace; }
+
+    /* Action buttons */
+    #sidebarFooter {
+      padding: 16px 20px;
+      border-top: 1.5px solid #eee;
+      display: flex; gap: 10px; align-items: center;
+    }
+    .btn {
+      flex: 1; padding: 10px 16px; border-radius: 8px; border: 2px solid #222;
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: #222; color: #fff; }
+    .btn-primary:hover { background: #000; }
+    .btn-ghost { background: #fff; color: #222; }
+    .btn-ghost:hover { background: #f5f5f5; }
+    .btn-danger { background: #fff; color: #e63946; border-color: #e63946; }
+    .btn-danger:hover { background: #fff0f1; }
+
+    /* ── NOTE BADGE on map ──────────────────────────── */
+    .note-badge {
+      background: #222; color: #fff;
+      font-size: 10px; font-family: 'DM Mono', monospace;
+      padding: 2px 6px; border-radius: 4px; white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* ── LEGEND ─────────────────────────────────────── */
+    #legend {
+      position: absolute; bottom: 30px; right: 14px; z-index: 1000;
+      background: #fff; border: 2px solid #222; border-radius: 8px;
+      padding: 12px 16px; box-shadow: 3px 3px 0 #222; font-size: 12px;
+      transition: right 0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+    #legend.shifted { right: 334px; }
+    #legend h4 { font-size: 11px; font-family: 'DM Mono', monospace; color: #555; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+    .legend-swatch { width: 16px; height: 16px; border: 1.5px solid #555; border-radius: 3px; flex-shrink: 0; }
+
+    /* ── PIN MARKER ─────────────────────────────────── */
+    .search-pin {
+      width: 14px; height: 14px; background: #e63946;
+      border: 2.5px solid #fff; border-radius: 50%;
+      box-shadow: 0 0 0 2px #e63946, 0 2px 8px rgba(0,0,0,0.35);
+    }
+    .muni-label {
+      font-size: 10px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+      color: #222; text-shadow: 0 0 4px #fff, 0 0 4px #fff;
+      white-space: nowrap; pointer-events: none;
+    }
+
+    /* ── AUTH PLACEHOLDER BANNER ────────────────────── */
+    #authBanner {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 3000;
+      background: #1a1a2e; color: #fff;
+      padding: 8px 16px; font-size: 12px; font-family: 'DM Mono', monospace;
+      display: flex; align-items: center; gap: 12px;
+    }
+    #authBanner span { flex: 1; color: #aaa; }
+    #authBanner strong { color: #f59e0b; }
+    #authBanner button {
+      background: #f59e0b; color: #000; border: none; border-radius: 4px;
+      padding: 4px 12px; font-size: 11px; font-weight: 600;
+      font-family: 'DM Mono', monospace; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Auth placeholder — swap this out when you add real login -->
+<div id="authBanner">
+  <span>Storing notes locally. <strong>Add login</strong> to sync across devices and users.</span>
+  <button onclick="document.getElementById('authBanner').style.display='none'">Got it</button>
+</div>
+
+<!-- Search -->
+<div id="searchPanel" style="top:46px">
+  <div id="searchWrap">
+    <span id="searchIcon">⌕</span>
+    <input id="search" type="text" placeholder="Search address, town, zip…" autocomplete="off" spellcheck="false" />
+    <button id="clearBtn" title="Clear">×</button>
+  </div>
+  <div id="suggestions">
+    <div id="statusMsg"></div>
+  </div>
+</div>
+
+<!-- Map -->
+<div id="map"></div>
+
+<!-- Notes sidebar -->
+<div id="sidebar">
+  <div id="sidebarHeader">
+    <div>
+      <div id="sidebarTitle">—</div>
+      <div id="sidebarSub">—</div>
+    </div>
+    <button id="closeBtn" title="Close">×</button>
+  </div>
+  <div id="sidebarBody">
+
+    <div>
+      <div class="section-label">Municipality color</div>
+      <div id="colorSwatches">
+        <!-- preset swatches injected by JS -->
+      </div>
+      <div id="customColorRow">
+        <input type="color" id="customColorPicker" value="#cccccc" title="Custom color" />
+        <span id="customColorLabel">#cccccc</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Notes</div>
+      <textarea id="noteTextarea" placeholder="Add notes about this municipality…"></textarea>
+      <div style="margin-top:8px;display:flex;align-items:center">
+        <span id="statusDot"></span>
+        <span id="statusText">Unsaved</span>
+      </div>
+    </div>
+
+  </div>
+  <div id="sidebarFooter">
+    <button class="btn btn-primary" onclick="saveNote()">Save</button>
+    <button class="btn btn-ghost" onclick="closeSidebar()">Cancel</button>
+    <button class="btn btn-danger" onclick="clearNote()" title="Remove note and reset color">Clear</button>
+  </div>
+</div>
+
+<!-- Legend -->
+<div id="legend">
+  <h4>Municipality Type</h4>
+  <div class="legend-row"><div class="legend-swatch" style="background:#cccccc"></div> Township</div>
+  <div class="legend-row"><div class="legend-swatch" style="background:#a8c66c"></div> Borough</div>
+  <div class="legend-row"><div class="legend-swatch" style="background:#c49a6c"></div> City / Other</div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  STORAGE LAYER
+//  To add auth: replace these 3 functions with API calls.
+//  The rest of the app is unchanged.
+// ═══════════════════════════════════════════════════════
+const STORAGE_KEY = 'pa_muni_notes_v1';
+
+function loadAllNotes() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+
+function saveAllNotes(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function getNoteForMuni(name) {
+  return loadAllNotes()[name] || null;
+}
+
+// When auth is ready, replace with:
+// async function getNoteForMuni(name) {
+//   const res = await fetch(`/api/notes/${encodeURIComponent(name)}`, {
+//     headers: { Authorization: `Bearer ${getToken()}` }
+//   });
+//   return res.ok ? res.json() : null;
+// }
+
+
+// ═══════════════════════════════════════════════════════
+//  PRESET COLORS
+// ═══════════════════════════════════════════════════════
+const PRESET_COLORS = [
+  { hex: '#cccccc', label: 'Default gray' },
+  { hex: '#a8c66c', label: 'Default green' },
+  { hex: '#c49a6c', label: 'Default tan' },
+  { hex: '#f59e0b', label: 'Amber' },
+  { hex: '#ef4444', label: 'Red' },
+  { hex: '#3b82f6', label: 'Blue' },
+  { hex: '#8b5cf6', label: 'Purple' },
+  { hex: '#10b981', label: 'Emerald' },
+  { hex: '#f97316', label: 'Orange' },
+  { hex: '#ec4899', label: 'Pink' },
+];
+
+function renderSwatches(selectedColor) {
+  const container = document.getElementById('colorSwatches');
+  container.innerHTML = '';
+  PRESET_COLORS.forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'swatch' + (c.hex === selectedColor ? ' active' : '');
+    el.style.background = c.hex;
+    el.title = c.label;
+    el.onclick = () => selectColor(c.hex);
+    container.appendChild(el);
+  });
+}
+
+function selectColor(hex) {
+  currentColor = hex;
+  document.getElementById('customColorPicker').value = hex;
+  document.getElementById('customColorLabel').textContent = hex;
+  renderSwatches(hex);
+  markUnsaved();
+}
+
+document.getElementById('customColorPicker').addEventListener('input', function() {
+  selectColor(this.value);
+});
+
+
+// ═══════════════════════════════════════════════════════
+//  MAP SETUP
+// ═══════════════════════════════════════════════════════
+const map = L.map('map', { zoomControl: true }).setView([40.9, -77.8], 7);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap © CARTO', maxZoom: 19
+}).addTo(map);
+
+let geoLayer;
+let pinMarker = null;
+
+// Default fill color for each municipality class
+function defaultColor(feature) {
+  const cls = feature.properties.CLASS_OF_M;
+  return cls === 'Township' ? '#cccccc' : cls === 'Borough' ? '#a8c66c' : '#c49a6c';
+}
+
+// Build the style for a layer, honouring any saved custom color
+function styleForLayer(feature) {
+  const saved = getNoteForMuni(feature.properties.MUNICIPAL1);
+  const fill = (saved && saved.color) ? saved.color : defaultColor(feature);
+  return { color: '#555', weight: 0.8, fillColor: fill, fillOpacity: 0.55 };
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  LOAD GEOJSON
+// ═══════════════════════════════════════════════════════
+fetch('pa_municipalities.geojson')
+  .then(r => r.json())
+  .then(data => {
+    geoLayer = L.geoJSON(data, {
+      style: f => styleForLayer(f),
+
+      onEachFeature: (feature, layer) => {
+        const p = feature.properties;
+
+        layer.bindPopup(
+          `<b>${p.MUNICIPAL1}</b><br>${p.CLASS_OF_M}<br>${p.COUNTY_NAM} County` +
+          `<br><br><a href="#" onclick="openSidebarFor('${escJs(p.MUNICIPAL1)}','${escJs(p.CLASS_OF_M)}','${escJs(p.COUNTY_NAM)}');return false;" ` +
+          `style="font-size:12px;color:#3b82f6;font-weight:600;">✎ Edit notes / color</a>`,
+          { maxWidth: 200 }
+        );
+
+        layer.on('click', () => {
+          geoLayer.resetStyle();
+          layer.setStyle({ color: '#e63946', weight: 2.5, fillOpacity: 0.75 });
+          // Keep custom fill color visible when selected
+          const saved = getNoteForMuni(feature.properties.MUNICIPAL1);
+          if (saved && saved.color) {
+            layer.setStyle({ fillColor: saved.color, fillOpacity: 0.85, color: '#e63946', weight: 2.5 });
+          }
+        });
+
+        // Label
+        const center = layer.getBounds().getCenter();
+        layer._label = L.marker(center, {
+          icon: L.divIcon({ className: 'muni-label', html: p.MUNICIPAL1, iconAnchor: [0, 0] }),
+          interactive: false
+        });
+
+        // Store reference for refreshing styles later
+        layer._muniName = p.MUNICIPAL1;
+        layer._class = p.CLASS_OF_M;
+        layer._county = p.COUNTY_NAM;
+      }
+    }).addTo(map);
+
+    map.fitBounds(geoLayer.getBounds());
+    updateLabels();
+    map.on('zoomend', updateLabels);
+  })
+  .catch(err => console.error('GeoJSON load failed:', err));
+
+
+function updateLabels() {
+  if (!geoLayer) return;
+  const show = map.getZoom() >= 10;
+  geoLayer.eachLayer(l => {
+    if (!l._label) return;
+    show ? l._label.addTo(map) : map.removeLayer(l._label);
+  });
+}
+
+// Refresh a single layer's style from storage (called after save)
+function refreshLayerStyle(muniName) {
+  if (!geoLayer) return;
+  geoLayer.eachLayer(l => {
+    if (l._muniName === muniName) {
+      const saved = getNoteForMuni(muniName);
+      const fill = (saved && saved.color) ? saved.color : defaultColor(l.feature);
+      l.setStyle({ color: '#555', weight: 0.8, fillColor: fill, fillOpacity: 0.55 });
+    }
+  });
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  SIDEBAR
+// ═══════════════════════════════════════════════════════
+let currentMuni = null;  // { name, class, county }
+let currentColor = '#cccccc';
+
+function openSidebarFor(name, cls, county) {
+  currentMuni = { name, cls, county };
+  document.getElementById('sidebarTitle').textContent = name;
+  document.getElementById('sidebarSub').textContent = `${cls} · ${county} County`;
+
+  // Load saved data
+  const saved = getNoteForMuni(name);
+  const color = (saved && saved.color) ? saved.color : defaultColor({ properties: { CLASS_OF_M: cls } });
+  const note  = (saved && saved.note)  ? saved.note  : '';
+
+  currentColor = color;
+  renderSwatches(color);
+  document.getElementById('customColorPicker').value = color;
+  document.getElementById('customColorLabel').textContent = color;
+  document.getElementById('noteTextarea').value = note;
+
+  markSaved(!!saved);
+
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('legend').classList.add('shifted');
+  document.getElementById('noteTextarea').focus();
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('legend').classList.remove('shifted');
+  currentMuni = null;
+}
+
+document.getElementById('closeBtn').addEventListener('click', closeSidebar);
+
+function saveNote() {
+  if (!currentMuni) return;
+  const note = document.getElementById('noteTextarea').value.trim();
+  const all = loadAllNotes();
+  all[currentMuni.name] = { color: currentColor, note, updatedAt: new Date().toISOString() };
+  saveAllNotes(all);
+  refreshLayerStyle(currentMuni.name);
+  markSaved(true);
+}
+
+function clearNote() {
+  if (!currentMuni) return;
+  if (!confirm(`Remove all notes and custom color for "${currentMuni.name}"?`)) return;
+  const all = loadAllNotes();
+  delete all[currentMuni.name];
+  saveAllNotes(all);
+  refreshLayerStyle(currentMuni.name);
+  closeSidebar();
+}
+
+function markSaved(isSaved) {
+  document.getElementById('statusDot').className = isSaved ? 'saved' : '';
+  document.getElementById('statusText').textContent = isSaved ? 'Saved' : 'Unsaved';
+}
+function markUnsaved() { markSaved(false); }
+
+document.getElementById('noteTextarea').addEventListener('input', markUnsaved);
+
+
+// ═══════════════════════════════════════════════════════
+//  SEARCH
+// ═══════════════════════════════════════════════════════
+const searchInput   = document.getElementById('search');
+const suggestionsEl = document.getElementById('suggestions');
+const statusEl      = document.getElementById('statusMsg');
+const clearBtn      = document.getElementById('clearBtn');
+let debounceTimer = null;
+
+searchInput.addEventListener('input', () => {
+  clearBtn.style.display = searchInput.value ? 'block' : 'none';
+  clearStatus();
+  clearTimeout(debounceTimer);
+  const q = searchInput.value.trim();
+  if (q.length < 2) { clearSuggestions(); return; }
+  debounceTimer = setTimeout(() => fetchSuggestions(q), 280);
+});
+
+clearBtn.addEventListener('click', () => {
+  searchInput.value = ''; clearBtn.style.display = 'none';
+  clearSuggestions(); clearStatus();
+  if (pinMarker) { map.removeLayer(pinMarker); pinMarker = null; }
+});
+
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { clearSuggestions(); geocodeAndFly(searchInput.value.trim()); }
+  if (e.key === 'Escape') clearSuggestions();
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#searchPanel')) clearSuggestions();
+});
+
+function fetchSuggestions(q) {
+  const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q + ' Pennsylvania')}&limit=8&lang=en&bbox=-80.5,39.7,-74.7,42.3`;
+  showStatus('Searching…');
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      clearStatus();
+      const features = (data.features || [])
+        .filter(f => { const s = (f.properties.state || '').toLowerCase(); return s === 'pennsylvania' || s === 'pa'; })
+        .slice(0, 6);
+      if (features.length === 0) { showStatus('No results in Pennsylvania.'); return; }
+      renderSuggestions(features);
+    })
+    .catch(() => showStatus('Search unavailable — press Enter to try anyway.'));
+}
+
+function renderSuggestions(features) {
+  Array.from(suggestionsEl.querySelectorAll('.suggestion-item')).forEach(el => el.remove());
+  features.forEach(f => {
+    const p = f.properties;
+    const coords = f.geometry.coordinates;
+    const parts = [p.name, p.street, p.city, p.county ? p.county + ' County' : '', 'PA'].filter(Boolean);
+    const deduped = parts.filter((v, i) => v !== parts[i - 1]);
+    const primary = deduped[0] || 'Unknown';
+    const secondary = deduped.slice(1).join(', ');
+    const item = document.createElement('div');
+    item.className = 'suggestion-item';
+    item.innerHTML = `<span class="suggestion-name">${escHtml(primary)}</span>${secondary ? `<span class="suggestion-sub">${escHtml(secondary)}</span>` : ''}`;
+    item.addEventListener('click', () => { searchInput.value = primary + (secondary ? `, ${secondary}` : ''); clearSuggestions(); flyToPoint(coords[1], coords[0]); });
+    suggestionsEl.insertBefore(item, statusEl);
+  });
+  suggestionsEl.style.display = 'block';
+}
+
+function geocodeAndFly(q) {
+  if (!q) return;
+  showStatus('Looking up address…');
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ', Pennsylvania')}&limit=1&countrycodes=us`;
+  fetch(url, { headers: { 'Accept-Language': 'en' } })
+    .then(r => r.json())
+    .then(data => {
+      clearStatus();
+      if (!data || data.length === 0) { showStatus('Address not found in Pennsylvania.'); return; }
+      flyToPoint(parseFloat(data[0].lat), parseFloat(data[0].lon));
+    })
+    .catch(() => showStatus('Geocoding failed. Check your connection.'));
+}
+
+function flyToPoint(lat, lon) {
+  if (pinMarker) map.removeLayer(pinMarker);
+  pinMarker = L.marker([lat, lon], {
+    icon: L.divIcon({ className: 'search-pin', iconSize: [14, 14], iconAnchor: [7, 7] })
+  }).addTo(map);
+
+  map.flyTo([lat, lon], 14, { duration: 1.0 });
+
+  if (geoLayer) {
+    geoLayer.resetStyle();
+    // Reapply saved colors after reset
+    geoLayer.eachLayer(l => {
+      if (l.feature) {
+        const saved = getNoteForMuni(l._muniName);
+        if (saved && saved.color) l.setStyle({ fillColor: saved.color });
+      }
+    });
+
+    geoLayer.eachLayer(layer => {
+      if (layer.feature && isPointInLayer(lat, lon, layer)) {
+        layer.setStyle({ color: '#e63946', weight: 2.5, fillOpacity: 0.75 });
+        setTimeout(() => layer.openPopup(), 800);
+      }
+    });
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  POINT-IN-POLYGON (ray casting)
+// ═══════════════════════════════════════════════════════
+function isPointInLayer(lat, lon, layer) {
+  try { if (!layer.getBounds().contains([lat, lon])) return false; } catch(e) { return false; }
+  const pt = [lon, lat];
+  const geom = layer.feature.geometry;
+  if (geom.type === 'Polygon')      return pointInPolygon(pt, geom.coordinates[0]);
+  if (geom.type === 'MultiPolygon') return geom.coordinates.some(poly => pointInPolygon(pt, poly[0]));
+  return false;
+}
+
+function pointInPolygon(point, polygon) {
+  let inside = false;
+  const x = point[0], y = point[1];
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i][0], yi = polygon[i][1];
+    const xj = polygon[j][0], yj = polygon[j][1];
+    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════
+function clearSuggestions() {
+  Array.from(suggestionsEl.querySelectorAll('.suggestion-item')).forEach(el => el.remove());
+  clearStatus();
+}
+function showStatus(msg) { statusEl.style.display = 'block'; statusEl.textContent = msg; suggestionsEl.style.display = 'block'; }
+function clearStatus() { statusEl.style.display = 'none'; statusEl.textContent = ''; if (!suggestionsEl.querySelector('.suggestion-item')) suggestionsEl.style.display = 'none'; }
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escJs(s)   { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+// Expose for popup link
+window.openSidebarFor = openSidebarFor;
+</script>
+
+</body>
+</html>
