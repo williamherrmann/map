@@ -8,6 +8,25 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
 
   <style>
+
+    /* ── LOCATION PIN ───────────────────────────────── */
+.location-pin {
+  width: 16px; height: 16px; background: #3b82f6;
+  border: 2.5px solid #fff; border-radius: 50%;
+  box-shadow: 0 0 0 2px #3b82f6, 0 2px 8px rgba(59,130,246,0.5);
+}
+
+/* ── LOCATION BUTTON ────────────────────────────── */
+#locBtn {
+  position: absolute; top: 86px; left: 14px; z-index: 1000;
+  width: 36px; height: 36px;
+  background: #fff; border: 2px solid #222; border-radius: 8px;
+  box-shadow: 3px 3px 0 #222;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #555; transition: background 0.15s, color 0.15s;
+}
+#locBtn:hover { background: #f5f5f5; }
+#locBtn.active { background: #3b82f6; border-color: #3b82f6; color: #fff; box-shadow: 3px 3px 0 #1d4ed8; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'DM Sans', sans-serif; overflow: hidden; }
     #map { height: 100vh; width: 100vw; }
@@ -104,6 +123,20 @@
       line-height: 1.6; margin-top: 12px;
     }
 
+
+    .utility-group-label {
+  font-size: 11px; font-weight: 600; color: #888;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin-top: 4px;
+}
+.utility-check {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: #111; cursor: pointer;
+  padding: 5px 8px; border-radius: 6px;
+  transition: background 0.1s;
+}
+.utility-check:hover { background: #f5f5f5; }
+.utility-check input { accent-color: #222; cursor: pointer; }
     /* ── SESSION BADGE ──────────────────────────────── */
     #sessionBadge {
       position: absolute; top: 14px; right: 14px; z-index: 1000;
@@ -240,6 +273,30 @@
     .btn-danger { background: #fff; color: #e63946; border-color: #e63946; }
     .btn-danger:hover { background: #fff0f1; }
 
+    /* ── STAR RATING ────────────────────────────────── */
+    .star { color: #ddd; transition: color 0.1s; user-select: none; cursor: pointer; }
+    .star.on { color: #f59e0b; }
+
+    /* ── UTILITY SELECT ─────────────────────────────── */
+    #utilitySelect {
+      width: 100%; padding: 9px 10px;
+      border: 2px solid #ddd; border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 13px;
+      color: #111; outline: none; cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    #utilitySelect:focus { border-color: #222; }
+
+    /* ── CHECKED IN RADIOS ──────────────────────────── */
+    .check-radio-label {
+      display: flex; align-items: center; gap: 6px;
+      cursor: pointer; font-size: 13px; color: #111;
+      padding: 6px 12px; border: 2px solid #ddd; border-radius: 8px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .check-radio-label:has(input:checked) { border-color: #222; background: #f5f5f5; font-weight: 600; }
+    .check-radio-label input { accent-color: #222; }
+
     /* ── LEGEND ─────────────────────────────────────── */
     #legend {
       position: absolute; bottom: 30px; right: 14px; z-index: 1000;
@@ -310,7 +367,7 @@
   </div>
 </div>
 
-<!-- Session badge (top right on map) -->
+<!-- Session badge -->
 <div id="sessionBadge" class="hidden">
   <span id="badgeSerial">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
@@ -329,6 +386,12 @@
 </div>
 
 <div id="map"></div>
+<button id="locBtn" onclick="toggleLocation()" title="Show my location">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+    <circle cx="12" cy="12" r="7" stroke-width="1.5"/>
+  </svg>
+</button>
 
 <!-- Notes sidebar -->
 <div id="sidebar">
@@ -339,7 +402,10 @@
     </div>
     <button id="closeBtn" title="Close">×</button>
   </div>
+
   <div id="sidebarBody">
+
+    <!-- Color -->
     <div>
       <div class="section-label">Municipality color</div>
       <div id="colorSwatches"></div>
@@ -348,6 +414,65 @@
         <span id="customColorLabel">#cccccc</span>
       </div>
     </div>
+
+    <!-- Checked in -->
+    <div>
+      <div class="section-label">Checked in</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <label class="check-radio-label">
+          <input type="radio" name="checkedIn" id="checkedYes" value="yes" /> Yes
+        </label>
+        <label class="check-radio-label">
+          <input type="radio" name="checkedIn" id="checkedNo" value="no" /> No
+        </label>
+        <label class="check-radio-label">
+          <input type="radio" name="checkedIn" id="checkedNone" value="" checked /> —
+        </label>
+      </div>
+    </div>
+
+<!-- Utility -->
+<div>
+  <div class="section-label">Utility providers</div>
+  <div id="utilityList" style="display:flex;flex-direction:column;gap:4px;">
+
+    <div class="utility-group-label">⚡ Electric</div>
+    <label class="utility-check"><input type="checkbox" value="PPL Electric Utilities"> PPL Electric Utilities</label>
+    <label class="utility-check"><input type="checkbox" value="PECO Energy"> PECO Energy</label>
+    <label class="utility-check"><input type="checkbox" value="West Penn Power (FirstEnergy)"> West Penn Power (FirstEnergy)</label>
+    <label class="utility-check"><input type="checkbox" value="Duquesne Light"> Duquesne Light</label>
+    <label class="utility-check"><input type="checkbox" value="Penn Power (FirstEnergy)"> Penn Power (FirstEnergy)</label>
+    <label class="utility-check"><input type="checkbox" value="Met-Ed (FirstEnergy)"> Met-Ed (FirstEnergy)</label>
+    <label class="utility-check"><input type="checkbox" value="Penelec (FirstEnergy)"> Penelec (FirstEnergy)</label>
+    <label class="utility-check"><input type="checkbox" value="UGI Electric"> UGI Electric</label>
+    <label class="utility-check"><input type="checkbox" value="Pike Electric"> Pike Electric</label>
+
+    <div class="utility-group-label" style="margin-top:8px;">🔥 Gas</div>
+    <label class="utility-check"><input type="checkbox" value="UGI Utilities (Gas)"> UGI Utilities (Gas)</label>
+    <label class="utility-check"><input type="checkbox" value="Peoples Natural Gas"> Peoples Natural Gas</label>
+    <label class="utility-check"><input type="checkbox" value="National Fuel Gas"> National Fuel Gas</label>
+    <label class="utility-check"><input type="checkbox" value="Columbia Gas of PA"> Columbia Gas of PA</label>
+    <label class="utility-check"><input type="checkbox" value="Equitable Gas"> Equitable Gas</label>
+
+    <div class="utility-group-label" style="margin-top:8px;">🏛 Other</div>
+    <label class="utility-check"><input type="checkbox" value="Municipal / Co-op"> Municipal / Co-op</label>
+    <label class="utility-check"><input type="checkbox" value="Unknown"> Unknown</label>
+  </div>
+</div>
+
+    <!-- Star rating -->
+    <div>
+      <div class="section-label">Territory rating</div>
+      <div id="starRating" style="display:flex;gap:4px;line-height:1;font-size:28px;">
+        <span class="star" data-val="1">☆</span>
+        <span class="star" data-val="2">☆</span>
+        <span class="star" data-val="3">☆</span>
+        <span class="star" data-val="4">☆</span>
+        <span class="star" data-val="5">☆</span>
+      </div>
+    </div>
+
+    <!-- Notes -->
     <div>
       <div class="section-label">Notes</div>
       <textarea id="noteTextarea" placeholder="Add notes about this municipality…"></textarea>
@@ -356,7 +481,9 @@
         <span id="statusText">Unsaved</span>
       </div>
     </div>
+
   </div>
+
   <div id="sidebarFooter">
     <button class="btn btn-primary" onclick="saveNote()">Save</button>
     <button class="btn btn-ghost" onclick="closeSidebar()">Cancel</button>
@@ -376,32 +503,24 @@
 
 <script>
 // ═══════════════════════════════════════════════════════
-//  SERIAL NUMBER AUTH SYSTEM
-//  Notes stored in localStorage keyed by serial number.
-//  To upgrade to real sync: replace readUserData / writeUserData
-//  with API calls using serial as the user ID / token.
+//  AUTH SYSTEM
 // ═══════════════════════════════════════════════════════
 
-const SESSION_KEY  = 'pa_muni_session_v1';   // which serial is active right now
-const DATA_PREFIX  = 'pa_muni_data_';         // per-serial note storage
+const SESSION_KEY = 'pa_muni_session_v1';
+const DATA_PREFIX = 'pa_muni_data_';
 
 let activeSerial = null;
 let pendingNewSerial = null;
 
-// ── Serial number generation ──────────────────────────
 function randomSegment() {
   return Math.random().toString(36).substring(2, 6).toUpperCase();
 }
 function generateSerial() {
   return `${randomSegment()}-${randomSegment()}-${randomSegment()}`;
 }
-
-// ── Validate format ───────────────────────────────────
 function validFormat(s) {
   return /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(s.trim().toUpperCase());
 }
-
-// ── Data read/write (swap these for API calls later) ──
 function readUserData(serial) {
   try { return JSON.parse(localStorage.getItem(DATA_PREFIX + serial) || '{}'); }
   catch(e) { return {}; }
@@ -409,20 +528,16 @@ function readUserData(serial) {
 function writeUserData(serial, data) {
   localStorage.setItem(DATA_PREFIX + serial, JSON.stringify(data));
 }
-
-// ── Check if a serial has ever been used (has saved session or data) ──
 function serialExists(serial) {
-  // Any serial that was ever created is stored in a registry
   const registry = JSON.parse(localStorage.getItem('pa_muni_registry') || '[]');
   return registry.includes(serial);
 }
 function registerSerial(serial) {
   const registry = JSON.parse(localStorage.getItem('pa_muni_registry') || '[]');
-  if (!registry.includes(serial)) { registry.push(serial); }
+  if (!registry.includes(serial)) registry.push(serial);
   localStorage.setItem('pa_muni_registry', JSON.stringify(registry));
 }
 
-// ── Format input as user types ────────────────────────
 document.getElementById('loginInput').addEventListener('input', function() {
   let val = this.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().substring(0, 12);
   if (val.length > 8) val = val.substring(0,4) + '-' + val.substring(4,8) + '-' + val.substring(8);
@@ -430,12 +545,10 @@ document.getElementById('loginInput').addEventListener('input', function() {
   this.value = val;
   document.getElementById('loginError').style.display = 'none';
 });
-
 document.getElementById('loginInput').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') loginWithSerial();
 });
 
-// ── Create new account ────────────────────────────────
 function createNewAccount() {
   const serial = generateSerial();
   registerSerial(serial);
@@ -444,7 +557,6 @@ function createNewAccount() {
   document.getElementById('authNew').style.display = 'none';
   document.getElementById('authCreated').style.display = 'block';
 }
-
 function copySerial() {
   const serial = document.getElementById('newSerialDisplay').textContent;
   navigator.clipboard.writeText(serial).then(() => {
@@ -453,15 +565,12 @@ function copySerial() {
     setTimeout(() => btn.textContent = 'Copy', 2000);
   });
 }
-
 function enterWithSerial() {
   if (pendingNewSerial) {
     startSession(pendingNewSerial);
     pendingNewSerial = null;
   }
 }
-
-// ── Login with existing serial ────────────────────────
 function loginWithSerial() {
   const raw = document.getElementById('loginInput').value.trim().toUpperCase();
   if (!validFormat(raw)) {
@@ -476,38 +585,29 @@ function loginWithSerial() {
   }
   startSession(raw);
 }
-
-// ── Start session ─────────────────────────────────────
 function startSession(serial) {
   activeSerial = serial;
   localStorage.setItem(SESSION_KEY, serial);
   document.getElementById('authGate').classList.add('hidden');
   document.getElementById('badgeSerial').textContent = serial;
   document.getElementById('sessionBadge').classList.remove('hidden');
-  // Reload layer styles with this user's data
   if (geoLayer) {
     geoLayer.eachLayer(l => { if (l.feature) l.setStyle(styleForLayer(l.feature)); });
   }
 }
-
-// ── Logout ────────────────────────────────────────────
 function logout() {
   if (!confirm('Sign out? Your notes are saved and will be there when you sign back in.')) return;
   activeSerial = null;
   localStorage.removeItem(SESSION_KEY);
   document.getElementById('sessionBadge').classList.add('hidden');
-  // Reset sidebar / map
   closeSidebar();
   if (geoLayer) geoLayer.eachLayer(l => { if (l.feature) l.setStyle(styleForLayer(l.feature)); });
-  // Show auth gate
   document.getElementById('authNew').style.display = 'block';
   document.getElementById('authCreated').style.display = 'none';
   document.getElementById('loginInput').value = '';
   document.getElementById('loginError').style.display = 'none';
   document.getElementById('authGate').classList.remove('hidden');
 }
-
-// ── Auto-restore session on page load ────────────────
 (function restoreSession() {
   const saved = localStorage.getItem(SESSION_KEY);
   if (saved && serialExists(saved)) {
@@ -518,7 +618,7 @@ function logout() {
 
 
 // ═══════════════════════════════════════════════════════
-//  STORAGE LAYER  (now serial-scoped)
+//  STORAGE
 // ═══════════════════════════════════════════════════════
 function loadAllNotes() {
   if (!activeSerial) return {};
@@ -561,7 +661,6 @@ function renderSwatches(selectedColor) {
     container.appendChild(el);
   });
 }
-
 function selectColor(hex) {
   currentColor = hex;
   document.getElementById('customColorPicker').value = hex;
@@ -569,10 +668,46 @@ function selectColor(hex) {
   renderSwatches(hex);
   markUnsaved();
 }
-
 document.getElementById('customColorPicker').addEventListener('input', function() {
   selectColor(this.value);
 });
+
+
+// ═══════════════════════════════════════════════════════
+//  STAR RATING
+// ═══════════════════════════════════════════════════════
+let currentRating = 0;
+
+function setStars(val) {
+  currentRating = val;
+  document.querySelectorAll('.star').forEach(s => {
+    const v = parseInt(s.dataset.val);
+    s.textContent = v <= val ? '★' : '☆';
+    s.classList.toggle('on', v <= val);
+  });
+  markUnsaved();
+}
+
+document.getElementById('starRating').addEventListener('click', e => {
+  const star = e.target.closest('.star');
+  if (star) setStars(parseInt(star.dataset.val));
+});
+document.getElementById('starRating').addEventListener('mouseover', e => {
+  const star = e.target.closest('.star');
+  if (!star) return;
+  const hov = parseInt(star.dataset.val);
+  document.querySelectorAll('.star').forEach(s => {
+    s.textContent = parseInt(s.dataset.val) <= hov ? '★' : '☆';
+  });
+});
+document.getElementById('starRating').addEventListener('mouseleave', () => {
+  setStars(currentRating);
+});
+
+document.querySelectorAll('#utilityList input[type="checkbox"]').forEach(cb => {
+  cb.addEventListener('change', markUnsaved);
+});
+document.querySelectorAll('input[name="checkedIn"]').forEach(r => r.addEventListener('change', markUnsaved));
 
 
 // ═══════════════════════════════════════════════════════
@@ -589,14 +724,28 @@ let pinMarker = null;
 
 function defaultColor(feature) {
   const cls = (feature.properties.CLASS_OF_M || '').toUpperCase();
-  if (cls.includes('TWP') || cls === 'TOWNSHIP') return '#cccccc';   // gray
-  if (cls.includes('BOR') || cls === 'BOROUGH')  return '#a8c66c';   // green
-  return '#c49a6c';                                                    // tan (city/other)
+  if (cls.includes('TWP') || cls === 'TOWNSHIP') return '#cccccc';
+  if (cls.includes('BOR') || cls === 'BOROUGH')  return '#a8c66c';
+  return '#c49a6c';
 }
 function styleForLayer(feature) {
   const saved = getNoteForMuni(feature.properties.MUNICIPAL1);
   const fill = (saved && saved.color) ? saved.color : defaultColor(feature);
   return { color: '#555', weight: 0.8, fillColor: fill, fillOpacity: 0.55 };
+}
+
+function formatClass(cls) {
+  const c = (cls || '').toUpperCase();
+  if (c === 'CITY')      return 'City';
+  if (c.includes('BOR')) return 'Borough';
+  if (c === '1TWP')      return 'Township (1st Class)';
+  if (c === '2TWP')      return 'Township (2nd Class)';
+  if (c === '3TWP')      return 'Township (3rd Class)';
+  if (c.includes('TWP')) return 'Township';
+  return cls;
+}
+function titleCase(s) {
+  return (s || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 }
 
 
@@ -611,11 +760,11 @@ fetch('pa_municipalities.geojson')
       onEachFeature: (feature, layer) => {
         const p = feature.properties;
         layer.bindPopup(
-  `<b>${p.MUNICIPAL1}</b><br>${formatClass(p.CLASS_OF_M)}<br>${p.COUNTY_NAM} County` +
-  `<br><br><a href="#" onclick="openSidebarFor('${escJs(p.MUNICIPAL1)}','${escJs(p.CLASS_OF_M)}','${escJs(p.COUNTY_NAM)}');return false;" ` +
-  `style="font-size:12px;color:#3b82f6;font-weight:600;">✎ Edit notes / color</a>`,
-  { maxWidth: 200 }
-);
+          `<b>${p.MUNICIPAL1}</b><br>${formatClass(p.CLASS_OF_M)}<br>${titleCase(p.COUNTY_NAM)} County` +
+          `<br><br><a href="#" onclick="openSidebarFor('${escJs(p.MUNICIPAL1)}','${escJs(p.CLASS_OF_M)}','${escJs(p.COUNTY_NAM)}');return false;" ` +
+          `style="font-size:12px;color:#3b82f6;font-weight:600;">✎ Edit notes / color</a>`,
+          { maxWidth: 200 }
+        );
         layer.on('click', () => {
           geoLayer.resetStyle();
           layer.setStyle({ color: '#e63946', weight: 2.5, fillOpacity: 0.75 });
@@ -641,7 +790,6 @@ fetch('pa_municipalities.geojson')
   })
   .catch(err => console.error('GeoJSON load failed:', err));
 
-
 function updateLabels() {
   if (!geoLayer) return;
   const show = map.getZoom() >= 10;
@@ -650,7 +798,6 @@ function updateLabels() {
     show ? l._label.addTo(map) : map.removeLayer(l._label);
   });
 }
-
 function refreshLayerStyle(muniName) {
   if (!geoLayer) return;
   geoLayer.eachLayer(l => {
@@ -676,23 +823,42 @@ function openSidebarFor(name, cls, county) {
   }
   currentMuni = { name, cls, county };
   document.getElementById('sidebarTitle').textContent = name;
-  document.getElementById('sidebarSub').textContent = `${formatClass(cls)} · ${county} County`;
-    const saved = getNoteForMuni(name);
-  const color = (saved && saved.color) ? saved.color : defaultColor({ properties: { CLASS_OF_M: cls } });
-    const note  = (saved && saved.note)  ? saved.note  : '';
+  document.getElementById('sidebarSub').textContent = `${formatClass(cls)} · ${titleCase(county)} County`;
+
+  const saved = getNoteForMuni(name);
+  const color     = (saved && saved.color)     ? saved.color     : defaultColor({ properties: { CLASS_OF_M: cls } });
+  const note      = (saved && saved.note)      ? saved.note      : '';
+  const checkedIn = (saved && saved.checkedIn) ? saved.checkedIn : '';
+  const utility   = (saved && saved.utility)   ? saved.utility   : '';
+  const rating    = (saved && saved.rating)    ? saved.rating    : 0;
+
   currentColor = color;
   renderSwatches(color);
   document.getElementById('customColorPicker').value = color;
   document.getElementById('customColorLabel').textContent = color;
   document.getElementById('noteTextarea').value = note;
+  const utilities = (saved && saved.utilities) ? saved.utilities : [];
+document.querySelectorAll('#utilityList input[type="checkbox"]').forEach(cb => {
+  cb.checked = utilities.includes(cb.value);
+});
+  const radioEl = document.querySelector(`input[name="checkedIn"][value="${checkedIn}"]`);
+  if (radioEl) radioEl.checked = true;
+  else document.getElementById('checkedNone').checked = true;
+
+  // setStars without triggering markUnsaved during load
+  currentRating = rating;
+  document.querySelectorAll('.star').forEach(s => {
+    const v = parseInt(s.dataset.val);
+    s.textContent = v <= rating ? '★' : '☆';
+    s.classList.toggle('on', v <= rating);
+  });
+
   markSaved(!!saved);
   document.getElementById('sidebar').classList.add('open');
   document.getElementById('legend').classList.add('shifted');
   document.getElementById('noteTextarea').focus();
 }
-function titleCase(s) {
-  return (s || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
-}
+
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('legend').classList.remove('shifted');
@@ -703,9 +869,13 @@ document.getElementById('closeBtn').addEventListener('click', closeSidebar);
 
 function saveNote() {
   if (!currentMuni) return;
-  const note = document.getElementById('noteTextarea').value.trim();
+  const note      = document.getElementById('noteTextarea').value.trim();
+  const checkedIn = document.querySelector('input[name="checkedIn"]:checked')?.value || '';
+  const utilities = Array.from(document.querySelectorAll('#utilityList input[type="checkbox"]:checked'))
+  .map(cb => cb.value);
+    const rating    = currentRating;
   const all = loadAllNotes();
-  all[currentMuni.name] = { color: currentColor, note, updatedAt: new Date().toISOString() };
+  all[currentMuni.name] = { color: currentColor, note, checkedIn, utility, rating, updatedAt: new Date().toISOString() };
   saveAllNotes(all);
   refreshLayerStyle(currentMuni.name);
   markSaved(true);
@@ -713,10 +883,10 @@ function saveNote() {
 
 function clearNote() {
   if (!currentMuni) return;
-  if (!confirm(`Remove all notes and custom color for "${currentMuni.name}"?`)) return;
+  if (!confirm(`Remove all notes and data for "${currentMuni.name}"?`)) return;
   const all = loadAllNotes();
-  delete all[currentMuni.name];
-  saveAllNotes(all);
+  all[currentMuni.name] = { color: currentColor, note, checkedIn, utilities, rating, updatedAt: new Date().toISOString() };
+    saveAllNotes(all);
   refreshLayerStyle(currentMuni.name);
   closeSidebar();
 }
@@ -729,7 +899,71 @@ function markUnsaved() { markSaved(false); }
 
 document.getElementById('noteTextarea').addEventListener('input', markUnsaved);
 
+// ═══════════════════════════════════════════════════════
+//  LIVE LOCATION TRACKING
+// ═══════════════════════════════════════════════════════
+let locationMarker = null;
+let locationCircle = null;
+let locationWatchId = null;
 
+function startLocationTracking() {
+  if (!navigator.geolocation) {
+    alert('Geolocation is not supported by your browser.');
+    return;
+  }
+  locationWatchId = navigator.geolocation.watchPosition(
+    pos => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      const acc = pos.coords.accuracy;
+
+      if (!locationMarker) {
+        locationMarker = L.marker([lat, lon], {
+          icon: L.divIcon({ className: 'location-pin', iconSize: [16, 16], iconAnchor: [8, 8] }),
+          zIndexOffset: 500
+        }).addTo(map);
+
+        locationCircle = L.circle([lat, lon], {
+          radius: acc, color: '#3b82f6', fillColor: '#3b82f6',
+          fillOpacity: 0.12, weight: 1
+        }).addTo(map);
+
+        map.flyTo([lat, lon], 14, { duration: 1.2 });
+      } else {
+        locationMarker.setLatLng([lat, lon]);
+        locationCircle.setLatLng([lat, lon]);
+        locationCircle.setRadius(acc);
+      }
+    },
+    err => {
+      console.warn('Location error:', err.message);
+      alert('Could not get your location. Check browser permissions.');
+      stopLocationTracking();
+      document.getElementById('locBtn').classList.remove('active');
+    },
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+  );
+}
+
+function stopLocationTracking() {
+  if (locationWatchId !== null) {
+    navigator.geolocation.clearWatch(locationWatchId);
+    locationWatchId = null;
+  }
+  if (locationMarker) { map.removeLayer(locationMarker); locationMarker = null; }
+  if (locationCircle) { map.removeLayer(locationCircle); locationCircle = null; }
+}
+
+function toggleLocation() {
+  const btn = document.getElementById('locBtn');
+  if (locationWatchId !== null) {
+    stopLocationTracking();
+    btn.classList.remove('active');
+  } else {
+    startLocationTracking();
+    btn.classList.add('active');
+  }
+}
 // ═══════════════════════════════════════════════════════
 //  SEARCH
 // ═══════════════════════════════════════════════════════
@@ -856,17 +1090,6 @@ function pointInPolygon(point, polygon) {
     if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) inside = !inside;
   }
   return inside;
-}
-
-function formatClass(cls) {
-  const c = (cls || '').toUpperCase();
-  if (c === 'CITY')           return 'City';
-  if (c.includes('BOR'))      return 'Borough';
-  if (c === '1TWP')           return 'Township (1st Class)';
-  if (c === '2TWP')           return 'Township (2nd Class)';
-  if (c === '3TWP')           return 'Township (3rd Class)';
-  if (c.includes('TWP'))      return 'Township';
-  return cls; // fallback to raw value
 }
 
 
