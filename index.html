@@ -124,19 +124,79 @@
     }
 
 
-    .utility-group-label {
-  font-size: 11px; font-weight: 600; color: #888;
-  text-transform: uppercase; letter-spacing: 0.06em;
-  margin-top: 4px;
+    /* ── UTILITY MULTI-SELECT DROPDOWN ─────────────── */
+.util-dropdown { position: relative; width: 100%; }
+
+.util-trigger {
+  width: 100%; min-height: 38px; padding: 6px 32px 6px 10px;
+  border: 2px solid #ddd; border-radius: 8px;
+  background: #fff; cursor: pointer;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
+  text-align: left; transition: border-color 0.15s;
+  position: relative;
 }
-.utility-check {
+.util-trigger:hover { border-color: #aaa; }
+.util-trigger.open { border-color: #222; border-radius: 8px 8px 0 0; }
+.util-trigger-arrow {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  color: #999; font-size: 10px; pointer-events: none;
+  transition: transform 0.15s;
+}
+.util-trigger.open .util-trigger-arrow { transform: translateY(-50%) rotate(180deg); }
+.util-placeholder { font-size: 13px; color: #aaa; font-family: 'DM Mono', monospace; }
+
+.util-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #f0f0f0; border: 1px solid #ddd;
+  border-radius: 4px; padding: 2px 6px;
+  font-size: 11px; font-family: 'DM Mono', monospace; color: #333;
+  white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis;
+}
+.util-pill-remove {
+  background: none; border: none; cursor: pointer;
+  color: #999; font-size: 13px; line-height: 1; padding: 0;
+  flex-shrink: 0;
+}
+.util-pill-remove:hover { color: #e63946; }
+
+.util-panel {
+  display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 3010;
+  background: #fff; border: 2px solid #222; border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 240px; overflow-y: auto;
+  box-shadow: 3px 4px 0 #222;
+}
+.util-panel.open { display: block; }
+
+.util-group-label {
+  font-size: 10px; font-weight: 700; color: #999;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 8px 12px 4px; background: #fafafa;
+  border-top: 1px solid #eee; border-bottom: 1px solid #eee;
+  position: sticky; top: 0;
+}
+.util-group-label:first-child { border-top: none; }
+
+.util-option {
   display: flex; align-items: center; gap: 8px;
-  font-size: 13px; color: #111; cursor: pointer;
-  padding: 5px 8px; border-radius: 6px;
-  transition: background 0.1s;
+  padding: 7px 12px; cursor: pointer;
+  font-size: 13px; color: #111;
+  transition: background 0.08s;
+  user-select: none;
 }
-.utility-check:hover { background: #f5f5f5; }
-.utility-check input { accent-color: #222; cursor: pointer; }
+.util-option:hover { background: #f5f5f5; }
+.util-option.selected { background: #f0f7ff; color: #1d4ed8; }
+.util-option.selected .util-check-icon { opacity: 1; }
+.util-check-icon {
+  width: 14px; height: 14px; flex-shrink: 0;
+  border: 1.5px solid #ccc; border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; color: #1d4ed8; background: #fff;
+  transition: border-color 0.1s, background 0.1s;
+}
+.util-option.selected .util-check-icon {
+  background: #1d4ed8; border-color: #1d4ed8; color: #fff;
+}
     /* ── SESSION BADGE ──────────────────────────────── */
     #sessionBadge {
       position: absolute; top: 14px; right: 14px; z-index: 1000;
@@ -434,29 +494,32 @@
 <!-- Utility -->
 <div>
   <div class="section-label">Utility providers</div>
-  <div id="utilityList" style="display:flex;flex-direction:column;gap:4px;">
-
-    <div class="utility-group-label">⚡ Electric</div>
-    <label class="utility-check"><input type="checkbox" value="PPL Electric Utilities"> PPL Electric Utilities</label>
-    <label class="utility-check"><input type="checkbox" value="PECO Energy"> PECO Energy</label>
-    <label class="utility-check"><input type="checkbox" value="West Penn Power (FirstEnergy)"> West Penn Power (FirstEnergy)</label>
-    <label class="utility-check"><input type="checkbox" value="Duquesne Light"> Duquesne Light</label>
-    <label class="utility-check"><input type="checkbox" value="Penn Power (FirstEnergy)"> Penn Power (FirstEnergy)</label>
-    <label class="utility-check"><input type="checkbox" value="Met-Ed (FirstEnergy)"> Met-Ed (FirstEnergy)</label>
-    <label class="utility-check"><input type="checkbox" value="Penelec (FirstEnergy)"> Penelec (FirstEnergy)</label>
-    <label class="utility-check"><input type="checkbox" value="UGI Electric"> UGI Electric</label>
-    <label class="utility-check"><input type="checkbox" value="Pike Electric"> Pike Electric</label>
-
-    <div class="utility-group-label" style="margin-top:8px;">🔥 Gas</div>
-    <label class="utility-check"><input type="checkbox" value="UGI Utilities (Gas)"> UGI Utilities (Gas)</label>
-    <label class="utility-check"><input type="checkbox" value="Peoples Natural Gas"> Peoples Natural Gas</label>
-    <label class="utility-check"><input type="checkbox" value="National Fuel Gas"> National Fuel Gas</label>
-    <label class="utility-check"><input type="checkbox" value="Columbia Gas of PA"> Columbia Gas of PA</label>
-    <label class="utility-check"><input type="checkbox" value="Equitable Gas"> Equitable Gas</label>
-
-    <div class="utility-group-label" style="margin-top:8px;">🏛 Other</div>
-    <label class="utility-check"><input type="checkbox" value="Municipal / Co-op"> Municipal / Co-op</label>
-    <label class="utility-check"><input type="checkbox" value="Unknown"> Unknown</label>
+  <div class="util-dropdown" id="utilDropdown">
+    <button type="button" class="util-trigger" id="utilTrigger" onclick="toggleUtilPanel()">
+      <span class="util-placeholder" id="utilPlaceholder">Select providers…</span>
+      <span class="util-trigger-arrow">▼</span>
+    </button>
+    <div class="util-panel" id="utilPanel">
+      <div class="util-group-label">⚡ Electric</div>
+      <div class="util-option" data-value="PPL Electric Utilities" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>PPL Electric Utilities</div>
+      <div class="util-option" data-value="PECO Energy" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>PECO Energy</div>
+      <div class="util-option" data-value="West Penn Power" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>West Penn Power (FirstEnergy)</div>
+      <div class="util-option" data-value="Duquesne Light" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Duquesne Light</div>
+      <div class="util-option" data-value="Penn Power" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Penn Power (FirstEnergy)</div>
+      <div class="util-option" data-value="Met-Ed" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Met-Ed (FirstEnergy)</div>
+      <div class="util-option" data-value="Penelec" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Penelec (FirstEnergy)</div>
+      <div class="util-option" data-value="UGI Electric" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>UGI Electric</div>
+      <div class="util-option" data-value="Pike Electric" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Pike Electric</div>
+      <div class="util-group-label">🔥 Gas</div>
+      <div class="util-option" data-value="UGI Gas" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>UGI Utilities (Gas)</div>
+      <div class="util-option" data-value="Peoples Natural Gas" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Peoples Natural Gas</div>
+      <div class="util-option" data-value="National Fuel Gas" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>National Fuel Gas</div>
+      <div class="util-option" data-value="Columbia Gas" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Columbia Gas of PA</div>
+      <div class="util-option" data-value="Equitable Gas" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Equitable Gas</div>
+      <div class="util-group-label">🏛 Other</div>
+      <div class="util-option" data-value="Municipal / Co-op" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Municipal / Co-op</div>
+      <div class="util-option" data-value="Unknown" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Unknown</div>
+    </div>
   </div>
 </div>
 
@@ -704,9 +767,7 @@ document.getElementById('starRating').addEventListener('mouseleave', () => {
   setStars(currentRating);
 });
 
-document.querySelectorAll('#utilityList input[type="checkbox"]').forEach(cb => {
-  cb.addEventListener('change', markUnsaved);
-});
+// utility listeners wired via toggleUtil()
 document.querySelectorAll('input[name="checkedIn"]').forEach(r => r.addEventListener('change', markUnsaved));
 
 
@@ -829,7 +890,7 @@ function openSidebarFor(name, cls, county) {
   const color     = (saved && saved.color)     ? saved.color     : defaultColor({ properties: { CLASS_OF_M: cls } });
   const note      = (saved && saved.note)      ? saved.note      : '';
   const checkedIn = (saved && saved.checkedIn) ? saved.checkedIn : '';
-  const utility   = (saved && saved.utility)   ? saved.utility   : '';
+  const utilities = (saved && saved.utilities) ? saved.utilities : [];
   const rating    = (saved && saved.rating)    ? saved.rating    : 0;
 
   currentColor = color;
@@ -837,10 +898,9 @@ function openSidebarFor(name, cls, county) {
   document.getElementById('customColorPicker').value = color;
   document.getElementById('customColorLabel').textContent = color;
   document.getElementById('noteTextarea').value = note;
-  const utilities = (saved && saved.utilities) ? saved.utilities : [];
-document.querySelectorAll('#utilityList input[type="checkbox"]').forEach(cb => {
-  cb.checked = utilities.includes(cb.value);
-});
+
+  setUtilDropdownValues(utilities);
+
   const radioEl = document.querySelector(`input[name="checkedIn"][value="${checkedIn}"]`);
   if (radioEl) radioEl.checked = true;
   else document.getElementById('checkedNone').checked = true;
@@ -871,11 +931,18 @@ function saveNote() {
   if (!currentMuni) return;
   const note      = document.getElementById('noteTextarea').value.trim();
   const checkedIn = document.querySelector('input[name="checkedIn"]:checked')?.value || '';
-  const utilities = Array.from(document.querySelectorAll('#utilityList input[type="checkbox"]:checked'))
-  .map(cb => cb.value);
-    const rating    = currentRating;
+  const utilities = getUtilDropdownValues();
+  const rating    = currentRating;
+
   const all = loadAllNotes();
-  all[currentMuni.name] = { color: currentColor, note, checkedIn, utility, rating, updatedAt: new Date().toISOString() };
+  all[currentMuni.name] = {
+    color: currentColor,
+    note,
+    checkedIn,
+    utilities,
+    rating,
+    updatedAt: new Date().toISOString()
+  };
   saveAllNotes(all);
   refreshLayerStyle(currentMuni.name);
   markSaved(true);
@@ -885,8 +952,8 @@ function clearNote() {
   if (!currentMuni) return;
   if (!confirm(`Remove all notes and data for "${currentMuni.name}"?`)) return;
   const all = loadAllNotes();
-  all[currentMuni.name] = { color: currentColor, note, checkedIn, utilities, rating, updatedAt: new Date().toISOString() };
-    saveAllNotes(all);
+  delete all[currentMuni.name];
+  saveAllNotes(all);
   refreshLayerStyle(currentMuni.name);
   closeSidebar();
 }
@@ -1104,6 +1171,75 @@ function showStatus(msg) { statusEl.style.display = 'block'; statusEl.textConten
 function clearStatus() { statusEl.style.display = 'none'; statusEl.textContent = ''; if (!suggestionsEl.querySelector('.suggestion-item')) suggestionsEl.style.display = 'none'; }
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function escJs(s)   { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+// ═══════════════════════════════════════════════════════
+//  UTILITY MULTI-SELECT DROPDOWN
+// ═══════════════════════════════════════════════════════
+let utilOpen = false;
+
+function toggleUtilPanel() {
+  utilOpen = !utilOpen;
+  document.getElementById('utilPanel').classList.toggle('open', utilOpen);
+  document.getElementById('utilTrigger').classList.toggle('open', utilOpen);
+}
+
+function toggleUtil(el) {
+  el.classList.toggle('selected');
+  renderUtilTrigger();
+  markUnsaved();
+}
+
+function renderUtilTrigger() {
+  const trigger = document.getElementById('utilTrigger');
+  const placeholder = document.getElementById('utilPlaceholder');
+  const selected = Array.from(document.querySelectorAll('#utilPanel .util-option.selected'));
+
+  // Remove old pills
+  trigger.querySelectorAll('.util-pill').forEach(p => p.remove());
+
+  if (selected.length === 0) {
+    placeholder.style.display = '';
+  } else {
+    placeholder.style.display = 'none';
+    selected.forEach(opt => {
+      const pill = document.createElement('span');
+      pill.className = 'util-pill';
+      // Short label: strip parentheticals for display
+      const label = opt.dataset.value.replace(/\s*\(.*?\)/g, '');
+      pill.innerHTML = `${escHtml(label)}<button class="util-pill-remove" onclick="removeUtil(event,'${escJs(opt.dataset.value)}')" title="Remove">×</button>`;
+      trigger.insertBefore(pill, trigger.querySelector('.util-trigger-arrow'));
+    });
+  }
+}
+
+function removeUtil(e, value) {
+  e.stopPropagation();
+  const opt = document.querySelector(`#utilPanel .util-option[data-value="${CSS.escape(value)}"]`);
+  if (opt) opt.classList.remove('selected');
+  renderUtilTrigger();
+  markUnsaved();
+}
+
+function getUtilDropdownValues() {
+  return Array.from(document.querySelectorAll('#utilPanel .util-option.selected'))
+    .map(el => el.dataset.value);
+}
+
+function setUtilDropdownValues(values) {
+  document.querySelectorAll('#utilPanel .util-option').forEach(el => {
+    el.classList.toggle('selected', values.includes(el.dataset.value));
+  });
+  renderUtilTrigger();
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+  if (utilOpen && !e.target.closest('#utilDropdown')) {
+    utilOpen = false;
+    document.getElementById('utilPanel').classList.remove('open');
+    document.getElementById('utilTrigger').classList.remove('open');
+  }
+});
 
 window.openSidebarFor = openSidebarFor;
 </script>
