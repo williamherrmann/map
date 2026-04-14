@@ -3,11 +3,25 @@
 <head>
   <title>PA Municipal Map</title>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
 
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --bar-height: 60px;
+      --sheet-radius: 20px;
+    }
+
+    body { font-family: 'DM Sans', sans-serif; overflow: hidden; }
+    #map { height: 100vh; width: 100vw; }
+
     /* ── LOCATION PIN ───────────────────────────────── */
     .location-pin {
       width: 16px; height: 16px; background: #3b82f6;
@@ -15,95 +29,9 @@
       box-shadow: 0 0 0 2px #3b82f6, 0 2px 8px rgba(59,130,246,0.5);
     }
 
-    /* ── LOCATION BUTTON ────────────────────────────── */
-    #locBtn {
-      position: absolute; top: 86px; left: 14px; z-index: 1000;
-      width: 36px; height: 36px;
-      background: #fff; border: 2px solid #222; border-radius: 8px;
-      box-shadow: 3px 3px 0 #222;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; color: #555; transition: background 0.15s, color 0.15s;
-    }
-    #locBtn:hover { background: #f5f5f5; }
-    #locBtn.active { background: #3b82f6; border-color: #3b82f6; color: #fff; box-shadow: 3px 3px 0 #1d4ed8; }
-
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'DM Sans', sans-serif; overflow: hidden; }
-    #map { height: 100vh; width: 100vw; }
-
-    /* ── AUTH GATE ─────────────────────────────────── */
-    #authGate {
-      position: fixed; inset: 0; z-index: 9999;
-      background: #0f0f13;
-      display: flex; align-items: center; justify-content: center;
-    }
-    #authGate.hidden { display: none; }
-    .auth-box {
-      background: #1a1a24;
-      border: 1.5px solid #2e2e40;
-      border-radius: 12px;
-      padding: 40px;
-      width: 380px;
-      max-width: 90vw;
-    }
-    .auth-logo {
-      font-family: 'DM Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 0.15em;
-      color: #4a4a6a;
-      text-transform: uppercase;
-      margin-bottom: 32px;
-    }
-    .auth-logo span { color: #f59e0b; }
-    .auth-heading {
-      font-size: 20px; font-weight: 600;
-      color: #e8e8ee; margin-bottom: 6px;
-    }
-    .auth-sub {
-      font-size: 13px; color: #6b6b8a;
-      font-family: 'DM Mono', monospace;
-      margin-bottom: 28px; line-height: 1.6;
-    }
-    .auth-label {
-      font-size: 11px; font-weight: 600; color: #6b6b8a;
-      text-transform: uppercase; letter-spacing: 0.08em;
-      display: block; margin-bottom: 8px;
-    }
-    .auth-input {
-      width: 100%; background: #12121a; border: 1.5px solid #2e2e40;
-      border-radius: 8px; padding: 11px 14px;
-      font-family: 'DM Mono', monospace; font-size: 14px;
-      color: #e8e8ee; outline: none; letter-spacing: 0.04em;
-      transition: border-color 0.15s;
-      margin-bottom: 14px;
-    }
-    .auth-input:focus { border-color: #f59e0b; }
-    .auth-input::placeholder { color: #3a3a55; }
-    .auth-btn {
-      width: 100%; padding: 12px;
-      background: #f59e0b; border: none; border-radius: 8px;
-      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
-      color: #12121a; cursor: pointer; transition: background 0.15s;
-    }
-    .auth-btn:hover { background: #fbbf24; }
-    .auth-btn:disabled { background: #7a5c10; color: #4a3a0a; cursor: not-allowed; }
-    .auth-error {
-      font-size: 12px; color: #ef4444; font-family: 'DM Mono', monospace;
-      margin-top: -8px; margin-bottom: 12px; display: none; line-height: 1.5;
-    }
-    .auth-success-box {
-      background: #0d2d1a; border: 1.5px solid #1a5c35;
-      border-radius: 8px; padding: 16px 18px; margin-top: 16px;
-      display: none;
-    }
-    .auth-success-icon { font-size: 22px; margin-bottom: 8px; }
-    .auth-success-title { font-size: 14px; font-weight: 600; color: #4ade80; margin-bottom: 4px; }
-    .auth-success-sub { font-size: 12px; color: #6b8a7a; font-family: 'DM Mono', monospace; line-height: 1.6; }
-    .auth-note {
-      font-size: 11px; color: #4a4a6a; font-family: 'DM Mono', monospace;
-      line-height: 1.6; margin-top: 18px;
-    }
-    .auth-note a { color: #6b6b8a; }
+    /* ══════════════════════════════════════════════════
+       DESKTOP LAYOUT (≥ 768px)
+    ══════════════════════════════════════════════════ */
 
     /* ── SESSION BADGE ──────────────────────────────── */
     #sessionBadge {
@@ -127,7 +55,7 @@
     }
     #badgeLogout:hover { color: #ef4444; }
 
-    /* ── SEARCH ─────────────────────────────────────── */
+    /* ── SEARCH (desktop) ───────────────────────────── */
     #searchPanel {
       position: absolute; top: 14px; left: 54px;
       z-index: 1000; width: 300px;
@@ -158,7 +86,19 @@
     .suggestion-sub { font-size: 11px; color: #777; font-family: 'DM Mono', monospace; }
     #statusMsg { display: none; padding: 8px 14px; font-size: 12px; color: #666; font-family: 'DM Mono', monospace; }
 
-    /* ── NOTES SIDEBAR ──────────────────────────────── */
+    /* ── LOCATION BUTTON (desktop) ──────────────────── */
+    #locBtn {
+      position: absolute; top: 86px; left: 14px; z-index: 1000;
+      width: 36px; height: 36px;
+      background: #fff; border: 2px solid #222; border-radius: 8px;
+      box-shadow: 3px 3px 0 #222;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: #555; transition: background 0.15s, color 0.15s;
+    }
+    #locBtn:hover { background: #f5f5f5; }
+    #locBtn.active { background: #3b82f6; border-color: #3b82f6; color: #fff; box-shadow: 3px 3px 0 #1d4ed8; }
+
+    /* ── NOTES SIDEBAR (desktop) ────────────────────── */
     #sidebar {
       position: absolute; top: 0; right: 0;
       width: 320px; height: 100vh;
@@ -169,31 +109,173 @@
       transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
     }
     #sidebar.open { transform: translateX(0); }
+
+    /* ── LEGEND (desktop) ───────────────────────────── */
+    #legend {
+      position: absolute; bottom: 30px; right: 14px; z-index: 1000;
+      background: #fff; border: 2px solid #222; border-radius: 8px;
+      padding: 12px 16px; box-shadow: 3px 3px 0 #222;
+      font-size: 12px;
+      transition: right 0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+    #legend.shifted { right: 334px; }
+
+    /* ══════════════════════════════════════════════════
+       MOBILE LAYOUT (< 768px)
+    ══════════════════════════════════════════════════ */
+    @media (max-width: 767px) {
+
+      /* Offset map controls so they don't overlap bottom bar */
+      .leaflet-control-zoom {
+        margin-bottom: calc(var(--bar-height) + var(--safe-bottom) + 72px) !important;
+        margin-right: 12px !important;
+      }
+
+      /* ── SESSION BADGE ── */
+      #sessionBadge {
+        top: calc(14px + var(--safe-top));
+        right: 12px;
+        padding: 6px 10px;
+        border-radius: 20px;
+      }
+      #badgeEmail { max-width: 120px; font-size: 10px; }
+
+      /* ── SEARCH (bottom bar) ── */
+      #searchPanel {
+        position: fixed;
+        bottom: calc(var(--bar-height) + var(--safe-bottom));
+        left: 0; right: 0; top: auto;
+        width: 100%;
+        padding: 10px 12px 0;
+        z-index: 1100;
+        background: #fff;
+        border-top: 2px solid #222;
+        box-shadow: 0 -4px 16px rgba(0,0,0,0.12);
+      }
+      #searchWrap {
+        box-shadow: none;
+        border-radius: 10px;
+        border: 2px solid #ddd;
+      }
+      #search { font-size: 16px; /* prevents iOS zoom */ padding: 12px 10px 12px 0; }
+      #suggestions {
+        position: fixed;
+        bottom: calc(var(--bar-height) + var(--safe-bottom) + 58px);
+        left: 12px; right: 12px;
+        border: 2px solid #222; border-radius: 12px;
+        box-shadow: 0 -4px 16px rgba(0,0,0,0.18);
+        max-height: 240px; overflow-y: auto;
+      }
+
+      /* ── LOCATION BUTTON ── */
+      #locBtn {
+        position: fixed;
+        bottom: calc(var(--bar-height) + var(--safe-bottom) + 130px);
+        right: 14px; left: auto; top: auto;
+        width: 44px; height: 44px;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+      }
+
+      /* ── LEGEND ── */
+      #legend {
+        bottom: calc(var(--bar-height) + var(--safe-bottom) + 72px);
+        right: 14px; left: auto;
+        padding: 8px 12px;
+        font-size: 11px;
+      }
+      #legend.shifted { right: 14px; bottom: calc(var(--bar-height) + var(--safe-bottom) + 72px); }
+
+      /* ── SIDEBAR → BOTTOM SHEET ── */
+      #sidebar {
+        width: 100%;
+        height: 92vh;
+        top: auto; bottom: 0; right: 0; left: 0;
+        border-left: none;
+        border-top: 2px solid #222;
+        border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
+        transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+        box-shadow: 0 -8px 40px rgba(0,0,0,0.22);
+        padding-bottom: var(--safe-bottom);
+      }
+      #sidebar.open { transform: translateY(0); }
+
+      /* Drag handle */
+      #sidebar::before {
+        content: '';
+        display: block;
+        width: 40px; height: 4px;
+        background: #ddd; border-radius: 2px;
+        margin: 10px auto 0;
+        flex-shrink: 0;
+      }
+
+      /* ── BOTTOM NAV BAR ── */
+      #mobileBar {
+        display: flex;
+      }
+
+      /* Hide desktop-only locate button location we moved it */
+    }
+
+    /* ══════════════════════════════════════════════════
+       MOBILE BOTTOM BAR
+    ══════════════════════════════════════════════════ */
+    #mobileBar {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: calc(var(--bar-height) + var(--safe-bottom));
+      padding-bottom: var(--safe-bottom);
+      background: #fff; border-top: 2px solid #222;
+      z-index: 1050;
+      align-items: center; justify-content: space-around;
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.1);
+    }
+    .mob-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      background: none; border: none; cursor: pointer;
+      padding: 6px 16px;
+      font-family: 'DM Sans', sans-serif; font-size: 10px;
+      font-weight: 600; color: #888;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      transition: color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mob-btn svg { transition: transform 0.15s; }
+    .mob-btn:active svg { transform: scale(0.9); }
+    .mob-btn.active { color: #3b82f6; }
+    .mob-btn.active svg { stroke: #3b82f6; }
+
+    /* ══════════════════════════════════════════════════
+       SHARED SIDEBAR STYLES
+    ══════════════════════════════════════════════════ */
     #sidebarHeader {
       display: flex; align-items: flex-start; justify-content: space-between;
       padding: 20px 20px 16px; border-bottom: 1.5px solid #eee;
     }
     #sidebarTitle { font-size: 16px; font-weight: 600; color: #111; line-height: 1.3; }
     #sidebarSub { font-size: 12px; color: #777; margin-top: 3px; font-family: 'DM Mono', monospace; }
-    #closeBtn { background: none; border: none; cursor: pointer; font-size: 20px; color: #999; padding: 0; line-height: 1; flex-shrink: 0; margin-left: 8px; }
+    #closeBtn { background: none; border: none; cursor: pointer; font-size: 22px; color: #999; padding: 4px; line-height: 1; flex-shrink: 0; margin-left: 8px; -webkit-tap-highlight-color: transparent; }
     #closeBtn:hover { color: #333; }
-    #sidebarBody { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+    #sidebarBody { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
     .section-label { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
     #colorSwatches { display: flex; gap: 8px; flex-wrap: wrap; }
     .swatch { width: 32px; height: 32px; border-radius: 6px; cursor: pointer; border: 2.5px solid transparent; transition: transform 0.1s, border-color 0.1s; }
-    .swatch:hover { transform: scale(1.12); }
+    .swatch:hover, .swatch:active { transform: scale(1.12); }
     .swatch.active { border-color: #222; transform: scale(1.12); }
     #customColorRow { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
     #customColorPicker { width: 36px; height: 36px; border: 2px solid #ddd; border-radius: 6px; cursor: pointer; padding: 2px; background: none; }
     #customColorLabel { font-size: 12px; color: #666; font-family: 'DM Mono', monospace; }
-    #noteTextarea { width: 100%; min-height: 120px; resize: vertical; border: 2px solid #ddd; border-radius: 8px; padding: 10px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; line-height: 1.5; color: #111; outline: none; transition: border-color 0.15s; }
+    #noteTextarea { width: 100%; min-height: 100px; resize: vertical; border: 2px solid #ddd; border-radius: 8px; padding: 10px 12px; font-family: 'DM Sans', sans-serif; font-size: 16px; line-height: 1.5; color: #111; outline: none; transition: border-color 0.15s; }
     #noteTextarea:focus { border-color: #222; }
     #statusDot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #ccc; margin-right: 6px; transition: background 0.3s; }
     #statusDot.saved { background: #4caf50; }
     #statusDot.saving { background: #f59e0b; }
     #statusText { font-size: 12px; color: #888; font-family: 'DM Mono', monospace; }
     #sidebarFooter { padding: 16px 20px; border-top: 1.5px solid #eee; display: flex; gap: 10px; align-items: center; }
-    .btn { flex: 1; padding: 10px 16px; border-radius: 8px; border: 2px solid #222; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s, transform 0.1s; }
+    .btn { flex: 1; padding: 12px 16px; border-radius: 8px; border: 2px solid #222; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s, transform 0.1s; -webkit-tap-highlight-color: transparent; }
     .btn:active { transform: scale(0.97); }
     .btn-primary { background: #222; color: #fff; }
     .btn-primary:hover { background: #000; }
@@ -202,13 +284,13 @@
     .btn-danger { background: #fff; color: #e63946; border-color: #e63946; }
     .btn-danger:hover { background: #fff0f1; }
 
-    /* ── STAR RATING ────────────────────────────────── */
+    /* ── STAR RATING ── */
     .star { color: #ddd; transition: color 0.1s; user-select: none; cursor: pointer; }
     .star.on { color: #f59e0b; }
 
-    /* ── UTILITY MULTI-SELECT DROPDOWN ─────────────── */
+    /* ── UTILITY MULTI-SELECT ── */
     .util-dropdown { position: relative; width: 100%; }
-    .util-trigger { width: 100%; min-height: 38px; padding: 6px 32px 6px 10px; border: 2px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; text-align: left; transition: border-color 0.15s; position: relative; }
+    .util-trigger { width: 100%; min-height: 44px; padding: 8px 32px 8px 10px; border: 2px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; text-align: left; transition: border-color 0.15s; position: relative; }
     .util-trigger:hover { border-color: #aaa; }
     .util-trigger.open { border-color: #222; border-radius: 8px 8px 0 0; }
     .util-trigger-arrow { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #999; font-size: 10px; pointer-events: none; transition: transform 0.15s; }
@@ -217,33 +299,31 @@
     .util-pill { display: inline-flex; align-items: center; gap: 4px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-family: 'DM Mono', monospace; color: #333; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
     .util-pill-remove { background: none; border: none; cursor: pointer; color: #999; font-size: 13px; line-height: 1; padding: 0; flex-shrink: 0; }
     .util-pill-remove:hover { color: #e63946; }
-    .util-panel { display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 3010; background: #fff; border: 2px solid #222; border-top: none; border-radius: 0 0 8px 8px; max-height: 240px; overflow-y: auto; box-shadow: 3px 4px 0 #222; }
+    .util-panel { display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 3010; background: #fff; border: 2px solid #222; border-top: none; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; -webkit-overflow-scrolling: touch; box-shadow: 3px 4px 0 #222; }
     .util-panel.open { display: block; }
     .util-group-label { font-size: 10px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.08em; padding: 8px 12px 4px; background: #fafafa; border-top: 1px solid #eee; border-bottom: 1px solid #eee; position: sticky; top: 0; }
     .util-group-label:first-child { border-top: none; }
-    .util-option { display: flex; align-items: center; gap: 8px; padding: 7px 12px; cursor: pointer; font-size: 13px; color: #111; transition: background 0.08s; user-select: none; }
-    .util-option:hover { background: #f5f5f5; }
+    .util-option { display: flex; align-items: center; gap: 8px; padding: 10px 12px; cursor: pointer; font-size: 13px; color: #111; transition: background 0.08s; user-select: none; -webkit-tap-highlight-color: transparent; }
+    .util-option:hover, .util-option:active { background: #f5f5f5; }
     .util-option.selected { background: #f0f7ff; color: #1d4ed8; }
     .util-check-icon { width: 14px; height: 14px; flex-shrink: 0; border: 1.5px solid #ccc; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #1d4ed8; background: #fff; transition: border-color 0.1s, background 0.1s; }
     .util-option.selected .util-check-icon { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
 
-    /* ── CHECKED IN RADIOS ──────────────────────────── */
-    .check-radio-label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; color: #111; padding: 6px 12px; border: 2px solid #ddd; border-radius: 8px; transition: border-color 0.15s, background 0.15s; }
+    /* ── PERMIT RADIOS ── */
+    .check-radio-label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; color: #111; padding: 8px 12px; border: 2px solid #ddd; border-radius: 8px; transition: border-color 0.15s, background 0.15s; -webkit-tap-highlight-color: transparent; }
     .check-radio-label:has(input:checked) { border-color: #222; background: #f5f5f5; font-weight: 600; }
     .check-radio-label input { accent-color: #222; }
 
-    /* ── LEGEND ─────────────────────────────────────── */
-    #legend { position: absolute; bottom: 30px; right: 14px; z-index: 1000; background: #fff; border: 2px solid #222; border-radius: 8px; padding: 12px 16px; box-shadow: 3px 3px 0 #222; font-size: 12px; transition: right 0.25s cubic-bezier(0.4,0,0.2,1); }
-    #legend.shifted { right: 334px; }
+    /* ── LEGEND ── */
     #legend h4 { font-size: 11px; font-family: 'DM Mono', monospace; color: #555; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
     .legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
     .legend-swatch { width: 16px; height: 16px; border: 1.5px solid #555; border-radius: 3px; flex-shrink: 0; }
 
-    /* ── PIN MARKER ─────────────────────────────────── */
+    /* ── PIN MARKERS ── */
     .search-pin { width: 14px; height: 14px; background: #e63946; border: 2.5px solid #fff; border-radius: 50%; box-shadow: 0 0 0 2px #e63946, 0 2px 8px rgba(0,0,0,0.35); }
     .muni-label { font-size: 10px; font-weight: 600; font-family: 'DM Sans', sans-serif; color: #222; text-shadow: 0 0 4px #fff, 0 0 4px #fff; white-space: nowrap; pointer-events: none; }
 
-    /* ── CUSTOM POPUP ───────────────────────────────── */
+    /* ── CUSTOM POPUP ── */
     .leaflet-popup-content-wrapper {
       border-radius: 10px !important;
       border: 2px solid #222 !important;
@@ -254,103 +334,125 @@
     }
     .leaflet-popup-content { margin: 0 !important; width: auto !important; }
     .leaflet-popup-tip-container { display: none; }
-
     .popup-inner { width: 260px; }
-    .popup-header {
-      background: #111; padding: 11px 14px 10px;
-    }
-    .popup-name {
-      font-size: 14px; font-weight: 700; color: #fff;
-      line-height: 1.2; font-family: 'DM Sans', sans-serif;
-    }
-    .popup-table {
-      width: 100%; border-collapse: collapse;
-    }
+    .popup-header { background: #111; padding: 11px 14px 10px; }
+    .popup-name { font-size: 14px; font-weight: 700; color: #fff; line-height: 1.2; font-family: 'DM Sans', sans-serif; }
+    .popup-table { width: 100%; border-collapse: collapse; }
     .popup-table tr { border-bottom: 1px solid #f0f0f0; }
     .popup-table tr:last-child { border-bottom: none; }
-    .popup-table td {
-      padding: 7px 14px; font-size: 12px; vertical-align: middle;
-      line-height: 1.3;
-    }
-    .popup-table td:first-child {
-      color: #999; font-family: 'DM Mono', monospace;
-      font-size: 10px; text-transform: uppercase;
-      letter-spacing: 0.06em; width: 42%; white-space: nowrap;
-    }
-    .popup-table td:last-child {
-      font-weight: 600; color: #111;
-      font-family: 'DM Sans', sans-serif;
-    }
+    .popup-table td { padding: 7px 14px; font-size: 12px; vertical-align: middle; line-height: 1.3; }
+    .popup-table td:first-child { color: #999; font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; width: 42%; white-space: nowrap; }
+    .popup-table td:last-child { font-weight: 600; color: #111; font-family: 'DM Sans', sans-serif; }
     .popup-stars-sm { color: #f59e0b; font-size: 12px; letter-spacing: 1px; }
     .popup-stars-sm .empty { color: #ddd; }
-    .popup-permit {
-      display: inline-flex; align-items: center; gap: 4px;
-      font-size: 11px; font-weight: 600; padding: 2px 8px;
-      border-radius: 20px; font-family: 'DM Mono', monospace;
-    }
+    .popup-permit { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; font-family: 'DM Mono', monospace; }
     .popup-permit.none      { background: #f3f4f6; color: #9ca3af; }
     .popup-permit.no-permit { background: #dcfce7; color: #15803d; }
     .popup-permit.required  { background: #fee2e2; color: #dc2626; }
     .popup-note-row td { color: #666 !important; font-weight: 400 !important; font-size: 11px !important; font-family: 'DM Sans', sans-serif !important; line-height: 1.5 !important; }
-    .popup-footer {
-      padding: 9px 14px; border-top: 1.5px solid #eee;
-      background: #fafafa;
-    }
-    .popup-edit-link {
-      font-size: 12px; color: #3b82f6; font-weight: 600;
-      text-decoration: none; display: flex; align-items: center; gap: 5px;
-      font-family: 'DM Sans', sans-serif;
-    }
+    .popup-footer { padding: 9px 14px; border-top: 1.5px solid #eee; background: #fafafa; }
+    .popup-edit-link { font-size: 12px; color: #3b82f6; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 5px; font-family: 'DM Sans', sans-serif; }
     .popup-edit-link:hover { color: #1d4ed8; }
 
-    /* ── TOAST ──────────────────────────────────────── */
-    #toast {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
-      background: #1a1a24; border: 1.5px solid #2e2e40; border-radius: 8px;
-      padding: 10px 18px; font-family: 'DM Mono', monospace; font-size: 12px; color: #e8e8ee;
-      z-index: 9998; transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
-      pointer-events: none;
+    /* ── AUTH GATE ── */
+    #authGate { position: fixed; inset: 0; z-index: 9999; background: #0f0f13; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    #authGate.hidden { display: none; }
+    .auth-box { background: #1a1a24; border: 1.5px solid #2e2e40; border-radius: 12px; padding: 36px; width: 380px; max-width: 100%; }
+    .auth-logo { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: #4a4a6a; text-transform: uppercase; margin-bottom: 28px; }
+    .auth-logo span { color: #f59e0b; }
+    .auth-tabs { display: flex; margin-bottom: 28px; border: 1.5px solid #2e2e40; border-radius: 8px; overflow: hidden; }
+    .auth-tab { flex: 1; padding: 10px; background: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; color: #4a4a6a; transition: background 0.15s, color 0.15s; }
+    .auth-tab.active { background: #f59e0b; color: #12121a; }
+    .auth-tab:not(.active):hover { background: #22222e; color: #e8e8ee; }
+    .auth-panel { display: none; }
+    .auth-panel.active { display: block; }
+    .auth-heading { font-size: 18px; font-weight: 600; color: #e8e8ee; margin-bottom: 20px; }
+    .auth-label { font-size: 11px; font-weight: 600; color: #6b6b8a; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 8px; }
+    .auth-input { width: 100%; background: #12121a; border: 1.5px solid #2e2e40; border-radius: 8px; padding: 11px 14px; font-family: 'DM Mono', monospace; font-size: 16px; color: #e8e8ee; outline: none; letter-spacing: 0.04em; transition: border-color 0.15s; margin-bottom: 14px; }
+    .auth-input:focus { border-color: #f59e0b; }
+    .auth-input::placeholder { color: #3a3a55; }
+    .auth-btn { width: 100%; padding: 14px; background: #f59e0b; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; color: #12121a; cursor: pointer; transition: background 0.15s; }
+    .auth-btn:hover { background: #fbbf24; }
+    .auth-btn:disabled { background: #7a5c10; color: #4a3a0a; cursor: not-allowed; }
+    .auth-btn-ghost { width: 100%; padding: 12px; background: transparent; border: 1.5px solid #2e2e40; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; color: #6b6b8a; cursor: pointer; transition: border-color 0.15s, color 0.15s; margin-top: 8px; }
+    .auth-btn-ghost:hover { border-color: #f59e0b; color: #e8e8ee; }
+    .auth-error { font-size: 12px; color: #ef4444; font-family: 'DM Mono', monospace; margin-bottom: 12px; display: none; line-height: 1.5; }
+    .auth-divider { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
+    .auth-divider-line { flex: 1; height: 1px; background: #2e2e40; }
+    .auth-divider-text { font-size: 11px; color: #4a4a6a; font-family: 'DM Mono', monospace; white-space: nowrap; }
+    .auth-forgot { font-size: 12px; color: #4a4a6a; font-family: 'DM Mono', monospace; text-align: right; display: block; margin-top: -8px; margin-bottom: 14px; cursor: pointer; transition: color 0.15s; background: none; border: none; width: 100%; }
+    .auth-forgot:hover { color: #f59e0b; }
+    .auth-success-box { background: #0d2d1a; border: 1.5px solid #1a5c35; border-radius: 8px; padding: 16px 18px; margin-top: 16px; display: none; }
+    .auth-success-icon { font-size: 22px; margin-bottom: 8px; }
+    .auth-success-title { font-size: 14px; font-weight: 600; color: #4ade80; margin-bottom: 4px; }
+    .auth-success-sub { font-size: 12px; color: #6b8a7a; font-family: 'DM Mono', monospace; line-height: 1.6; }
+    .auth-note { font-size: 11px; color: #4a4a6a; font-family: 'DM Mono', monospace; line-height: 1.6; margin-top: 18px; }
+
+
+
+    /* ── SHEET BACKDROP ── */
+    #sheetBackdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 1999;
+      opacity: 0;
+      transition: opacity 0.3s;
     }
-    #toast.show { transform: translateX(-50%) translateY(0); }
+    #sheetBackdrop.show { display: block; opacity: 1; }
   </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════════════
-     AUTH GATE
-════════════════════════════════════════════════════════ -->
+<!-- AUTH GATE -->
 <div id="authGate">
   <div class="auth-box">
     <div class="auth-logo">PA Territory Map <span>// Field Tool</span></div>
 
-    <!-- SIGN IN VIEW -->
-    <div id="authSignIn">
-      <div class="auth-heading">Sign in</div>
-      <div class="auth-sub">Enter your email and we'll send you a magic link — no password needed.</div>
-      <label class="auth-label">Email address</label>
-      <input class="auth-input" id="emailInput" type="email" placeholder="you@example.com" autocomplete="email" />
-      <div class="auth-error" id="authError"></div>
-      <button class="auth-btn" id="magicLinkBtn" onclick="sendMagicLink()">Send magic link</button>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('password')">Email &amp; Password</button>
+      <button class="auth-tab" onclick="switchAuthTab('magic')">Magic Link</button>
+    </div>
 
+    <!-- Password panel -->
+    <div class="auth-panel active" id="panelPassword">
+      <div class="auth-heading">Sign in</div>
+      <div class="auth-error" id="pwError"></div>
+      <label class="auth-label">Email address</label>
+      <input class="auth-input" id="pwEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+      <label class="auth-label">Password</label>
+      <input class="auth-input" id="pwPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
+      <button class="auth-forgot" onclick="forgotPassword()">Forgot password?</button>
+      <button class="auth-btn" id="pwSignInBtn" onclick="signInWithPassword()">Sign in</button>
+      <div class="auth-divider"><div class="auth-divider-line"></div><span class="auth-divider-text">no account?</span><div class="auth-divider-line"></div></div>
+      <button class="auth-btn-ghost" onclick="signUpWithPassword()">Create account</button>
+      <div class="auth-note">Your notes sync securely to your account across all devices.</div>
+    </div>
+
+    <!-- Magic link panel -->
+    <div class="auth-panel" id="panelMagic">
+      <div class="auth-heading">Magic link</div>
+      <div class="auth-error" id="magicError"></div>
+      <label class="auth-label">Email address</label>
+      <input class="auth-input" id="magicEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+      <button class="auth-btn" id="magicLinkBtn" onclick="sendMagicLink()">Send magic link</button>
       <div class="auth-success-box" id="successBox">
-        <div class="auth-success-icon">✉️</div>
+        <div class="auth-success-icon">📩</div>
         <div class="auth-success-title">Check your inbox</div>
         <div class="auth-success-sub">We sent a sign-in link to <span id="sentToEmail" style="color:#86efac"></span>.<br>Click the link in that email to enter the map.</div>
       </div>
-
-      <div class="auth-note">Your notes sync securely to your account across all devices.</div>
+      <div class="auth-note">No password needed — we'll email you a one-click sign-in link.</div>
     </div>
   </div>
 </div>
-
-<!-- Session badge -->
+<!-- SESSION BADGE -->
 <div id="sessionBadge" class="hidden">
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
 
-<!-- Search -->
-<div id="searchPanel" style="top:14px">
+<!-- SEARCH -->
+<div id="searchPanel">
   <div id="searchWrap">
     <span id="searchIcon">⌕</span>
     <input id="search" type="text" placeholder="Search address, town, zip…" autocomplete="off" spellcheck="false" />
@@ -361,7 +463,10 @@
   </div>
 </div>
 
+<!-- MAP -->
 <div id="map"></div>
+
+<!-- LOCATION BUTTON (desktop; mobile version is in bottom bar) -->
 <button id="locBtn" onclick="toggleLocation()" title="Show my location">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
@@ -369,14 +474,17 @@
   </svg>
 </button>
 
-<!-- Notes sidebar -->
+<!-- SHEET BACKDROP (mobile) -->
+<div id="sheetBackdrop" onclick="closeSidebar()"></div>
+
+<!-- NOTES SIDEBAR / BOTTOM SHEET -->
 <div id="sidebar">
   <div id="sidebarHeader">
     <div>
       <div id="sidebarTitle">—</div>
       <div id="sidebarSub">—</div>
     </div>
-    <button id="closeBtn" title="Close">×</button>
+    <button id="closeBtn" title="Close" onclick="closeSidebar()">×</button>
   </div>
 
   <div id="sidebarBody">
@@ -390,12 +498,12 @@
       </div>
     </div>
 
-    <!-- Checked in town -->
+    <!-- Permit -->
     <div>
       <div class="section-label">Permit required?</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <label class="check-radio-label" title="Checked-in town — no permit needed"><input type="radio" name="checkedIn" id="checkedYes" value="false" /> No permit</label>
-        <label class="check-radio-label" title="Not checked in — permit required"><input type="radio" name="checkedIn" id="checkedNo" value="true" /> Permit req.</label>
+        <label class="check-radio-label"><input type="radio" name="checkedIn" id="checkedYes" value="false" /> No permit</label>
+        <label class="check-radio-label"><input type="radio" name="checkedIn" id="checkedNo" value="true" /> Permit req.</label>
         <label class="check-radio-label"><input type="radio" name="checkedIn" id="checkedNone" value="" checked /> Unknown</label>
       </div>
     </div>
@@ -432,10 +540,10 @@
       </div>
     </div>
 
-    <!-- Star rating -->
+    <!-- Stars -->
     <div>
       <div class="section-label">Territory rating</div>
-      <div id="starRating" style="display:flex;gap:4px;line-height:1;font-size:28px;">
+      <div id="starRating" style="display:flex;gap:4px;line-height:1;font-size:32px;">
         <span class="star" data-val="1">☆</span>
         <span class="star" data-val="2">☆</span>
         <span class="star" data-val="3">☆</span>
@@ -462,7 +570,7 @@
   </div>
 </div>
 
-<!-- Legend -->
+<!-- LEGEND -->
 <div id="legend">
   <h4>Municipality Type</h4>
   <div class="legend-row"><div class="legend-swatch" style="background:#cccccc"></div> Township</div>
@@ -470,171 +578,198 @@
   <div class="legend-row"><div class="legend-swatch" style="background:#c49a6c"></div> City / Other</div>
 </div>
 
-<!-- Toast -->
-<div id="toast"></div>
+<!-- MOBILE BOTTOM BAR -->
+<div id="mobileBar">
+  <button class="mob-btn" id="mobLocBtn" onclick="toggleLocation()">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+      <circle cx="12" cy="12" r="7" stroke-width="1.5"/>
+    </svg>
+    Locate
+  </button>
+  <button class="mob-btn" id="mobLegendBtn" onclick="toggleLegendMobile()">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="5" height="5" rx="1"/><rect x="3" y="10" width="5" height="5" rx="1"/><rect x="3" y="17" width="5" height="5" rx="1"/>
+      <line x1="12" y1="5.5" x2="21" y2="5.5"/><line x1="12" y1="12.5" x2="21" y2="12.5"/><line x1="12" y1="19.5" x2="21" y2="19.5"/>
+    </svg>
+    Legend
+  </button>
+  <button class="mob-btn" id="mobSignBtn" onclick="handleMobSignBtn()">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+    </svg>
+    <span id="mobSignLabel">Sign In</span>
+  </button>
+</div>
+
+
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════
-//  SUPABASE INIT
+//  MOBILE DETECTION
+// ═══════════════════════════════════════════════════════
+const isMobile = () => window.innerWidth < 768;
+
+// ═══════════════════════════════════════════════════════
+//  SUPABASE
 // ═══════════════════════════════════════════════════════
 const SUPABASE_URL  = 'https://ccgscataqcztdexhfpgd.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZ3NjYXRhcWN6dGRleGhmcGdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMjU1NDUsImV4cCI6MjA5MTcwMTU0NX0.osZLCZP3l4WN3EQGA95L5jPisPSeyflCM9GJ697F1ko';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 let currentUser = null;
-
-// In-memory note cache so map colors don't require async on every layer render
 let noteCache = {};
 
-// ═══════════════════════════════════════════════════════
-//  TOAST
-// ═══════════════════════════════════════════════════════
-function showToast(msg, duration = 2500) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), duration);
+
+
+// ═════════════════════════════════════════════════════════
+//  AUTH
+// ═════════════════════════════════════════════════════════
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (i === 0 && tab === 'password') || (i === 1 && tab === 'magic')));
+  document.getElementById('panelPassword').classList.toggle('active', tab === 'password');
+  document.getElementById('panelMagic').classList.toggle('active', tab === 'magic');
+  document.getElementById('pwError').style.display = 'none';
+  document.getElementById('magicError').style.display = 'none';
 }
 
-// ═══════════════════════════════════════════════════════
-//  AUTH
-// ═══════════════════════════════════════════════════════
+async function signInWithPassword() {
+  const email = document.getElementById('pwEmail').value.trim();
+  const password = document.getElementById('pwPassword').value;
+  const errEl = document.getElementById('pwError');
+  errEl.style.display = 'none'; errEl.style.color = '#ef4444';
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Please enter a valid email.'; errEl.style.display = 'block'; return; }
+  if (!password) { errEl.textContent = 'Please enter your password.'; errEl.style.display = 'block'; return; }
+  const btn = document.getElementById('pwSignInBtn');
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.textContent = 'Sign in';
+  if (error) { errEl.textContent = error.message || 'Invalid email or password.'; errEl.style.display = 'block'; }
+}
+
+async function signUpWithPassword() {
+  const email = document.getElementById('pwEmail').value.trim();
+  const password = document.getElementById('pwPassword').value;
+  const errEl = document.getElementById('pwError');
+  errEl.style.display = 'none'; errEl.style.color = '#ef4444';
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Please enter a valid email.'; errEl.style.display = 'block'; return; }
+  if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
+  const btn = document.getElementById('pwSignInBtn');
+  btn.disabled = true; btn.textContent = 'Creating account…';
+  const { error } = await sb.auth.signUp({ email, password });
+  btn.disabled = false; btn.textContent = 'Sign in';
+  if (error) { errEl.textContent = error.message || 'Could not create account.'; errEl.style.display = 'block'; return; }
+  errEl.style.color = '#4ade80'; errEl.textContent = 'Account created! Check your email to confirm, then sign in.'; errEl.style.display = 'block';
+}
+
+async function forgotPassword() {
+  const email = document.getElementById('pwEmail').value.trim();
+  const errEl = document.getElementById('pwError');
+  errEl.style.display = 'none'; errEl.style.color = '#ef4444';
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Enter your email above first.'; errEl.style.display = 'block'; return; }
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
+  if (error) { errEl.textContent = error.message || 'Could not send reset email.'; errEl.style.display = 'block'; return; }
+  errEl.style.color = '#4ade80'; errEl.textContent = 'Password reset email sent!'; errEl.style.display = 'block';
+}
+
 async function sendMagicLink() {
-  const email = document.getElementById('emailInput').value.trim();
-  const errEl = document.getElementById('authError');
+  const email = document.getElementById('magicEmail').value.trim();
+  const errEl = document.getElementById('magicError');
   errEl.style.display = 'none';
-
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    errEl.textContent = 'Please enter a valid email address.';
-    errEl.style.display = 'block';
-    return;
-  }
-
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Please enter a valid email address.'; errEl.style.display = 'block'; return; }
   const btn = document.getElementById('magicLinkBtn');
-  btn.disabled = true;
-  btn.textContent = 'Sending…';
-
-  const { error } = await sb.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.href }
-  });
-
-  btn.disabled = false;
-  btn.textContent = 'Send magic link';
-
-  if (error) {
-    errEl.textContent = error.message || 'Something went wrong. Try again.';
-    errEl.style.display = 'block';
-    return;
-  }
-
+  btn.disabled = true; btn.textContent = 'Sending…';
+  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
+  btn.disabled = false; btn.textContent = 'Send magic link';
+  if (error) { errEl.textContent = error.message || 'Something went wrong. Try again.'; errEl.style.display = 'block'; return; }
   document.getElementById('sentToEmail').textContent = email;
   document.getElementById('successBox').style.display = 'block';
-  document.getElementById('emailInput').style.display = 'none';
+  document.getElementById('magicEmail').style.display = 'none';
   document.getElementById('magicLinkBtn').style.display = 'none';
-  document.querySelector('.auth-label').style.display = 'none';
-  document.querySelector('.auth-sub').style.display = 'none';
+  document.querySelectorAll('#panelMagic .auth-label')[0].style.display = 'none';
 }
 
-document.getElementById('emailInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') sendMagicLink();
-});
+document.getElementById('pwPassword').addEventListener('keydown', e => { if (e.key === 'Enter') signInWithPassword(); });
+document.getElementById('magicEmail').addEventListener('keydown', e => { if (e.key === 'Enter') sendMagicLink(); });
 
 function startSession(user) {
   currentUser = user;
   document.getElementById('authGate').classList.add('hidden');
   document.getElementById('badgeEmail').textContent = user.email;
   document.getElementById('sessionBadge').classList.remove('hidden');
+  document.getElementById('mobSignLabel').textContent = 'Sign Out';
+  document.getElementById('mobSignBtn').querySelector('svg').setAttribute('stroke', '#ef4444');
   loadAllNotesFromSupabase();
+}
+
+function resetAuthUI() {
+  document.getElementById('pwEmail').value = '';
+  document.getElementById('pwPassword').value = '';
+  document.getElementById('pwError').style.display = 'none';
+  document.getElementById('pwError').style.color = '#ef4444';
+  document.getElementById('magicEmail').value = '';
+  document.getElementById('magicEmail').style.display = '';
+  document.getElementById('magicLinkBtn').style.display = '';
+  document.getElementById('magicError').style.display = 'none';
+  document.getElementById('successBox').style.display = 'none';
+  document.querySelectorAll('#panelMagic .auth-label')[0].style.display = '';
+  switchAuthTab('password');
 }
 
 async function logout() {
   if (!confirm('Sign out?')) return;
   await sb.auth.signOut();
-  currentUser = null;
-  noteCache = {};
+  currentUser = null; noteCache = {};
   closeSidebar();
   if (geoLayer) geoLayer.eachLayer(l => { if (l.feature) l.setStyle(styleForLayer(l.feature)); });
   document.getElementById('sessionBadge').classList.add('hidden');
-  document.getElementById('successBox').style.display = 'none';
-  document.getElementById('emailInput').style.display = '';
-  document.getElementById('magicLinkBtn').style.display = '';
-  document.querySelector('.auth-label').style.display = '';
-  document.querySelector('.auth-sub').style.display = '';
-  document.getElementById('emailInput').value = '';
-  document.getElementById('authError').style.display = 'none';
-  document.getElementById('magicLinkBtn').textContent = 'Send magic link';
-  document.getElementById('magicLinkBtn').disabled = false;
+  resetAuthUI();
   document.getElementById('authGate').classList.remove('hidden');
+  document.getElementById('mobSignLabel').textContent = 'Sign In';
+  document.getElementById('mobSignBtn').querySelector('svg').setAttribute('stroke', '#888');
 }
 
-// Auth state listener — handles magic link callback redirect
-sb.auth.onAuthStateChange(async (event, session) => {
-  if (session && session.user) {
-    startSession(session.user);
-  }
-});
+function handleMobSignBtn() {
+  if (currentUser) logout();
+  else document.getElementById('authGate').classList.remove('hidden');
+}
 
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (session && session.user) startSession(session.user);
+});
 // ═══════════════════════════════════════════════════════
 //  SUPABASE DATA
 // ═══════════════════════════════════════════════════════
 async function loadAllNotesFromSupabase() {
   if (!currentUser) return;
-  const { data, error } = await sb
-    .from('municipality_notes')
-    .select('*')
-    .eq('user_id', currentUser.id);
-
+  const { data, error } = await sb.from('municipality_notes').select('*').eq('user_id', currentUser.id);
   if (error) { console.error('Load error:', error); return; }
-
   noteCache = {};
   (data || []).forEach(row => {
-    noteCache[row.muni_name] = {
-      color:     row.color,
-      note:      row.note,
-      checkedIn: row.permit_required, // boolean or null
-      utilities: row.utilities || [],
-      rating:    row.rating || 0,
-      updatedAt: row.updated_at
-    };
+    noteCache[row.muni_name] = { color: row.color, note: row.note, checkedIn: row.permit_required, utilities: row.utilities || [], rating: row.rating || 0, updatedAt: row.updated_at };
   });
-
-  // Re-render map colors after loading
-  if (geoLayer) {
-    geoLayer.eachLayer(l => { if (l.feature) l.setStyle(styleForLayer(l.feature)); });
-  }
+  if (geoLayer) geoLayer.eachLayer(l => { if (l.feature) l.setStyle(styleForLayer(l.feature)); });
 }
 
-function getNoteForMuni(name) {
-  return noteCache[name] || null;
-}
+function getNoteForMuni(name) { return noteCache[name] || null; }
 
 async function upsertNote(muniName, data) {
   if (!currentUser) return;
   const { error } = await sb.from('municipality_notes').upsert({
-    user_id:    currentUser.id,
-    muni_name:  muniName,
-    color:      data.color,
-    note:       data.note,
-    permit_required: data.checkedIn,
-    utilities:  data.utilities,
-    rating:     data.rating,
+    user_id: currentUser.id, muni_name: muniName, color: data.color, note: data.note,
+    permit_required: data.checkedIn, utilities: data.utilities, rating: data.rating,
     updated_at: new Date().toISOString()
   }, { onConflict: 'user_id,muni_name' });
-
   if (error) { console.error('Save error:', error); throw error; }
   noteCache[muniName] = data;
 }
 
 async function deleteNote(muniName) {
   if (!currentUser) return;
-  const { error } = await sb.from('municipality_notes')
-    .delete()
-    .eq('user_id', currentUser.id)
-    .eq('muni_name', muniName);
+  const { error } = await sb.from('municipality_notes').delete().eq('user_id', currentUser.id).eq('muni_name', muniName);
   if (error) { console.error('Delete error:', error); throw error; }
   delete noteCache[muniName];
 }
@@ -643,16 +778,11 @@ async function deleteNote(muniName) {
 //  PRESET COLORS
 // ═══════════════════════════════════════════════════════
 const PRESET_COLORS = [
-  { hex: '#cccccc', label: 'Default gray' },
-  { hex: '#a8c66c', label: 'Default green' },
-  { hex: '#c49a6c', label: 'Default tan' },
-  { hex: '#f59e0b', label: 'Amber' },
-  { hex: '#ef4444', label: 'Red' },
-  { hex: '#3b82f6', label: 'Blue' },
-  { hex: '#8b5cf6', label: 'Purple' },
-  { hex: '#10b981', label: 'Emerald' },
-  { hex: '#f97316', label: 'Orange' },
-  { hex: '#ec4899', label: 'Pink' },
+  { hex: '#cccccc', label: 'Default gray' }, { hex: '#a8c66c', label: 'Default green' },
+  { hex: '#c49a6c', label: 'Default tan' },  { hex: '#f59e0b', label: 'Amber' },
+  { hex: '#ef4444', label: 'Red' },          { hex: '#3b82f6', label: 'Blue' },
+  { hex: '#8b5cf6', label: 'Purple' },       { hex: '#10b981', label: 'Emerald' },
+  { hex: '#f97316', label: 'Orange' },       { hex: '#ec4899', label: 'Pink' },
 ];
 
 function renderSwatches(selectedColor) {
@@ -661,8 +791,7 @@ function renderSwatches(selectedColor) {
   PRESET_COLORS.forEach(c => {
     const el = document.createElement('div');
     el.className = 'swatch' + (c.hex === selectedColor ? ' active' : '');
-    el.style.background = c.hex;
-    el.title = c.label;
+    el.style.background = c.hex; el.title = c.label;
     el.onclick = () => selectColor(c.hex);
     container.appendChild(el);
   });
@@ -671,54 +800,32 @@ function selectColor(hex) {
   currentColor = hex;
   document.getElementById('customColorPicker').value = hex;
   document.getElementById('customColorLabel').textContent = hex;
-  renderSwatches(hex);
-  markUnsaved();
+  renderSwatches(hex); markUnsaved();
 }
-document.getElementById('customColorPicker').addEventListener('input', function() {
-  selectColor(this.value);
-});
+document.getElementById('customColorPicker').addEventListener('input', function() { selectColor(this.value); });
 
 // ═══════════════════════════════════════════════════════
 //  STAR RATING
 // ═══════════════════════════════════════════════════════
 let currentRating = 0;
-
 function setStars(val) {
   currentRating = val;
   document.querySelectorAll('.star').forEach(s => {
     const v = parseInt(s.dataset.val);
     s.textContent = v <= val ? '★' : '☆';
     s.classList.toggle('on', v <= val);
-  });
-  markUnsaved();
+  }); markUnsaved();
 }
-
-document.getElementById('starRating').addEventListener('click', e => {
-  const star = e.target.closest('.star');
-  if (star) setStars(parseInt(star.dataset.val));
-});
-document.getElementById('starRating').addEventListener('mouseover', e => {
-  const star = e.target.closest('.star');
-  if (!star) return;
-  const hov = parseInt(star.dataset.val);
-  document.querySelectorAll('.star').forEach(s => {
-    s.textContent = parseInt(s.dataset.val) <= hov ? '★' : '☆';
-  });
-});
-document.getElementById('starRating').addEventListener('mouseleave', () => {
-  setStars(currentRating);
-});
-
+document.getElementById('starRating').addEventListener('click', e => { const star = e.target.closest('.star'); if (star) setStars(parseInt(star.dataset.val)); });
+document.getElementById('starRating').addEventListener('mouseover', e => { const star = e.target.closest('.star'); if (!star) return; const hov = parseInt(star.dataset.val); document.querySelectorAll('.star').forEach(s => { s.textContent = parseInt(s.dataset.val) <= hov ? '★' : '☆'; }); });
+document.getElementById('starRating').addEventListener('mouseleave', () => { setStars(currentRating); });
 document.querySelectorAll('input[name="checkedIn"]').forEach(r => r.addEventListener('change', markUnsaved));
 
 // ═══════════════════════════════════════════════════════
 //  MAP SETUP
 // ═══════════════════════════════════════════════════════
 const map = L.map('map', { zoomControl: true }).setView([40.9, -77.8], 7);
-
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '© OpenStreetMap © CARTO', maxZoom: 19
-}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap © CARTO', maxZoom: 19 }).addTo(map);
 
 let geoLayer;
 let pinMarker = null;
@@ -734,20 +841,17 @@ function styleForLayer(feature) {
   const fill = (saved && saved.color) ? saved.color : defaultColor(feature);
   return { color: '#555', weight: 0.8, fillColor: fill, fillOpacity: 0.55 };
 }
-
 function formatClass(cls) {
   const c = (cls || '').toUpperCase();
-  if (c === 'CITY')      return 'City';
+  if (c === 'CITY') return 'City';
   if (c.includes('BOR')) return 'Borough';
-  if (c === '1TWP')      return 'Township (1st Class)';
-  if (c === '2TWP')      return 'Township (2nd Class)';
-  if (c === '3TWP')      return 'Township (3rd Class)';
+  if (c === '1TWP') return 'Township (1st Class)';
+  if (c === '2TWP') return 'Township (2nd Class)';
+  if (c === '3TWP') return 'Township (3rd Class)';
   if (c.includes('TWP')) return 'Township';
   return cls;
 }
-function titleCase(s) {
-  return (s || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
-}
+function titleCase(s) { return (s || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()); }
 
 // ═══════════════════════════════════════════════════════
 //  LOAD GEOJSON
@@ -766,14 +870,10 @@ fetch('pa_municipalities.geojson')
           else if (d && d.checkedIn === true) permitHtml = `<span class="popup-permit required">✕ Permit req.</span>`;
           else                                permitHtml = `<span class="popup-permit none">— Unknown</span>`;
           const rating = (d && d.rating) ? d.rating : 0;
-          const starsHtml = [1,2,3,4,5].map(i =>
-            i <= rating ? '<span>★</span>' : '<span class="empty">★</span>'
-          ).join('');
+          const starsHtml = [1,2,3,4,5].map(i => i <= rating ? '<span>★</span>' : '<span class="empty">★</span>').join('');
           const noteText = d && d.note ? d.note.substring(0, 70) + (d.note.length > 70 ? '…' : '') : null;
           return `<div class="popup-inner">
-            <div class="popup-header">
-              <div class="popup-name">${escHtml(p.MUNICIPAL1)}</div>
-            </div>
+            <div class="popup-header"><div class="popup-name">${escHtml(p.MUNICIPAL1)}</div></div>
             <table class="popup-table">
               <tr><td>Type</td><td>${formatClass(p.CLASS_OF_M)}</td></tr>
               <tr><td>County</td><td>${titleCase(p.COUNTY_NAM)}</td></tr>
@@ -788,23 +888,13 @@ fetch('pa_municipalities.geojson')
         }, { maxWidth: 280 });
         layer.on('click', () => {
           geoLayer.resetStyle();
-          geoLayer.eachLayer(l => {
-            if (l.feature) {
-              const s = getNoteForMuni(l._muniName);
-              if (s && s.color) l.setStyle({ fillColor: s.color });
-            }
-          });
+          geoLayer.eachLayer(l => { if (l.feature) { const s = getNoteForMuni(l._muniName); if (s && s.color) l.setStyle({ fillColor: s.color }); } });
           layer.setStyle({ color: '#e63946', weight: 2.5, fillOpacity: 0.75 });
           const saved = getNoteForMuni(feature.properties.MUNICIPAL1);
-          if (saved && saved.color) {
-            layer.setStyle({ fillColor: saved.color, fillOpacity: 0.85, color: '#e63946', weight: 2.5 });
-          }
+          if (saved && saved.color) layer.setStyle({ fillColor: saved.color, fillOpacity: 0.85, color: '#e63946', weight: 2.5 });
         });
         const center = layer.getBounds().getCenter();
-        layer._label = L.marker(center, {
-          icon: L.divIcon({ className: 'muni-label', html: p.MUNICIPAL1, iconAnchor: [0, 0] }),
-          interactive: false
-        });
+        layer._label = L.marker(center, { icon: L.divIcon({ className: 'muni-label', html: p.MUNICIPAL1, iconAnchor: [0, 0] }), interactive: false });
         layer._muniName = p.MUNICIPAL1;
         layer._class = p.CLASS_OF_M;
         layer._county = p.COUNTY_NAM;
@@ -820,10 +910,7 @@ fetch('pa_municipalities.geojson')
 function updateLabels() {
   if (!geoLayer) return;
   const show = map.getZoom() >= 10;
-  geoLayer.eachLayer(l => {
-    if (!l._label) return;
-    show ? l._label.addTo(map) : map.removeLayer(l._label);
-  });
+  geoLayer.eachLayer(l => { if (!l._label) return; show ? l._label.addTo(map) : map.removeLayer(l._label); });
 }
 function refreshLayerStyle(muniName) {
   if (!geoLayer) return;
@@ -843,10 +930,7 @@ let currentMuni = null;
 let currentColor = '#cccccc';
 
 function openSidebarFor(name, cls, county) {
-  if (!currentUser) {
-    showToast('Sign in to edit notes.');
-    return;
-  }
+  if (!currentUser) { alert('Sign in to edit notes.'); return; }
   currentMuni = { name, cls, county };
   document.getElementById('sidebarTitle').textContent = name;
   document.getElementById('sidebarSub').textContent = `${formatClass(cls)} · ${titleCase(county)} County`;
@@ -863,70 +947,59 @@ function openSidebarFor(name, cls, county) {
   document.getElementById('customColorPicker').value = color;
   document.getElementById('customColorLabel').textContent = color;
   document.getElementById('noteTextarea').value = note;
-
   setUtilDropdownValues(utilities);
-
   const radioEl = document.querySelector(`input[name="checkedIn"][value="${checkedIn}"]`);
-  if (radioEl) radioEl.checked = true;
-  else document.getElementById('checkedNone').checked = true;
-
+  if (radioEl) radioEl.checked = true; else document.getElementById('checkedNone').checked = true;
   currentRating = rating;
-  document.querySelectorAll('.star').forEach(s => {
-    const v = parseInt(s.dataset.val);
-    s.textContent = v <= rating ? '★' : '☆';
-    s.classList.toggle('on', v <= rating);
-  });
+  document.querySelectorAll('.star').forEach(s => { const v = parseInt(s.dataset.val); s.textContent = v <= rating ? '★' : '☆'; s.classList.toggle('on', v <= rating); });
 
   markSaved(!!saved);
   document.getElementById('sidebar').classList.add('open');
   document.getElementById('legend').classList.add('shifted');
-  document.getElementById('noteTextarea').focus();
+
+  // Mobile backdrop
+  if (isMobile()) {
+    document.getElementById('sheetBackdrop').classList.add('show');
+    // Dismiss keyboard if open
+    document.activeElement && document.activeElement.blur();
+  } else {
+    document.getElementById('noteTextarea').focus();
+  }
 }
 
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('legend').classList.remove('shifted');
+  document.getElementById('sheetBackdrop').classList.remove('show');
   currentMuni = null;
 }
 
-document.getElementById('closeBtn').addEventListener('click', closeSidebar);
-
 async function saveNote() {
   if (!currentMuni) return;
-  const note      = document.getElementById('noteTextarea').value.trim();
+  const note = document.getElementById('noteTextarea').value.trim();
   const checkedInRaw = document.querySelector('input[name="checkedIn"]:checked')?.value || '';
   const checkedIn = checkedInRaw === 'true' ? true : checkedInRaw === 'false' ? false : null;
   const utilities = getUtilDropdownValues();
   const rating    = currentRating;
-
   markStatus('saving', 'Saving…');
-
   try {
-    await upsertNote(currentMuni.name, {
-      color: currentColor, note, checkedIn, utilities, rating,
-      updatedAt: new Date().toISOString()
-    });
+    await upsertNote(currentMuni.name, { color: currentColor, note, checkedIn, utilities, rating, updatedAt: new Date().toISOString() });
     refreshLayerStyle(currentMuni.name);
     markSaved(true);
-    showToast('✓ Saved');
   } catch(e) {
     markStatus('', 'Save failed');
-    showToast('Save failed — check connection.');
+    alert('Save failed — check connection.');
   }
 }
 
 async function clearNote() {
   if (!currentMuni) return;
   if (!confirm(`Remove all notes and data for "${currentMuni.name}"?`)) return;
-
   try {
     await deleteNote(currentMuni.name);
     refreshLayerStyle(currentMuni.name);
     closeSidebar();
-    showToast('Cleared');
-  } catch(e) {
-    showToast('Delete failed — check connection.');
-  }
+  } catch(e) { alert('Delete failed — check connection.'); }
 }
 
 function markSaved(isSaved) {
@@ -938,15 +1011,23 @@ function markStatus(dotClass, text) {
   document.getElementById('statusText').textContent = text;
 }
 function markUnsaved() { markSaved(false); }
-
 document.getElementById('noteTextarea').addEventListener('input', markUnsaved);
 
 // ═══════════════════════════════════════════════════════
-//  LIVE LOCATION TRACKING
+//  LEGEND MOBILE TOGGLE
 // ═══════════════════════════════════════════════════════
-let locationMarker = null;
-let locationCircle = null;
-let locationWatchId = null;
+let legendVisible = true;
+function toggleLegendMobile() {
+  legendVisible = !legendVisible;
+  const el = document.getElementById('legend');
+  el.style.display = legendVisible ? '' : 'none';
+  document.getElementById('mobLegendBtn').classList.toggle('active', legendVisible);
+}
+
+// ═══════════════════════════════════════════════════════
+//  LIVE LOCATION
+// ═══════════════════════════════════════════════════════
+let locationMarker = null, locationCircle = null, locationWatchId = null;
 
 function startLocationTracking() {
   if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
@@ -954,24 +1035,12 @@ function startLocationTracking() {
     pos => {
       const { latitude: lat, longitude: lon, accuracy: acc } = pos.coords;
       if (!locationMarker) {
-        locationMarker = L.marker([lat, lon], {
-          icon: L.divIcon({ className: 'location-pin', iconSize: [16, 16], iconAnchor: [8, 8] }),
-          zIndexOffset: 500
-        }).addTo(map);
+        locationMarker = L.marker([lat, lon], { icon: L.divIcon({ className: 'location-pin', iconSize: [16,16], iconAnchor: [8,8] }), zIndexOffset: 500 }).addTo(map);
         locationCircle = L.circle([lat, lon], { radius: acc, color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.12, weight: 1 }).addTo(map);
         map.flyTo([lat, lon], 14, { duration: 1.2 });
-      } else {
-        locationMarker.setLatLng([lat, lon]);
-        locationCircle.setLatLng([lat, lon]);
-        locationCircle.setRadius(acc);
-      }
+      } else { locationMarker.setLatLng([lat, lon]); locationCircle.setLatLng([lat, lon]); locationCircle.setRadius(acc); }
     },
-    err => {
-      console.warn('Location error:', err.message);
-      alert('Could not get your location. Check browser permissions.');
-      stopLocationTracking();
-      document.getElementById('locBtn').classList.remove('active');
-    },
+    err => { console.warn('Location error:', err.message); alert('Could not get your location.'); stopLocationTracking(); setLocBtnActive(false); },
     { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
   );
 }
@@ -982,10 +1051,14 @@ function stopLocationTracking() {
   if (locationCircle) { map.removeLayer(locationCircle); locationCircle = null; }
 }
 
+function setLocBtnActive(active) {
+  document.getElementById('locBtn').classList.toggle('active', active);
+  document.getElementById('mobLocBtn').classList.toggle('active', active);
+}
+
 function toggleLocation() {
-  const btn = document.getElementById('locBtn');
-  if (locationWatchId !== null) { stopLocationTracking(); btn.classList.remove('active'); }
-  else { startLocationTracking(); btn.classList.add('active'); }
+  if (locationWatchId !== null) { stopLocationTracking(); setLocBtnActive(false); }
+  else { startLocationTracking(); setLocBtnActive(true); }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1013,35 +1086,27 @@ clearBtn.addEventListener('click', () => {
 });
 
 searchInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') { clearSuggestions(); geocodeAndFly(searchInput.value.trim()); }
-  if (e.key === 'Escape') clearSuggestions();
+  if (e.key === 'Enter') { clearSuggestions(); geocodeAndFly(searchInput.value.trim()); searchInput.blur(); }
+  if (e.key === 'Escape') { clearSuggestions(); searchInput.blur(); }
 });
 
-document.addEventListener('click', e => {
-  if (!e.target.closest('#searchPanel')) clearSuggestions();
-});
+document.addEventListener('click', e => { if (!e.target.closest('#searchPanel')) clearSuggestions(); });
 
 function fetchSuggestions(q) {
   const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q + ' Pennsylvania')}&limit=8&lang=en&bbox=-80.5,39.7,-74.7,42.3`;
   showStatus('Searching…');
-  fetch(url)
-    .then(r => r.json())
-    .then(data => {
-      clearStatus();
-      const features = (data.features || [])
-        .filter(f => { const s = (f.properties.state || '').toLowerCase(); return s === 'pennsylvania' || s === 'pa'; })
-        .slice(0, 6);
-      if (features.length === 0) { showStatus('No results in Pennsylvania.'); return; }
-      renderSuggestions(features);
-    })
-    .catch(() => showStatus('Search unavailable — press Enter to try anyway.'));
+  fetch(url).then(r => r.json()).then(data => {
+    clearStatus();
+    const features = (data.features || []).filter(f => { const s = (f.properties.state || '').toLowerCase(); return s === 'pennsylvania' || s === 'pa'; }).slice(0, 6);
+    if (features.length === 0) { showStatus('No results in Pennsylvania.'); return; }
+    renderSuggestions(features);
+  }).catch(() => showStatus('Search unavailable — press Enter to try anyway.'));
 }
 
 function renderSuggestions(features) {
   Array.from(suggestionsEl.querySelectorAll('.suggestion-item')).forEach(el => el.remove());
   features.forEach(f => {
-    const p = f.properties;
-    const coords = f.geometry.coordinates;
+    const p = f.properties; const coords = f.geometry.coordinates;
     const parts = [p.name, p.street, p.city, p.county ? p.county + ' County' : '', 'PA'].filter(Boolean);
     const deduped = parts.filter((v, i) => v !== parts[i - 1]);
     const primary = deduped[0] || 'Unknown';
@@ -1049,7 +1114,7 @@ function renderSuggestions(features) {
     const item = document.createElement('div');
     item.className = 'suggestion-item';
     item.innerHTML = `<span class="suggestion-name">${escHtml(primary)}</span>${secondary ? `<span class="suggestion-sub">${escHtml(secondary)}</span>` : ''}`;
-    item.addEventListener('click', () => { searchInput.value = primary + (secondary ? `, ${secondary}` : ''); clearSuggestions(); flyToPoint(coords[1], coords[0]); });
+    item.addEventListener('click', () => { searchInput.value = primary + (secondary ? `, ${secondary}` : ''); clearSuggestions(); flyToPoint(coords[1], coords[0]); searchInput.blur(); });
     suggestionsEl.insertBefore(item, statusEl);
   });
   suggestionsEl.style.display = 'block';
@@ -1059,30 +1124,20 @@ function geocodeAndFly(q) {
   if (!q) return;
   showStatus('Looking up address…');
   const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ', Pennsylvania')}&limit=1&countrycodes=us`;
-  fetch(url, { headers: { 'Accept-Language': 'en' } })
-    .then(r => r.json())
-    .then(data => {
-      clearStatus();
-      if (!data || data.length === 0) { showStatus('Address not found in Pennsylvania.'); return; }
-      flyToPoint(parseFloat(data[0].lat), parseFloat(data[0].lon));
-    })
-    .catch(() => showStatus('Geocoding failed. Check your connection.'));
+  fetch(url, { headers: { 'Accept-Language': 'en' } }).then(r => r.json()).then(data => {
+    clearStatus();
+    if (!data || data.length === 0) { showStatus('Address not found in Pennsylvania.'); return; }
+    flyToPoint(parseFloat(data[0].lat), parseFloat(data[0].lon));
+  }).catch(() => showStatus('Geocoding failed. Check your connection.'));
 }
 
 function flyToPoint(lat, lon) {
   if (pinMarker) map.removeLayer(pinMarker);
-  pinMarker = L.marker([lat, lon], {
-    icon: L.divIcon({ className: 'search-pin', iconSize: [14, 14], iconAnchor: [7, 7] })
-  }).addTo(map);
+  pinMarker = L.marker([lat, lon], { icon: L.divIcon({ className: 'search-pin', iconSize: [14,14], iconAnchor: [7,7] }) }).addTo(map);
   map.flyTo([lat, lon], 14, { duration: 1.0 });
   if (geoLayer) {
     geoLayer.resetStyle();
-    geoLayer.eachLayer(l => {
-      if (l.feature) {
-        const saved = getNoteForMuni(l._muniName);
-        if (saved && saved.color) l.setStyle({ fillColor: saved.color });
-      }
-    });
+    geoLayer.eachLayer(l => { if (l.feature) { const saved = getNoteForMuni(l._muniName); if (saved && saved.color) l.setStyle({ fillColor: saved.color }); } });
     geoLayer.eachLayer(layer => {
       if (layer.feature && isPointInLayer(lat, lon, layer)) {
         layer.setStyle({ color: '#e63946', weight: 2.5, fillOpacity: 0.75 });
@@ -1097,19 +1152,15 @@ function flyToPoint(lat, lon) {
 // ═══════════════════════════════════════════════════════
 function isPointInLayer(lat, lon, layer) {
   try { if (!layer.getBounds().contains([lat, lon])) return false; } catch(e) { return false; }
-  const pt = [lon, lat];
-  const geom = layer.feature.geometry;
+  const pt = [lon, lat]; const geom = layer.feature.geometry;
   if (geom.type === 'Polygon')      return pointInPolygon(pt, geom.coordinates[0]);
   if (geom.type === 'MultiPolygon') return geom.coordinates.some(poly => pointInPolygon(pt, poly[0]));
   return false;
 }
-
 function pointInPolygon(point, polygon) {
-  let inside = false;
-  const x = point[0], y = point[1];
+  let inside = false; const x = point[0], y = point[1];
   for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const xi = polygon[i][0], yi = polygon[i][1];
-    const xj = polygon[j][0], yj = polygon[j][1];
+    const xi = polygon[i][0], yi = polygon[i][1]; const xj = polygon[j][0], yj = polygon[j][1];
     if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) inside = !inside;
   }
   return inside;
@@ -1118,40 +1169,29 @@ function pointInPolygon(point, polygon) {
 // ═══════════════════════════════════════════════════════
 //  HELPERS
 // ═══════════════════════════════════════════════════════
-function clearSuggestions() {
-  Array.from(suggestionsEl.querySelectorAll('.suggestion-item')).forEach(el => el.remove());
-  clearStatus();
-}
+function clearSuggestions() { Array.from(suggestionsEl.querySelectorAll('.suggestion-item')).forEach(el => el.remove()); clearStatus(); }
 function showStatus(msg) { statusEl.style.display = 'block'; statusEl.textContent = msg; suggestionsEl.style.display = 'block'; }
 function clearStatus() { statusEl.style.display = 'none'; statusEl.textContent = ''; if (!suggestionsEl.querySelector('.suggestion-item')) suggestionsEl.style.display = 'none'; }
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function escJs(s)   { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 
 // ═══════════════════════════════════════════════════════
-//  UTILITY MULTI-SELECT DROPDOWN
+//  UTILITY MULTI-SELECT
 // ═══════════════════════════════════════════════════════
 let utilOpen = false;
-
 function toggleUtilPanel() {
   utilOpen = !utilOpen;
   document.getElementById('utilPanel').classList.toggle('open', utilOpen);
   document.getElementById('utilTrigger').classList.toggle('open', utilOpen);
 }
-
-function toggleUtil(el) {
-  el.classList.toggle('selected');
-  renderUtilTrigger();
-  markUnsaved();
-}
-
+function toggleUtil(el) { el.classList.toggle('selected'); renderUtilTrigger(); markUnsaved(); }
 function renderUtilTrigger() {
   const trigger = document.getElementById('utilTrigger');
   const placeholder = document.getElementById('utilPlaceholder');
   const selected = Array.from(document.querySelectorAll('#utilPanel .util-option.selected'));
   trigger.querySelectorAll('.util-pill').forEach(p => p.remove());
-  if (selected.length === 0) {
-    placeholder.style.display = '';
-  } else {
+  if (selected.length === 0) { placeholder.style.display = ''; }
+  else {
     placeholder.style.display = 'none';
     selected.forEach(opt => {
       const pill = document.createElement('span');
@@ -1162,26 +1202,14 @@ function renderUtilTrigger() {
     });
   }
 }
-
 function removeUtil(e, value) {
   e.stopPropagation();
   const opt = document.querySelector(`#utilPanel .util-option[data-value="${CSS.escape(value)}"]`);
   if (opt) opt.classList.remove('selected');
-  renderUtilTrigger();
-  markUnsaved();
+  renderUtilTrigger(); markUnsaved();
 }
-
-function getUtilDropdownValues() {
-  return Array.from(document.querySelectorAll('#utilPanel .util-option.selected')).map(el => el.dataset.value);
-}
-
-function setUtilDropdownValues(values) {
-  document.querySelectorAll('#utilPanel .util-option').forEach(el => {
-    el.classList.toggle('selected', values.includes(el.dataset.value));
-  });
-  renderUtilTrigger();
-}
-
+function getUtilDropdownValues() { return Array.from(document.querySelectorAll('#utilPanel .util-option.selected')).map(el => el.dataset.value); }
+function setUtilDropdownValues(values) { document.querySelectorAll('#utilPanel .util-option').forEach(el => { el.classList.toggle('selected', values.includes(el.dataset.value)); }); renderUtilTrigger(); }
 document.addEventListener('click', e => {
   if (utilOpen && !e.target.closest('#utilDropdown')) {
     utilOpen = false;
@@ -1189,6 +1217,18 @@ document.addEventListener('click', e => {
     document.getElementById('utilTrigger').classList.remove('open');
   }
 });
+
+// ═══════════════════════════════════════════════════════
+//  MAP PADDING FOR MOBILE
+// ═══════════════════════════════════════════════════════
+function applyMapPadding() {
+  if (isMobile()) {
+    // Push map content up from the bottom bar + search bar
+    map.setPadding ? map.setPadding({ bottom: 130 }) : null;
+  }
+}
+window.addEventListener('resize', applyMapPadding);
+applyMapPadding();
 
 window.openSidebarFor = openSidebarFor;
 </script>
