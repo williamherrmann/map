@@ -1,496 +1,832 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>PA Municipal Map</title>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PA Territory Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0f0f13">
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
 
   <style>
+    /* ══════════════════════════════════════════════
+       RESET & TOKENS
+    ══════════════════════════════════════════════ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-left: env(safe-area-inset-left, 0px);
-      --safe-right: env(safe-area-inset-right, 0px);
-      --bar-height: 60px;
+      /* Safe areas */
+      --sat: env(safe-area-inset-top, 0px);
+      --sar: env(safe-area-inset-right, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+      --sal: env(safe-area-inset-left, 0px);
+
+      /* Layout */
+      --nav-h: 56px;           /* bottom nav bar */
+      --search-h: 60px;        /* search bar above nav */
+      --total-chrome: calc(var(--nav-h) + var(--search-h) + var(--sab));
+
+      /* Colors */
+      --bg:       #0f0f13;
+      --surface:  #1a1a24;
+      --border:   #2e2e40;
+      --text:     #e8e8ee;
+      --text-dim: #6b6b8a;
+      --accent:   #f59e0b;
+      --blue:     #3b82f6;
+      --red:      #ef4444;
+      --green:    #4ade80;
+
+      /* Sheets */
       --sheet-radius: 20px;
     }
 
-    body { font-family: 'DM Sans', sans-serif; overflow: hidden; }
-    #map { height: 100vh; width: 100vw; }
+    html, body {
+      height: 100%;
+      /* Use dvh where supported for correct iOS behavior */
+      height: 100dvh;
+      overflow: hidden;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+    }
 
-    /* ── LOCATION PIN ───────────────────────────────── */
+    /* ══════════════════════════════════════════════
+       MAP — fills entire viewport
+    ══════════════════════════════════════════════ */
+    #map {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+    }
+
+    /* Push Leaflet zoom controls above chrome on mobile */
+    .leaflet-control-zoom {
+      margin-bottom: calc(var(--total-chrome) + 8px) !important;
+      margin-right: calc(var(--sar) + 12px) !important;
+    }
+
+    /* ══════════════════════════════════════════════
+       LOCATION PIN
+    ══════════════════════════════════════════════ */
     .location-pin {
-      width: 16px; height: 16px; background: #3b82f6;
-      border: 2.5px solid #fff; border-radius: 50%;
-      box-shadow: 0 0 0 2px #3b82f6, 0 2px 8px rgba(59,130,246,0.5);
+      width: 16px; height: 16px;
+      background: var(--blue);
+      border: 2.5px solid #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.3), 0 2px 8px rgba(59,130,246,0.5);
     }
 
-    /* ══════════════════════════════════════════════════
-       DESKTOP LAYOUT (≥ 768px)
-    ══════════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════
+       BOTTOM CHROME — search + nav
+       Anchored to bottom with safe-area padding
+    ══════════════════════════════════════════════ */
+    #bottomChrome {
+      position: fixed;
+      bottom: 0;
+      left: 0; right: 0;
+      z-index: 500;
+      /* Glass background */
+      background: rgba(255,255,255,0.97);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-top: 1.5px solid #e2e2e2;
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.10);
+      padding-bottom: var(--sab);
+    }
 
-    /* ── SESSION BADGE ──────────────────────────────── */
-    #sessionBadge {
-      position: absolute; top: 14px; right: 14px; z-index: 1000;
-      background: #1a1a24; border: 1.5px solid #2e2e40;
-      border-radius: 8px; padding: 7px 12px;
-      display: flex; align-items: center; gap: 10px;
-      box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
-    }
-    #sessionBadge.hidden { display: none; }
-    #badgeEmail {
-      font-family: 'DM Mono', monospace; font-size: 11px;
-      color: #f59e0b; letter-spacing: 0.04em;
-      max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    #badgeLogout {
-      background: none; border: none; cursor: pointer;
-      font-size: 11px; color: #4a4a6a;
-      font-family: 'DM Mono', monospace; padding: 0;
-      transition: color 0.15s;
-    }
-    #badgeLogout:hover { color: #ef4444; }
-
-    /* ── SEARCH (desktop) ───────────────────────────── */
-    #searchPanel {
-      position: absolute; top: 14px; left: 54px;
-      z-index: 1000; width: 300px;
+    /* ── Search row ── */
+    #searchRow {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px 6px;
+      gap: 8px;
     }
     #searchWrap {
-      display: flex; align-items: center;
-      background: #fff; border: 2px solid #222;
-      border-radius: 8px; overflow: hidden;
-      box-shadow: 3px 3px 0 #222;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: #f4f4f6;
+      border: 1.5px solid #e0e0e6;
+      border-radius: 12px;
+      overflow: visible;
+      position: relative;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
-    #searchIcon { padding: 0 10px 0 12px; color: #555; font-size: 16px; user-select: none; }
+    #searchWrap:focus-within {
+      border-color: #222;
+      background: #fff;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    #searchIcon {
+      padding: 0 8px 0 12px;
+      color: #888;
+      font-size: 17px;
+      line-height: 1;
+      user-select: none;
+      flex-shrink: 0;
+    }
     #search {
-      flex: 1; border: none; outline: none; padding: 10px 10px 10px 0;
-      font-family: 'DM Mono', monospace; font-size: 13px; color: #111; background: transparent;
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 11px 4px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px; /* critical: prevents iOS auto-zoom */
+      color: #111;
+      background: transparent;
+      min-width: 0;
     }
     #search::placeholder { color: #aaa; }
-    #clearBtn { display: none; background: none; border: none; cursor: pointer; padding: 0 10px; color: #999; font-size: 18px; line-height: 1; }
-    #clearBtn:hover { color: #333; }
+    #clearBtn {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0 12px;
+      color: #bbb;
+      font-size: 20px;
+      line-height: 1;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Suggestions (floats UP above chrome) ── */
     #suggestions {
-      display: none; background: #fff; border: 2px solid #222; border-top: none;
-      border-radius: 0 0 8px 8px; overflow: hidden; box-shadow: 3px 3px 0 #222;
-      max-height: 260px; overflow-y: auto;
+      display: none;
+      position: fixed;
+      bottom: calc(var(--total-chrome) + 4px);
+      left: 12px; right: 12px;
+      background: #fff;
+      border: 1.5px solid #222;
+      border-radius: 14px;
+      z-index: 600;
+      max-height: 55vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      box-shadow: 0 -8px 32px rgba(0,0,0,0.18);
     }
-    .suggestion-item { padding: 9px 14px; cursor: pointer; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 2px; }
-    .suggestion-item:first-child { border-top: none; }
-    .suggestion-item:hover { background: #f5f5f5; }
-    .suggestion-name { font-size: 13px; font-weight: 600; color: #111; }
-    .suggestion-sub { font-size: 11px; color: #777; font-family: 'DM Mono', monospace; }
-    #statusMsg { display: none; padding: 8px 14px; font-size: 12px; color: #666; font-family: 'DM Mono', monospace; }
-
-    /* ── LOCATION BUTTON (desktop) ──────────────────── */
-    #locBtn {
-      position: absolute; top: 86px; left: 14px; z-index: 1000;
-      width: 36px; height: 36px;
-      background: #fff; border: 2px solid #222; border-radius: 8px;
-      box-shadow: 3px 3px 0 #222;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; color: #555; transition: background 0.15s, color 0.15s;
+    .suggestion-item {
+      padding: 13px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex; flex-direction: column; gap: 3px;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.08s;
     }
-    #locBtn:hover { background: #f5f5f5; }
-    #locBtn.active { background: #3b82f6; border-color: #3b82f6; color: #fff; box-shadow: 3px 3px 0 #1d4ed8; }
-
-    /* ── NOTES SIDEBAR (desktop) ────────────────────── */
-    #sidebar {
-      position: absolute; top: 0; right: 0;
-      width: 320px; height: 100vh;
-      background: #fff; border-left: 2px solid #222;
-      box-shadow: -4px 0 16px rgba(0,0,0,0.12);
-      z-index: 2000; display: flex; flex-direction: column;
-      transform: translateX(100%);
-      transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:active { background: #f5f5f5; }
+    .suggestion-name { font-size: 14px; font-weight: 600; color: #111; }
+    .suggestion-sub  { font-size: 12px; color: #888; font-family: 'DM Mono', monospace; }
+    #statusMsg {
+      display: none;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: #888;
+      font-family: 'DM Mono', monospace;
+      text-align: center;
     }
-    #sidebar.open { transform: translateX(0); }
 
-    /* ── LEGEND (desktop) ───────────────────────────── */
-    #legend {
-      position: absolute; bottom: 30px; right: 14px; z-index: 1000;
-      background: #fff; border: 2px solid #222; border-radius: 8px;
-      padding: 12px 16px; box-shadow: 3px 3px 0 #222;
-      font-size: 12px;
-      transition: right 0.25s cubic-bezier(0.4,0,0.2,1);
+    /* ── Nav row ── */
+    #navRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      height: var(--nav-h);
     }
-    #legend.shifted { right: 334px; }
+    .nav-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      flex: 1;
+      background: none; border: none; cursor: pointer;
+      padding: 6px 4px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10px; font-weight: 600; color: #999;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 0.12s;
+      min-height: 44px; /* accessible tap target */
+    }
+    .nav-btn svg { flex-shrink: 0; }
+    .nav-btn.active { color: var(--blue); }
+    .nav-btn.active svg { stroke: var(--blue) !important; }
+    .nav-btn.danger { color: var(--red); }
+    .nav-btn.danger svg { stroke: var(--red) !important; }
 
-    /* ══════════════════════════════════════════════════
-       MOBILE LAYOUT (< 768px)
-    ══════════════════════════════════════════════════ */
-    @media (max-width: 767px) {
-
-      /* Offset map controls so they don't overlap bottom bar */
-      .leaflet-control-zoom {
-        margin-bottom: calc(var(--bar-height) + var(--safe-bottom) + 72px) !important;
-        margin-right: 12px !important;
-      }
-
-      /* ── SESSION BADGE ── */
-      #sessionBadge {
-        top: calc(14px + var(--safe-top));
-        right: 12px;
-        padding: 6px 10px;
-        border-radius: 20px;
-      }
-      #badgeEmail { max-width: 120px; font-size: 10px; }
-
-      /* ── SEARCH (bottom bar) ── */
-      #searchPanel {
-        position: fixed;
-        bottom: calc(var(--bar-height) + var(--safe-bottom));
-        left: 0; right: 0; top: auto;
-        width: 100%;
-        padding: 10px 12px 0;
-        z-index: 1100;
-        background: #fff;
-        border-top: 2px solid #222;
-        box-shadow: 0 -4px 16px rgba(0,0,0,0.12);
-      }
-      #searchWrap {
-        box-shadow: none;
-        border-radius: 10px;
-        border: 2px solid #ddd;
-      }
-      #search { font-size: 16px; /* prevents iOS zoom */ padding: 12px 10px 12px 0; }
+    /* ══════════════════════════════════════════════
+       DESKTOP OVERRIDES (≥ 768px)
+       Sidebar + floating search panel
+    ══════════════════════════════════════════════ */
+    @media (min-width: 768px) {
+      #bottomChrome { display: none; }
       #suggestions {
-        position: fixed;
-        bottom: calc(var(--bar-height) + var(--safe-bottom) + 58px);
-        left: 12px; right: 12px;
-        border: 2px solid #222; border-radius: 12px;
-        box-shadow: 0 -4px 16px rgba(0,0,0,0.18);
-        max-height: 240px; overflow-y: auto;
-      }
-
-      /* ── LOCATION BUTTON ── */
-      #locBtn {
-        position: fixed;
-        bottom: calc(var(--bar-height) + var(--safe-bottom) + 130px);
-        right: 14px; left: auto; top: auto;
-        width: 44px; height: 44px;
-        border-radius: 50%;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.18);
-      }
-
-      /* ── LEGEND ── */
-      #legend {
-        bottom: calc(var(--bar-height) + var(--safe-bottom) + 72px);
-        right: 14px; left: auto;
-        padding: 8px 12px;
-        font-size: 11px;
-      }
-      #legend.shifted { right: 14px; bottom: calc(var(--bar-height) + var(--safe-bottom) + 72px); }
-
-      /* ── SIDEBAR → BOTTOM SHEET ── */
-      #sidebar {
+        position: absolute;
+        bottom: auto; left: auto; right: auto;
+        top: 100%;
         width: 100%;
-        height: 92vh;
-        top: auto; bottom: 0; right: 0; left: 0;
-        border-left: none;
-        border-top: 2px solid #222;
-        border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
-        transform: translateY(100%);
-        transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
-        box-shadow: 0 -8px 40px rgba(0,0,0,0.22);
-        padding-bottom: var(--safe-bottom);
+        max-height: 300px;
+        border-top: none;
+        border-radius: 0 0 10px 10px;
+        box-shadow: 3px 4px 0 #222;
       }
-      #sidebar.open { transform: translateY(0); }
 
-      /* Drag handle */
-      #sidebar::before {
-        content: '';
+      #desktopSearch {
         display: block;
-        width: 40px; height: 4px;
-        background: #ddd; border-radius: 2px;
-        margin: 10px auto 0;
+        position: absolute;
+        top: 14px; left: 54px;
+        z-index: 500;
+        width: 300px;
+      }
+      #desktopSearch #searchWrap {
+        background: #fff;
+        border: 2px solid #222;
+        border-radius: 8px;
+        box-shadow: 3px 3px 0 #222;
+      }
+      #desktopSearch #search { font-size: 13px; }
+      #desktopSearch .suggestions-wrap { position: relative; }
+
+      #locBtnDesktop {
+        display: flex;
+        position: absolute;
+        top: 14px; left: 14px;
+        z-index: 500;
+        width: 36px; height: 36px;
+        background: #fff; border: 2px solid #222; border-radius: 8px;
+        box-shadow: 3px 3px 0 #222;
+        align-items: center; justify-content: center;
+        cursor: pointer; color: #555;
+        transition: background 0.15s, color 0.15s;
+      }
+      #locBtnDesktop:hover { background: #f5f5f5; }
+      #locBtnDesktop.active { background: var(--blue); border-color: var(--blue); color: #fff; box-shadow: 3px 3px 0 #1d4ed8; }
+
+      #sessionBadge {
+        position: absolute; top: 14px; right: 14px; z-index: 500;
+        background: #1a1a24; border: 1.5px solid #2e2e40;
+        border-radius: 8px; padding: 7px 12px;
+        display: flex; align-items: center; gap: 10px;
+        box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+      }
+      #sessionBadge.hidden { display: none !important; }
+      #badgeEmail {
+        font-family: 'DM Mono', monospace; font-size: 11px;
+        color: var(--accent); letter-spacing: 0.04em;
+        max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      #badgeLogout {
+        background: none; border: none; cursor: pointer;
+        font-size: 11px; color: #4a4a6a;
+        font-family: 'DM Mono', monospace;
+        transition: color 0.15s;
+      }
+      #badgeLogout:hover { color: var(--red); }
+      #badgeVersion {
+        font-family: 'DM Mono', monospace; font-size: 10px;
+        color: #3a3a55;
+        background: #12121a;
+        border: 1px solid #2e2e40;
+        border-radius: 4px;
+        padding: 2px 6px;
+        letter-spacing: 0.06em;
+        user-select: none;
         flex-shrink: 0;
       }
 
-      /* ── BOTTOM NAV BAR ── */
-      #mobileBar {
-        display: flex;
+      #legend {
+        position: absolute;
+        bottom: 30px; right: 14px;
+        z-index: 500;
+        background: #fff; border: 2px solid #222; border-radius: 8px;
+        padding: 12px 16px; box-shadow: 3px 3px 0 #222;
+        font-size: 12px;
+        transition: right 0.25s cubic-bezier(0.4,0,0.2,1);
       }
+      #legend.shifted { right: 334px; }
 
-      /* Hide desktop-only locate button location we moved it */
+      #sidebar {
+        width: 320px;
+        height: 100dvh;
+        top: 0; right: 0; bottom: auto; left: auto;
+        border-radius: 0;
+        border-top: none;
+        border-left: 2px solid #222;
+        transform: translateX(100%);
+        transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+        box-shadow: -4px 0 16px rgba(0,0,0,0.12);
+      }
+      #sidebar.open { transform: translateX(0); }
+      #sidebar::before { display: none; }
     }
 
-    /* ══════════════════════════════════════════════════
-       MOBILE BOTTOM BAR
-    ══════════════════════════════════════════════════ */
-    #mobileBar {
+    /* ══════════════════════════════════════════════
+       DESKTOP-ONLY ELEMENTS (hidden on mobile)
+    ══════════════════════════════════════════════ */
+    #desktopSearch { display: none; }
+    #locBtnDesktop { display: none; }
+    #sessionBadge  { display: none; } /* shown via JS on desktop */
+
+    /* ══════════════════════════════════════════════
+       BOTTOM SHEET (sidebar on mobile)
+    ══════════════════════════════════════════════ */
+    #sheetBackdrop {
       display: none;
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      height: calc(var(--bar-height) + var(--safe-bottom));
-      padding-bottom: var(--safe-bottom);
-      background: #fff; border-top: 2px solid #222;
-      z-index: 1050;
-      align-items: center; justify-content: space-around;
-      box-shadow: 0 -2px 12px rgba(0,0,0,0.1);
-    }
-    .mob-btn {
-      display: flex; flex-direction: column; align-items: center; gap: 3px;
-      background: none; border: none; cursor: pointer;
-      padding: 6px 16px;
-      font-family: 'DM Sans', sans-serif; font-size: 10px;
-      font-weight: 600; color: #888;
-      letter-spacing: 0.04em; text-transform: uppercase;
-      transition: color 0.15s;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 800;
+      opacity: 0;
+      transition: opacity 0.3s;
       -webkit-tap-highlight-color: transparent;
     }
-    .mob-btn svg { transition: transform 0.15s; }
-    .mob-btn:active svg { transform: scale(0.9); }
-    .mob-btn.active { color: #3b82f6; }
-    .mob-btn.active svg { stroke: #3b82f6; }
+    #sheetBackdrop.visible { display: block; }
+    #sheetBackdrop.show    { opacity: 1; }
 
-    /* ══════════════════════════════════════════════════
-       SHARED SIDEBAR STYLES
-    ══════════════════════════════════════════════════ */
+    #sidebar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 900;
+      /* Use max safe height leaving room for iOS home indicator */
+      max-height: calc(94dvh - var(--sab));
+      background: #fff;
+      border-top: 1.5px solid #ddd;
+      border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.2);
+      display: flex; flex-direction: column;
+      transform: translateY(110%);
+      transition: transform 0.32s cubic-bezier(0.32,0.72,0,1);
+      /* Prevent content from going under home indicator */
+      padding-bottom: var(--sab);
+      will-change: transform;
+    }
+    #sidebar.open {
+      transform: translateY(0);
+    }
+
+    /* Drag handle */
+    #sidebar::before {
+      content: '';
+      display: block;
+      width: 36px; height: 4px;
+      background: #ddd; border-radius: 2px;
+      margin: 10px auto 0;
+      flex-shrink: 0;
+    }
+
+    /* ── Sidebar inner layout ── */
     #sidebarHeader {
       display: flex; align-items: flex-start; justify-content: space-between;
-      padding: 20px 20px 16px; border-bottom: 1.5px solid #eee;
+      padding: 14px 20px 14px;
+      border-bottom: 1.5px solid #eee;
+      flex-shrink: 0;
     }
-    #sidebarTitle { font-size: 16px; font-weight: 600; color: #111; line-height: 1.3; }
-    #sidebarSub { font-size: 12px; color: #777; margin-top: 3px; font-family: 'DM Mono', monospace; }
-    #closeBtn { background: none; border: none; cursor: pointer; font-size: 22px; color: #999; padding: 4px; line-height: 1; flex-shrink: 0; margin-left: 8px; -webkit-tap-highlight-color: transparent; }
-    #closeBtn:hover { color: #333; }
-    #sidebarBody { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
-    .section-label { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+    #sidebarTitle { font-size: 17px; font-weight: 700; color: #111; line-height: 1.2; }
+    #sidebarSub   { font-size: 12px; color: #888; margin-top: 3px; font-family: 'DM Mono', monospace; }
+    #closeBtn {
+      background: #f0f0f0; border: none; border-radius: 50%;
+      width: 30px; height: 30px;
+      cursor: pointer; font-size: 18px; color: #666;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-left: 8px;
+      -webkit-tap-highlight-color: transparent;
+      line-height: 1;
+    }
+
+    #sidebarBody {
+      flex: 1; overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      padding: 18px 20px;
+      display: flex; flex-direction: column; gap: 22px;
+    }
+
+    #sidebarFooter {
+      padding: 14px 20px;
+      border-top: 1.5px solid #eee;
+      display: flex; gap: 10px; align-items: center;
+      flex-shrink: 0;
+      background: #fff;
+    }
+
+    /* ── Form Controls ── */
+    .section-label {
+      font-size: 11px; font-weight: 700; color: #888;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      margin-bottom: 10px;
+    }
+
+    /* Color swatches */
     #colorSwatches { display: flex; gap: 8px; flex-wrap: wrap; }
-    .swatch { width: 32px; height: 32px; border-radius: 6px; cursor: pointer; border: 2.5px solid transparent; transition: transform 0.1s, border-color 0.1s; }
-    .swatch:hover, .swatch:active { transform: scale(1.12); }
-    .swatch.active { border-color: #222; transform: scale(1.12); }
+    .swatch {
+      width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
+      border: 2.5px solid transparent;
+      transition: transform 0.1s, border-color 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .swatch:active { transform: scale(0.9); }
+    .swatch.active { border-color: #222; transform: scale(1.1); }
     #customColorRow { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
-    #customColorPicker { width: 36px; height: 36px; border: 2px solid #ddd; border-radius: 6px; cursor: pointer; padding: 2px; background: none; }
+    #customColorPicker {
+      width: 40px; height: 40px; border: 2px solid #ddd;
+      border-radius: 8px; cursor: pointer; padding: 2px; background: none;
+    }
     #customColorLabel { font-size: 12px; color: #666; font-family: 'DM Mono', monospace; }
-    #noteTextarea { width: 100%; min-height: 100px; resize: vertical; border: 2px solid #ddd; border-radius: 8px; padding: 10px 12px; font-family: 'DM Sans', sans-serif; font-size: 16px; line-height: 1.5; color: #111; outline: none; transition: border-color 0.15s; }
-    #noteTextarea:focus { border-color: #222; }
-    #statusDot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #ccc; margin-right: 6px; transition: background 0.3s; }
-    #statusDot.saved { background: #4caf50; }
-    #statusDot.saving { background: #f59e0b; }
-    #statusText { font-size: 12px; color: #888; font-family: 'DM Mono', monospace; }
-    #sidebarFooter { padding: 16px 20px; border-top: 1.5px solid #eee; display: flex; gap: 10px; align-items: center; }
-    .btn { flex: 1; padding: 12px 16px; border-radius: 8px; border: 2px solid #222; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s, transform 0.1s; -webkit-tap-highlight-color: transparent; }
-    .btn:active { transform: scale(0.97); }
-    .btn-primary { background: #222; color: #fff; }
-    .btn-primary:hover { background: #000; }
-    .btn-ghost { background: #fff; color: #222; }
-    .btn-ghost:hover { background: #f5f5f5; }
-    .btn-danger { background: #fff; color: #e63946; border-color: #e63946; }
-    .btn-danger:hover { background: #fff0f1; }
 
-    /* ── STAR RATING ── */
-    .star { color: #ddd; transition: color 0.1s; user-select: none; cursor: pointer; }
-    .star.on { color: #f59e0b; }
-
-    /* ── UTILITY MULTI-SELECT ── */
-    .util-dropdown { position: relative; width: 100%; }
-    .util-trigger { width: 100%; min-height: 44px; padding: 8px 32px 8px 10px; border: 2px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; text-align: left; transition: border-color 0.15s; position: relative; }
-    .util-trigger:hover { border-color: #aaa; }
-    .util-trigger.open { border-color: #222; border-radius: 8px 8px 0 0; }
-    .util-trigger-arrow { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #999; font-size: 10px; pointer-events: none; transition: transform 0.15s; }
-    .util-trigger.open .util-trigger-arrow { transform: translateY(-50%) rotate(180deg); }
-    .util-placeholder { font-size: 13px; color: #aaa; font-family: 'DM Mono', monospace; }
-    .util-pill { display: inline-flex; align-items: center; gap: 4px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-family: 'DM Mono', monospace; color: #333; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
-    .util-pill-remove { background: none; border: none; cursor: pointer; color: #999; font-size: 13px; line-height: 1; padding: 0; flex-shrink: 0; }
-    .util-pill-remove:hover { color: #e63946; }
-    .util-panel { display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 3010; background: #fff; border: 2px solid #222; border-top: none; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; -webkit-overflow-scrolling: touch; box-shadow: 3px 4px 0 #222; }
-    .util-panel.open { display: block; }
-    .util-group-label { font-size: 10px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.08em; padding: 8px 12px 4px; background: #fafafa; border-top: 1px solid #eee; border-bottom: 1px solid #eee; position: sticky; top: 0; }
-    .util-group-label:first-child { border-top: none; }
-    .util-option { display: flex; align-items: center; gap: 8px; padding: 10px 12px; cursor: pointer; font-size: 13px; color: #111; transition: background 0.08s; user-select: none; -webkit-tap-highlight-color: transparent; }
-    .util-option:hover, .util-option:active { background: #f5f5f5; }
-    .util-option.selected { background: #f0f7ff; color: #1d4ed8; }
-    .util-check-icon { width: 14px; height: 14px; flex-shrink: 0; border: 1.5px solid #ccc; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #1d4ed8; background: #fff; transition: border-color 0.1s, background 0.1s; }
-    .util-option.selected .util-check-icon { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
-
-    /* ── PERMIT RADIOS ── */
-    .check-radio-label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; color: #111; padding: 8px 12px; border: 2px solid #ddd; border-radius: 8px; transition: border-color 0.15s, background 0.15s; -webkit-tap-highlight-color: transparent; }
+    /* Permit radios */
+    .permit-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .check-radio-label {
+      display: flex; align-items: center; gap: 6px; cursor: pointer;
+      font-size: 13px; color: #111;
+      padding: 10px 14px;
+      border: 1.5px solid #ddd; border-radius: 10px;
+      transition: border-color 0.15s, background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      flex: 1; min-width: 0; justify-content: center;
+      font-weight: 500;
+    }
     .check-radio-label:has(input:checked) { border-color: #222; background: #f5f5f5; font-weight: 600; }
     .check-radio-label input { accent-color: #222; }
 
-    /* ── LEGEND ── */
-    #legend h4 { font-size: 11px; font-family: 'DM Mono', monospace; color: #555; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    /* Utility multi-select */
+    .util-dropdown { position: relative; width: 100%; }
+    .util-trigger {
+      width: 100%; min-height: 48px; padding: 8px 36px 8px 12px;
+      border: 1.5px solid #ddd; border-radius: 10px; background: #fff;
+      cursor: pointer; display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
+      text-align: left; transition: border-color 0.15s; position: relative;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .util-trigger:active { border-color: #aaa; }
+    .util-trigger.open { border-color: #222; border-radius: 10px 10px 0 0; }
+    .util-trigger-arrow {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      color: #999; font-size: 10px; pointer-events: none; transition: transform 0.15s;
+    }
+    .util-trigger.open .util-trigger-arrow { transform: translateY(-50%) rotate(180deg); }
+    .util-placeholder { font-size: 13px; color: #aaa; font-family: 'DM Mono', monospace; }
+    .util-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #eef2ff; border: 1px solid #c7d2fe;
+      border-radius: 6px; padding: 3px 7px;
+      font-size: 11px; font-family: 'DM Mono', monospace; color: #3730a3;
+    }
+    .util-pill-remove {
+      background: none; border: none; cursor: pointer;
+      color: #818cf8; font-size: 14px; line-height: 1; padding: 0; flex-shrink: 0;
+    }
+    .util-panel {
+      display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 950;
+      background: #fff; border: 1.5px solid #222; border-top: none;
+      border-radius: 0 0 10px 10px;
+      max-height: 220px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    .util-panel.open { display: block; }
+    .util-group-label {
+      font-size: 10px; font-weight: 700; color: #999; text-transform: uppercase;
+      letter-spacing: 0.08em; padding: 8px 14px 5px;
+      background: #fafafa; border-top: 1px solid #eee; border-bottom: 1px solid #eee;
+      position: sticky; top: 0;
+    }
+    .util-group-label:first-child { border-top: none; }
+    .util-option {
+      display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+      cursor: pointer; font-size: 13px; color: #111;
+      transition: background 0.08s; user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 44px;
+    }
+    .util-option:active { background: #f5f5f5; }
+    .util-option.selected { background: #f0f7ff; color: #1d4ed8; }
+    .util-check-icon {
+      width: 16px; height: 16px; flex-shrink: 0;
+      border: 1.5px solid #ddd; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; color: #fff; background: #fff;
+      transition: border-color 0.1s, background 0.1s;
+    }
+    .util-option.selected .util-check-icon { background: #1d4ed8; border-color: #1d4ed8; }
+
+    /* Star rating */
+    #starRating { display: flex; gap: 6px; }
+    .star {
+      font-size: 34px; color: #ddd; cursor: pointer;
+      transition: color 0.1s, transform 0.1s;
+      user-select: none; -webkit-tap-highlight-color: transparent;
+      line-height: 1;
+    }
+    .star:active { transform: scale(0.9); }
+    .star.on { color: var(--accent); }
+
+    /* Note textarea */
+    #noteTextarea {
+      width: 100%; min-height: 90px; resize: vertical;
+      border: 1.5px solid #ddd; border-radius: 10px;
+      padding: 12px 14px; font-family: 'DM Sans', sans-serif;
+      font-size: 16px; line-height: 1.5; color: #111; outline: none;
+      transition: border-color 0.15s; background: #fff;
+    }
+    #noteTextarea:focus { border-color: #222; }
+
+    /* Save status */
+    #saveStatus { display: flex; align-items: center; gap: 7px; margin-top: 8px; }
+    #statusDot {
+      width: 8px; height: 8px; border-radius: 50%; background: #ddd;
+      flex-shrink: 0; transition: background 0.3s;
+    }
+    #statusDot.saved   { background: #22c55e; }
+    #statusDot.saving  { background: var(--accent); }
+    #statusText { font-size: 12px; color: #999; font-family: 'DM Mono', monospace; }
+
+    /* Buttons */
+    .btn {
+      flex: 1; padding: 13px 16px; border-radius: 10px;
+      border: 1.5px solid #222; font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 48px;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: #222; color: #fff; border-color: #222; }
+    .btn-primary:hover { background: #000; }
+    .btn-ghost   { background: #fff; color: #222; }
+    .btn-ghost:hover { background: #f5f5f5; }
+    .btn-danger  { background: #fff; color: var(--red); border-color: var(--red); }
+    .btn-danger:hover { background: #fff0f1; }
+
+    /* ══════════════════════════════════════════════
+       LEGEND
+    ══════════════════════════════════════════════ */
+    #legend {
+      position: fixed;
+      bottom: calc(var(--total-chrome) + 10px);
+      left: 12px;
+      z-index: 400;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1.5px solid #ddd;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    #legend.hidden { opacity: 0; pointer-events: none; transform: scale(0.95); }
+    #legend h4 {
+      font-size: 10px; font-family: 'DM Mono', monospace; color: #888;
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;
+    }
     .legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-    .legend-swatch { width: 16px; height: 16px; border: 1.5px solid #555; border-radius: 3px; flex-shrink: 0; }
+    .legend-row:last-child { margin-bottom: 0; }
+    .legend-swatch { width: 14px; height: 14px; border: 1.5px solid #aaa; border-radius: 3px; flex-shrink: 0; }
 
-    /* ── PIN MARKERS ── */
-    .search-pin { width: 14px; height: 14px; background: #e63946; border: 2.5px solid #fff; border-radius: 50%; box-shadow: 0 0 0 2px #e63946, 0 2px 8px rgba(0,0,0,0.35); }
-    .muni-label { font-size: 10px; font-weight: 600; font-family: 'DM Sans', sans-serif; color: #222; text-shadow: 0 0 4px #fff, 0 0 4px #fff; white-space: nowrap; pointer-events: none; }
+    /* ══════════════════════════════════════════════
+       AUTH GATE
+    ══════════════════════════════════════════════ */
+    #authGate {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      padding: max(20px, calc(var(--sat) + 16px)) 20px max(20px, calc(var(--sab) + 16px));
+      overflow-y: auto;
+    }
+    #authGate.hidden { display: none; }
+    .auth-box {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 16px; padding: 32px 28px;
+      width: 100%; max-width: 380px;
+    }
+    .auth-logo {
+      font-family: 'DM Mono', monospace; font-size: 11px;
+      letter-spacing: 0.15em; color: #4a4a6a; text-transform: uppercase; margin-bottom: 24px;
+    }
+    .auth-logo span { color: var(--accent); }
+    .auth-tabs {
+      display: flex; margin-bottom: 24px;
+      border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden;
+    }
+    .auth-tab {
+      flex: 1; padding: 11px; background: none; border: none; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+      color: #4a4a6a; transition: background 0.15s, color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .auth-tab.active { background: var(--accent); color: #12121a; }
+    .auth-tab:not(.active):hover { background: #22222e; color: var(--text); }
+    .auth-panel { display: none; }
+    .auth-panel.active { display: block; }
+    .auth-heading { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 20px; }
+    .auth-label {
+      font-size: 11px; font-weight: 600; color: #6b6b8a;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      display: block; margin-bottom: 8px;
+    }
+    .auth-input {
+      width: 100%; background: #12121a; border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 13px 14px;
+      font-family: 'DM Mono', monospace; font-size: 16px; color: var(--text);
+      outline: none; letter-spacing: 0.04em;
+      transition: border-color 0.15s; margin-bottom: 14px;
+    }
+    .auth-input:focus { border-color: var(--accent); }
+    .auth-input::placeholder { color: #3a3a55; }
+    .auth-btn {
+      width: 100%; padding: 15px; background: var(--accent); border: none;
+      border-radius: 10px; font-family: 'DM Sans', sans-serif;
+      font-size: 15px; font-weight: 700; color: #12121a; cursor: pointer;
+      transition: background 0.15s; -webkit-tap-highlight-color: transparent;
+    }
+    .auth-btn:hover { background: #fbbf24; }
+    .auth-btn:disabled { background: #7a5c10; color: #4a3a0a; cursor: not-allowed; }
+    .auth-btn-ghost {
+      width: 100%; padding: 13px; background: transparent;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+      color: #6b6b8a; cursor: pointer;
+      transition: border-color 0.15s, color 0.15s; margin-top: 10px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .auth-btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+    .auth-error {
+      font-size: 12px; color: var(--red); font-family: 'DM Mono', monospace;
+      margin-bottom: 14px; display: none; line-height: 1.5;
+    }
+    .auth-divider {
+      display: flex; align-items: center; gap: 10px; margin: 18px 0;
+    }
+    .auth-divider-line { flex: 1; height: 1px; background: var(--border); }
+    .auth-divider-text { font-size: 11px; color: #4a4a6a; font-family: 'DM Mono', monospace; white-space: nowrap; }
+    .auth-forgot {
+      font-size: 12px; color: #4a4a6a; font-family: 'DM Mono', monospace;
+      text-align: right; display: block; margin-top: -8px; margin-bottom: 14px;
+      cursor: pointer; background: none; border: none; width: 100%;
+      transition: color 0.15s; -webkit-tap-highlight-color: transparent;
+    }
+    .auth-forgot:hover { color: var(--accent); }
+    .auth-success-box {
+      background: #0d2d1a; border: 1.5px solid #1a5c35;
+      border-radius: 10px; padding: 16px 18px; margin-top: 16px; display: none;
+    }
+    .auth-success-icon { font-size: 22px; margin-bottom: 8px; }
+    .auth-success-title { font-size: 14px; font-weight: 600; color: var(--green); margin-bottom: 4px; }
+    .auth-success-sub { font-size: 12px; color: #6b8a7a; font-family: 'DM Mono', monospace; line-height: 1.6; }
+    .auth-note { font-size: 11px; color: #4a4a6a; font-family: 'DM Mono', monospace; line-height: 1.6; margin-top: 18px; }
 
-    /* ── CUSTOM POPUP ── */
+    /* ══════════════════════════════════════════════
+       POPUP
+    ══════════════════════════════════════════════ */
     .leaflet-popup-content-wrapper {
-      border-radius: 10px !important;
-      border: 2px solid #222 !important;
+      border-radius: 12px !important;
+      border: 1.5px solid #222 !important;
       box-shadow: 4px 4px 0 #222 !important;
-      padding: 0 !important;
-      overflow: hidden;
+      padding: 0 !important; overflow: hidden;
       font-family: 'DM Sans', sans-serif !important;
     }
     .leaflet-popup-content { margin: 0 !important; width: auto !important; }
     .leaflet-popup-tip-container { display: none; }
     .popup-inner { width: 260px; }
-    .popup-header { background: #111; padding: 11px 14px 10px; }
-    .popup-name { font-size: 14px; font-weight: 700; color: #fff; line-height: 1.2; font-family: 'DM Sans', sans-serif; }
+    .popup-header { background: #111; padding: 12px 16px; }
+    .popup-name { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.2; }
     .popup-table { width: 100%; border-collapse: collapse; }
     .popup-table tr { border-bottom: 1px solid #f0f0f0; }
     .popup-table tr:last-child { border-bottom: none; }
-    .popup-table td { padding: 7px 14px; font-size: 12px; vertical-align: middle; line-height: 1.3; }
+    .popup-table td { padding: 8px 16px; font-size: 12px; vertical-align: middle; line-height: 1.3; }
     .popup-table td:first-child { color: #999; font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; width: 42%; white-space: nowrap; }
-    .popup-table td:last-child { font-weight: 600; color: #111; font-family: 'DM Sans', sans-serif; }
-    .popup-stars-sm { color: #f59e0b; font-size: 12px; letter-spacing: 1px; }
+    .popup-table td:last-child { font-weight: 600; color: #111; }
+    .popup-stars-sm { color: var(--accent); font-size: 13px; letter-spacing: 1px; }
     .popup-stars-sm .empty { color: #ddd; }
-    .popup-permit { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; font-family: 'DM Mono', monospace; }
+    .popup-permit { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; font-family: 'DM Mono', monospace; }
     .popup-permit.none      { background: #f3f4f6; color: #9ca3af; }
     .popup-permit.no-permit { background: #dcfce7; color: #15803d; }
     .popup-permit.required  { background: #fee2e2; color: #dc2626; }
-    .popup-note-row td { color: #666 !important; font-weight: 400 !important; font-size: 11px !important; font-family: 'DM Sans', sans-serif !important; line-height: 1.5 !important; }
-    .popup-footer { padding: 9px 14px; border-top: 1.5px solid #eee; background: #fafafa; }
-    .popup-edit-link { font-size: 12px; color: #3b82f6; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 5px; font-family: 'DM Sans', sans-serif; }
+    .popup-note-row td { color: #666 !important; font-weight: 400 !important; font-size: 11px !important; }
+    .popup-footer { padding: 10px 16px; border-top: 1.5px solid #eee; background: #fafafa; }
+    .popup-edit-link { font-size: 13px; color: var(--blue); font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 5px; }
     .popup-edit-link:hover { color: #1d4ed8; }
 
-    /* ── AUTH GATE ── */
-    #authGate { position: fixed; inset: 0; z-index: 9999; background: #0f0f13; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    #authGate.hidden { display: none; }
-    .auth-box { background: #1a1a24; border: 1.5px solid #2e2e40; border-radius: 12px; padding: 36px; width: 380px; max-width: 100%; }
-    .auth-logo { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: #4a4a6a; text-transform: uppercase; margin-bottom: 28px; }
-    .auth-logo span { color: #f59e0b; }
-    .auth-tabs { display: flex; margin-bottom: 28px; border: 1.5px solid #2e2e40; border-radius: 8px; overflow: hidden; }
-    .auth-tab { flex: 1; padding: 10px; background: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; color: #4a4a6a; transition: background 0.15s, color 0.15s; }
-    .auth-tab.active { background: #f59e0b; color: #12121a; }
-    .auth-tab:not(.active):hover { background: #22222e; color: #e8e8ee; }
-    .auth-panel { display: none; }
-    .auth-panel.active { display: block; }
-    .auth-heading { font-size: 18px; font-weight: 600; color: #e8e8ee; margin-bottom: 20px; }
-    .auth-label { font-size: 11px; font-weight: 600; color: #6b6b8a; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 8px; }
-    .auth-input { width: 100%; background: #12121a; border: 1.5px solid #2e2e40; border-radius: 8px; padding: 11px 14px; font-family: 'DM Mono', monospace; font-size: 16px; color: #e8e8ee; outline: none; letter-spacing: 0.04em; transition: border-color 0.15s; margin-bottom: 14px; }
-    .auth-input:focus { border-color: #f59e0b; }
-    .auth-input::placeholder { color: #3a3a55; }
-    .auth-btn { width: 100%; padding: 14px; background: #f59e0b; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; color: #12121a; cursor: pointer; transition: background 0.15s; }
-    .auth-btn:hover { background: #fbbf24; }
-    .auth-btn:disabled { background: #7a5c10; color: #4a3a0a; cursor: not-allowed; }
-    .auth-btn-ghost { width: 100%; padding: 12px; background: transparent; border: 1.5px solid #2e2e40; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; color: #6b6b8a; cursor: pointer; transition: border-color 0.15s, color 0.15s; margin-top: 8px; }
-    .auth-btn-ghost:hover { border-color: #f59e0b; color: #e8e8ee; }
-    .auth-error { font-size: 12px; color: #ef4444; font-family: 'DM Mono', monospace; margin-bottom: 12px; display: none; line-height: 1.5; }
-    .auth-divider { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
-    .auth-divider-line { flex: 1; height: 1px; background: #2e2e40; }
-    .auth-divider-text { font-size: 11px; color: #4a4a6a; font-family: 'DM Mono', monospace; white-space: nowrap; }
-    .auth-forgot { font-size: 12px; color: #4a4a6a; font-family: 'DM Mono', monospace; text-align: right; display: block; margin-top: -8px; margin-bottom: 14px; cursor: pointer; transition: color 0.15s; background: none; border: none; width: 100%; }
-    .auth-forgot:hover { color: #f59e0b; }
-    .auth-success-box { background: #0d2d1a; border: 1.5px solid #1a5c35; border-radius: 8px; padding: 16px 18px; margin-top: 16px; display: none; }
-    .auth-success-icon { font-size: 22px; margin-bottom: 8px; }
-    .auth-success-title { font-size: 14px; font-weight: 600; color: #4ade80; margin-bottom: 4px; }
-    .auth-success-sub { font-size: 12px; color: #6b8a7a; font-family: 'DM Mono', monospace; line-height: 1.6; }
-    .auth-note { font-size: 11px; color: #4a4a6a; font-family: 'DM Mono', monospace; line-height: 1.6; margin-top: 18px; }
-
-
-
-    /* ── SHEET BACKDROP ── */
-    #sheetBackdrop {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.4);
-      z-index: 1999;
-      opacity: 0;
-      transition: opacity 0.3s;
+    /* Municipality labels */
+    .muni-label {
+      font-size: 10px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+      color: #222; text-shadow: 0 0 4px #fff, 0 0 4px #fff, 0 0 3px #fff;
+      white-space: nowrap; pointer-events: none;
     }
-    #sheetBackdrop.show { display: block; opacity: 1; }
+    /* Search pin */
+    .search-pin {
+      width: 14px; height: 14px; background: var(--red);
+      border: 2.5px solid #fff; border-radius: 50%;
+      box-shadow: 0 0 0 2px var(--red), 0 2px 8px rgba(0,0,0,0.35);
+    }
   </style>
 </head>
 <body>
 
-<!-- AUTH GATE -->
+<!-- ═══════════════════════════════════════════
+     AUTH GATE
+═══════════════════════════════════════════ -->
 <div id="authGate">
   <div class="auth-box">
     <div class="auth-logo">PA Territory Map <span>// Field Tool</span></div>
-
     <div class="auth-tabs">
       <button class="auth-tab active" onclick="switchAuthTab('password')">Email &amp; Password</button>
       <button class="auth-tab" onclick="switchAuthTab('magic')">Magic Link</button>
     </div>
-
-    <!-- Password panel -->
     <div class="auth-panel active" id="panelPassword">
       <div class="auth-heading">Sign in</div>
       <div class="auth-error" id="pwError"></div>
       <label class="auth-label">Email address</label>
-      <input class="auth-input" id="pwEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+      <input class="auth-input" id="pwEmail" type="email" placeholder="you@example.com" autocomplete="email" inputmode="email" />
       <label class="auth-label">Password</label>
       <input class="auth-input" id="pwPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
       <button class="auth-forgot" onclick="forgotPassword()">Forgot password?</button>
       <button class="auth-btn" id="pwSignInBtn" onclick="signInWithPassword()">Sign in</button>
       <div class="auth-divider"><div class="auth-divider-line"></div><span class="auth-divider-text">no account?</span><div class="auth-divider-line"></div></div>
       <button class="auth-btn-ghost" onclick="signUpWithPassword()">Create account</button>
-      <div class="auth-note">Your notes sync securely to your account across all devices.</div>
+      <div class="auth-note">Notes sync securely to your account across all devices.</div>
     </div>
-
-    <!-- Magic link panel -->
     <div class="auth-panel" id="panelMagic">
       <div class="auth-heading">Magic link</div>
       <div class="auth-error" id="magicError"></div>
       <label class="auth-label">Email address</label>
-      <input class="auth-input" id="magicEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+      <input class="auth-input" id="magicEmail" type="email" placeholder="you@example.com" autocomplete="email" inputmode="email" />
       <button class="auth-btn" id="magicLinkBtn" onclick="sendMagicLink()">Send magic link</button>
       <div class="auth-success-box" id="successBox">
         <div class="auth-success-icon">📩</div>
         <div class="auth-success-title">Check your inbox</div>
-        <div class="auth-success-sub">We sent a sign-in link to <span id="sentToEmail" style="color:#86efac"></span>.<br>Click the link in that email to enter the map.</div>
+        <div class="auth-success-sub">Sent to <span id="sentToEmail" style="color:#86efac"></span>. Click the link to enter.</div>
       </div>
-      <div class="auth-note">No password needed — we'll email you a one-click sign-in link.</div>
+      <div class="auth-note">No password needed — one-click sign-in link.</div>
     </div>
   </div>
 </div>
-<!-- SESSION BADGE -->
+
+<!-- ═══════════════════════════════════════════
+     MAP
+═══════════════════════════════════════════ -->
+<div id="map"></div>
+
+<!-- ═══════════════════════════════════════════
+     DESKTOP ELEMENTS
+═══════════════════════════════════════════ -->
 <div id="sessionBadge" class="hidden">
+  <span id="badgeVersion">v1</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
 
-<!-- SEARCH -->
-<div id="searchPanel">
-  <div id="searchWrap">
-    <span id="searchIcon">⌕</span>
-    <input id="search" type="text" placeholder="Search address, town, zip…" autocomplete="off" spellcheck="false" />
-    <button id="clearBtn" title="Clear">×</button>
-  </div>
-  <div id="suggestions">
-    <div id="statusMsg"></div>
-  </div>
-</div>
-
-<!-- MAP -->
-<div id="map"></div>
-
-<!-- LOCATION BUTTON (desktop; mobile version is in bottom bar) -->
-<button id="locBtn" onclick="toggleLocation()" title="Show my location">
+<button id="locBtnDesktop" onclick="toggleLocation()" title="My location">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
     <circle cx="12" cy="12" r="7" stroke-width="1.5"/>
   </svg>
 </button>
 
-<!-- SHEET BACKDROP (mobile) -->
+<div id="desktopSearch">
+  <div class="suggestions-wrap">
+    <div id="searchWrap">
+      <span id="searchIcon">⌕</span>
+      <input id="search" type="search" placeholder="Search address, town, zip…" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" />
+      <button id="clearBtn" title="Clear">×</button>
+    </div>
+    <div id="suggestions">
+      <div id="statusMsg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     LEGEND
+═══════════════════════════════════════════ -->
+<div id="legend">
+  <h4>Municipality Type</h4>
+  <div class="legend-row"><div class="legend-swatch" style="background:#cccccc"></div> Township</div>
+  <div class="legend-row"><div class="legend-swatch" style="background:#a8c66c"></div> Borough</div>
+  <div class="legend-row"><div class="legend-swatch" style="background:#c49a6c"></div> City / Other</div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SHEET BACKDROP
+═══════════════════════════════════════════ -->
 <div id="sheetBackdrop" onclick="closeSidebar()"></div>
 
-<!-- NOTES SIDEBAR / BOTTOM SHEET -->
+<!-- ═══════════════════════════════════════════
+     NOTES SIDEBAR / BOTTOM SHEET
+═══════════════════════════════════════════ -->
 <div id="sidebar">
   <div id="sidebarHeader">
     <div>
       <div id="sidebarTitle">—</div>
       <div id="sidebarSub">—</div>
     </div>
-    <button id="closeBtn" title="Close" onclick="closeSidebar()">×</button>
+    <button id="closeBtn" onclick="closeSidebar()" aria-label="Close">×</button>
   </div>
 
   <div id="sidebarBody">
     <!-- Color -->
     <div>
-      <div class="section-label">Municipality color</div>
+      <div class="section-label">Municipality Color</div>
       <div id="colorSwatches"></div>
       <div id="customColorRow">
         <input type="color" id="customColorPicker" value="#cccccc" title="Custom color" />
@@ -500,8 +836,8 @@
 
     <!-- Permit -->
     <div>
-      <div class="section-label">Permit required?</div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <div class="section-label">Permit Required?</div>
+      <div class="permit-row">
         <label class="check-radio-label"><input type="radio" name="checkedIn" id="checkedYes" value="false" /> No permit</label>
         <label class="check-radio-label"><input type="radio" name="checkedIn" id="checkedNo" value="true" /> Permit req.</label>
         <label class="check-radio-label"><input type="radio" name="checkedIn" id="checkedNone" value="" checked /> Unknown</label>
@@ -510,7 +846,7 @@
 
     <!-- Utility -->
     <div>
-      <div class="section-label">Utility providers</div>
+      <div class="section-label">Utility Providers</div>
       <div class="util-dropdown" id="utilDropdown">
         <button type="button" class="util-trigger" id="utilTrigger" onclick="toggleUtilPanel()">
           <span class="util-placeholder" id="utilPlaceholder">Select providers…</span>
@@ -542,8 +878,8 @@
 
     <!-- Stars -->
     <div>
-      <div class="section-label">Territory rating</div>
-      <div id="starRating" style="display:flex;gap:4px;line-height:1;font-size:32px;">
+      <div class="section-label">Territory Rating</div>
+      <div id="starRating">
         <span class="star" data-val="1">☆</span>
         <span class="star" data-val="2">☆</span>
         <span class="star" data-val="3">☆</span>
@@ -555,8 +891,8 @@
     <!-- Notes -->
     <div>
       <div class="section-label">Notes</div>
-      <textarea id="noteTextarea" placeholder="Add notes about this municipality…"></textarea>
-      <div style="margin-top:8px;display:flex;align-items:center">
+      <textarea id="noteTextarea" placeholder="Add notes about this municipality…" rows="4"></textarea>
+      <div id="saveStatus">
         <span id="statusDot"></span>
         <span id="statusText">Unsaved</span>
       </div>
@@ -570,48 +906,78 @@
   </div>
 </div>
 
-<!-- LEGEND -->
-<div id="legend">
-  <h4>Municipality Type</h4>
-  <div class="legend-row"><div class="legend-swatch" style="background:#cccccc"></div> Township</div>
-  <div class="legend-row"><div class="legend-swatch" style="background:#a8c66c"></div> Borough</div>
-  <div class="legend-row"><div class="legend-swatch" style="background:#c49a6c"></div> City / Other</div>
+<!-- ═══════════════════════════════════════════
+     BOTTOM CHROME (mobile)
+═══════════════════════════════════════════ -->
+<div id="bottomChrome">
+  <!-- Search bar -->
+  <div id="searchRow">
+    <div id="searchWrapMobile" style="flex:1;display:flex;align-items:center;background:#f4f4f6;border:1.5px solid #e0e0e6;border-radius:12px;overflow:visible;position:relative;transition:border-color 0.15s,box-shadow 0.15s;">
+      <span style="padding:0 8px 0 12px;color:#888;font-size:17px;line-height:1;user-select:none;flex-shrink:0;">⌕</span>
+      <input id="searchMobile" type="search"
+        placeholder="Search address, town, zip…"
+        autocomplete="off" spellcheck="false"
+        autocorrect="off" autocapitalize="off"
+        inputmode="search"
+        style="flex:1;border:none;outline:none;padding:11px 4px;font-family:'DM Sans',sans-serif;font-size:16px;color:#111;background:transparent;min-width:0;" />
+      <button id="clearBtnMobile" title="Clear"
+        style="display:none;background:none;border:none;cursor:pointer;padding:0 12px;color:#bbb;font-size:20px;line-height:1;flex-shrink:0;-webkit-tap-highlight-color:transparent;">×</button>
+    </div>
+  </div>
+
+  <!-- Nav bar -->
+  <div id="navRow">
+    <button class="nav-btn" id="mobLocBtn" onclick="toggleLocation()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+        <circle cx="12" cy="12" r="7" stroke-width="1.5"/>
+      </svg>
+      Locate
+    </button>
+    <button class="nav-btn" id="mobLegendBtn" onclick="toggleLegend()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="5" height="5" rx="1"/><rect x="3" y="10" width="5" height="5" rx="1"/><rect x="3" y="17" width="5" height="5" rx="1"/>
+        <line x1="12" y1="5.5" x2="21" y2="5.5"/><line x1="12" y1="12.5" x2="21" y2="12.5"/><line x1="12" y1="19.5" x2="21" y2="19.5"/>
+      </svg>
+      Legend
+    </button>
+    <button class="nav-btn" id="mobSignBtn" onclick="handleMobSignBtn()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobSignIcon">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+      </svg>
+      <span id="mobSignLabel">Sign In</span>
+    </button>
+  </div>
 </div>
 
-<!-- MOBILE BOTTOM BAR -->
-<div id="mobileBar">
-  <button class="mob-btn" id="mobLocBtn" onclick="toggleLocation()">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
-      <circle cx="12" cy="12" r="7" stroke-width="1.5"/>
-    </svg>
-    Locate
-  </button>
-  <button class="mob-btn" id="mobLegendBtn" onclick="toggleLegendMobile()">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="3" y="3" width="5" height="5" rx="1"/><rect x="3" y="10" width="5" height="5" rx="1"/><rect x="3" y="17" width="5" height="5" rx="1"/>
-      <line x1="12" y1="5.5" x2="21" y2="5.5"/><line x1="12" y1="12.5" x2="21" y2="12.5"/><line x1="12" y1="19.5" x2="21" y2="19.5"/>
-    </svg>
-    Legend
-  </button>
-  <button class="mob-btn" id="mobSignBtn" onclick="handleMobSignBtn()">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-    </svg>
-    <span id="mobSignLabel">Sign In</span>
-  </button>
+<!-- Suggestions for mobile (separate from bottom chrome, floats above it) -->
+<div id="suggestionsMobile" style="
+  display:none;
+  position:fixed;
+  left:12px; right:12px;
+  background:#fff;
+  border:1.5px solid #222;
+  border-radius:14px;
+  z-index:600;
+  max-height:50vh;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  box-shadow:0 -8px 32px rgba(0,0,0,0.18);
+">
+  <div id="statusMsgMobile" style="display:none;padding:14px 16px;font-size:13px;color:#888;font-family:'DM Mono',monospace;text-align:center;"></div>
 </div>
-
-
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
+'use strict';
+
 // ═══════════════════════════════════════════════════════
-//  MOBILE DETECTION
+//  UTILS
 // ═══════════════════════════════════════════════════════
 const isMobile = () => window.innerWidth < 768;
+const escHtml  = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const escJs    = s => String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
 
 // ═══════════════════════════════════════════════════════
 //  SUPABASE
@@ -621,70 +987,68 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 let currentUser = null;
-let noteCache = {};
+let noteCache   = {};
 
-
-
-// ═════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  AUTH
-// ═════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 function switchAuthTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (i === 0 && tab === 'password') || (i === 1 && tab === 'magic')));
-  document.getElementById('panelPassword').classList.toggle('active', tab === 'password');
-  document.getElementById('panelMagic').classList.toggle('active', tab === 'magic');
-  document.getElementById('pwError').style.display = 'none';
-  document.getElementById('magicError').style.display = 'none';
+  document.querySelectorAll('.auth-tab').forEach((t,i) =>
+    t.classList.toggle('active', (i===0&&tab==='password')||(i===1&&tab==='magic')));
+  document.getElementById('panelPassword').classList.toggle('active', tab==='password');
+  document.getElementById('panelMagic').classList.toggle('active', tab==='magic');
+  ['pwError','magicError'].forEach(id => { document.getElementById(id).style.display='none'; });
 }
 
 async function signInWithPassword() {
   const email = document.getElementById('pwEmail').value.trim();
-  const password = document.getElementById('pwPassword').value;
-  const errEl = document.getElementById('pwError');
-  errEl.style.display = 'none'; errEl.style.color = '#ef4444';
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Please enter a valid email.'; errEl.style.display = 'block'; return; }
-  if (!password) { errEl.textContent = 'Please enter your password.'; errEl.style.display = 'block'; return; }
+  const pass  = document.getElementById('pwPassword').value;
+  const err   = document.getElementById('pwError');
+  err.style.display='none'; err.style.color=getComputedStyle(document.documentElement).getPropertyValue('--red').trim()||'#ef4444';
+  if (!isValidEmail(email)) { showAuthErr(err,'Please enter a valid email.'); return; }
+  if (!pass) { showAuthErr(err,'Please enter your password.'); return; }
   const btn = document.getElementById('pwSignInBtn');
-  btn.disabled = true; btn.textContent = 'Signing in…';
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  btn.disabled = false; btn.textContent = 'Sign in';
-  if (error) { errEl.textContent = error.message || 'Invalid email or password.'; errEl.style.display = 'block'; }
+  btn.disabled=true; btn.textContent='Signing in…';
+  const { error } = await sb.auth.signInWithPassword({ email, password:pass });
+  btn.disabled=false; btn.textContent='Sign in';
+  if (error) showAuthErr(err, error.message||'Invalid email or password.');
 }
 
 async function signUpWithPassword() {
   const email = document.getElementById('pwEmail').value.trim();
-  const password = document.getElementById('pwPassword').value;
-  const errEl = document.getElementById('pwError');
-  errEl.style.display = 'none'; errEl.style.color = '#ef4444';
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Please enter a valid email.'; errEl.style.display = 'block'; return; }
-  if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
+  const pass  = document.getElementById('pwPassword').value;
+  const err   = document.getElementById('pwError');
+  err.style.display='none';
+  if (!isValidEmail(email)) { showAuthErr(err,'Please enter a valid email.'); return; }
+  if (pass.length < 6) { showAuthErr(err,'Password must be at least 6 characters.'); return; }
   const btn = document.getElementById('pwSignInBtn');
-  btn.disabled = true; btn.textContent = 'Creating account…';
-  const { error } = await sb.auth.signUp({ email, password });
-  btn.disabled = false; btn.textContent = 'Sign in';
-  if (error) { errEl.textContent = error.message || 'Could not create account.'; errEl.style.display = 'block'; return; }
-  errEl.style.color = '#4ade80'; errEl.textContent = 'Account created! Check your email to confirm, then sign in.'; errEl.style.display = 'block';
+  btn.disabled=true; btn.textContent='Creating account…';
+  const { error } = await sb.auth.signUp({ email, password:pass });
+  btn.disabled=false; btn.textContent='Sign in';
+  if (error) { showAuthErr(err, error.message||'Could not create account.'); return; }
+  err.style.color='#4ade80'; err.textContent='Account created! Check your email to confirm.'; err.style.display='block';
 }
 
 async function forgotPassword() {
   const email = document.getElementById('pwEmail').value.trim();
-  const errEl = document.getElementById('pwError');
-  errEl.style.display = 'none'; errEl.style.color = '#ef4444';
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Enter your email above first.'; errEl.style.display = 'block'; return; }
+  const err   = document.getElementById('pwError');
+  err.style.display='none';
+  if (!isValidEmail(email)) { showAuthErr(err,'Enter your email above first.'); return; }
   const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
-  if (error) { errEl.textContent = error.message || 'Could not send reset email.'; errEl.style.display = 'block'; return; }
-  errEl.style.color = '#4ade80'; errEl.textContent = 'Password reset email sent!'; errEl.style.display = 'block';
+  if (error) { showAuthErr(err, error.message||'Could not send reset email.'); return; }
+  err.style.color='#4ade80'; err.textContent='Password reset email sent!'; err.style.display='block';
 }
 
 async function sendMagicLink() {
   const email = document.getElementById('magicEmail').value.trim();
-  const errEl = document.getElementById('magicError');
-  errEl.style.display = 'none';
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Please enter a valid email address.'; errEl.style.display = 'block'; return; }
+  const err   = document.getElementById('magicError');
+  err.style.display='none';
+  if (!isValidEmail(email)) { showAuthErr(err,'Please enter a valid email address.'); return; }
   const btn = document.getElementById('magicLinkBtn');
-  btn.disabled = true; btn.textContent = 'Sending…';
-  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
-  btn.disabled = false; btn.textContent = 'Send magic link';
-  if (error) { errEl.textContent = error.message || 'Something went wrong. Try again.'; errEl.style.display = 'block'; return; }
+  btn.disabled=true; btn.textContent='Sending…';
+  const { error } = await sb.auth.signInWithOtp({ email, options:{ emailRedirectTo: window.location.href } });
+  btn.disabled=false; btn.textContent='Send magic link';
+  if (error) { showAuthErr(err, error.message||'Something went wrong.'); return; }
   document.getElementById('sentToEmail').textContent = email;
   document.getElementById('successBox').style.display = 'block';
   document.getElementById('magicEmail').style.display = 'none';
@@ -692,44 +1056,49 @@ async function sendMagicLink() {
   document.querySelectorAll('#panelMagic .auth-label')[0].style.display = 'none';
 }
 
-document.getElementById('pwPassword').addEventListener('keydown', e => { if (e.key === 'Enter') signInWithPassword(); });
-document.getElementById('magicEmail').addEventListener('keydown', e => { if (e.key === 'Enter') sendMagicLink(); });
+function isValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+function showAuthErr(el, msg) { el.textContent=msg; el.style.display='block'; }
+
+document.getElementById('pwPassword').addEventListener('keydown', e => { if(e.key==='Enter') signInWithPassword(); });
+document.getElementById('magicEmail').addEventListener('keydown', e => { if(e.key==='Enter') sendMagicLink(); });
 
 function startSession(user) {
   currentUser = user;
   document.getElementById('authGate').classList.add('hidden');
   document.getElementById('badgeEmail').textContent = user.email;
-  document.getElementById('sessionBadge').classList.remove('hidden');
+  if (!isMobile()) {
+    document.getElementById('sessionBadge').style.display = 'flex';
+    document.getElementById('sessionBadge').classList.remove('hidden');
+  }
   document.getElementById('mobSignLabel').textContent = 'Sign Out';
-  document.getElementById('mobSignBtn').querySelector('svg').setAttribute('stroke', '#ef4444');
+  document.getElementById('mobSignIcon').setAttribute('stroke','#ef4444');
+  document.getElementById('mobSignBtn').classList.add('danger');
   loadAllNotesFromSupabase();
 }
 
 function resetAuthUI() {
-  document.getElementById('pwEmail').value = '';
-  document.getElementById('pwPassword').value = '';
-  document.getElementById('pwError').style.display = 'none';
-  document.getElementById('pwError').style.color = '#ef4444';
-  document.getElementById('magicEmail').value = '';
-  document.getElementById('magicEmail').style.display = '';
-  document.getElementById('magicLinkBtn').style.display = '';
-  document.getElementById('magicError').style.display = 'none';
-  document.getElementById('successBox').style.display = 'none';
-  document.querySelectorAll('#panelMagic .auth-label')[0].style.display = '';
+  ['pwEmail','pwPassword','magicEmail'].forEach(id => { document.getElementById(id).value=''; });
+  ['pwError','magicError'].forEach(id => { document.getElementById(id).style.display='none'; });
+  document.getElementById('magicEmail').style.display='';
+  document.getElementById('magicLinkBtn').style.display='';
+  document.getElementById('successBox').style.display='none';
+  document.querySelectorAll('#panelMagic .auth-label')[0].style.display='';
   switchAuthTab('password');
 }
 
 async function logout() {
   if (!confirm('Sign out?')) return;
   await sb.auth.signOut();
-  currentUser = null; noteCache = {};
+  currentUser=null; noteCache={};
   closeSidebar();
-  if (geoLayer) geoLayer.eachLayer(l => { if (l.feature) l.setStyle(styleForLayer(l.feature)); });
+  if (geoLayer) geoLayer.eachLayer(l => { if(l.feature) l.setStyle(styleForLayer(l.feature)); });
   document.getElementById('sessionBadge').classList.add('hidden');
+  document.getElementById('sessionBadge').style.display='none';
   resetAuthUI();
   document.getElementById('authGate').classList.remove('hidden');
-  document.getElementById('mobSignLabel').textContent = 'Sign In';
-  document.getElementById('mobSignBtn').querySelector('svg').setAttribute('stroke', '#888');
+  document.getElementById('mobSignLabel').textContent='Sign In';
+  document.getElementById('mobSignIcon').setAttribute('stroke','#999');
+  document.getElementById('mobSignBtn').classList.remove('danger');
 }
 
 function handleMobSignBtn() {
@@ -740,6 +1109,7 @@ function handleMobSignBtn() {
 sb.auth.onAuthStateChange(async (event, session) => {
   if (session && session.user) startSession(session.user);
 });
+
 // ═══════════════════════════════════════════════════════
 //  SUPABASE DATA
 // ═══════════════════════════════════════════════════════
@@ -748,52 +1118,185 @@ async function loadAllNotesFromSupabase() {
   const { data, error } = await sb.from('municipality_notes').select('*').eq('user_id', currentUser.id);
   if (error) { console.error('Load error:', error); return; }
   noteCache = {};
-  (data || []).forEach(row => {
-    noteCache[row.muni_name] = { color: row.color, note: row.note, checkedIn: row.permit_required, utilities: row.utilities || [], rating: row.rating || 0, updatedAt: row.updated_at };
+  (data||[]).forEach(row => {
+    noteCache[row.muni_name] = {
+      color:row.color, note:row.note, checkedIn:row.permit_required,
+      utilities:row.utilities||[], rating:row.rating||0, updatedAt:row.updated_at
+    };
   });
-  if (geoLayer) geoLayer.eachLayer(l => { if (l.feature) l.setStyle(styleForLayer(l.feature)); });
+  if (geoLayer) geoLayer.eachLayer(l => { if(l.feature) l.setStyle(styleForLayer(l.feature)); });
 }
 
-function getNoteForMuni(name) { return noteCache[name] || null; }
+function getNoteForMuni(name) { return noteCache[name]||null; }
 
 async function upsertNote(muniName, data) {
   if (!currentUser) return;
   const { error } = await sb.from('municipality_notes').upsert({
-    user_id: currentUser.id, muni_name: muniName, color: data.color, note: data.note,
-    permit_required: data.checkedIn, utilities: data.utilities, rating: data.rating,
+    user_id:currentUser.id, muni_name:muniName, color:data.color, note:data.note,
+    permit_required:data.checkedIn, utilities:data.utilities, rating:data.rating,
     updated_at: new Date().toISOString()
-  }, { onConflict: 'user_id,muni_name' });
+  }, { onConflict:'user_id,muni_name' });
   if (error) { console.error('Save error:', error); throw error; }
   noteCache[muniName] = data;
 }
 
 async function deleteNote(muniName) {
   if (!currentUser) return;
-  const { error } = await sb.from('municipality_notes').delete().eq('user_id', currentUser.id).eq('muni_name', muniName);
+  const { error } = await sb.from('municipality_notes').delete().eq('user_id',currentUser.id).eq('muni_name',muniName);
   if (error) { console.error('Delete error:', error); throw error; }
   delete noteCache[muniName];
 }
 
 // ═══════════════════════════════════════════════════════
-//  PRESET COLORS
+//  MAP
+// ═══════════════════════════════════════════════════════
+const map = L.map('map', { zoomControl:true }).setView([40.9,-77.8], 7);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution:'© OpenStreetMap © CARTO', maxZoom:19
+}).addTo(map);
+
+let geoLayer;
+let pinMarker = null;
+
+function defaultColor(feature) {
+  const cls = (feature.properties.CLASS_OF_M||'').toUpperCase();
+  if (cls.includes('TWP')||cls==='TOWNSHIP') return '#cccccc';
+  if (cls.includes('BOR')||cls==='BOROUGH')  return '#a8c66c';
+  return '#c49a6c';
+}
+function styleForLayer(feature) {
+  const saved = getNoteForMuni(feature.properties.MUNICIPAL1);
+  const fill  = (saved&&saved.color) ? saved.color : defaultColor(feature);
+  return { color:'#555', weight:0.8, fillColor:fill, fillOpacity:0.55 };
+}
+function formatClass(cls) {
+  const c = (cls||'').toUpperCase();
+  if (c==='CITY') return 'City';
+  if (c.includes('BOR')) return 'Borough';
+  if (c==='1TWP') return 'Township (1st)';
+  if (c==='2TWP') return 'Township (2nd)';
+  if (c.includes('TWP')) return 'Township';
+  return cls;
+}
+function titleCase(s) { return (s||'').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()); }
+
+// ── Load GeoJSON ──
+fetch('pa_municipalities.geojson')
+  .then(r => r.json())
+  .then(data => {
+    geoLayer = L.geoJSON(data, {
+      style: f => styleForLayer(f),
+      onEachFeature: (feature, layer) => {
+        const p = feature.properties;
+        layer.bindPopup(() => buildPopup(p), { maxWidth:280 });
+        layer.on('click', () => {
+          geoLayer.resetStyle();
+          geoLayer.eachLayer(l => {
+            if (l.feature) {
+              const s = getNoteForMuni(l._muniName);
+              if (s&&s.color) l.setStyle({ fillColor:s.color });
+            }
+          });
+          layer.setStyle({ color:'#e63946', weight:2.5, fillOpacity:0.75 });
+          const saved = getNoteForMuni(p.MUNICIPAL1);
+          if (saved&&saved.color) layer.setStyle({ fillColor:saved.color, fillOpacity:0.85, color:'#e63946', weight:2.5 });
+        });
+        const center = layer.getBounds().getCenter();
+        layer._label = L.marker(center, {
+          icon: L.divIcon({ className:'muni-label', html:p.MUNICIPAL1, iconAnchor:[0,0] }),
+          interactive: false
+        });
+        layer._muniName = p.MUNICIPAL1;
+        layer._class    = p.CLASS_OF_M;
+        layer._county   = p.COUNTY_NAM;
+      }
+    }).addTo(map);
+    map.fitBounds(geoLayer.getBounds());
+    updateLabels();
+    map.on('zoomend', updateLabels);
+  })
+  .catch(err => console.error('GeoJSON load failed:', err));
+
+function buildPopup(p) {
+  const d = getNoteForMuni(p.MUNICIPAL1);
+  let permitHtml;
+  if (d&&d.checkedIn===false)     permitHtml = `<span class="popup-permit no-permit">✓ No permit</span>`;
+  else if (d&&d.checkedIn===true) permitHtml = `<span class="popup-permit required">✕ Permit req.</span>`;
+  else                            permitHtml = `<span class="popup-permit none">— Unknown</span>`;
+  const rating = (d&&d.rating) ? d.rating : 0;
+  const starsHtml = [1,2,3,4,5].map(i=>i<=rating?'<span>★</span>':'<span class="empty">★</span>').join('');
+  const noteText = d&&d.note ? d.note.substring(0,70)+(d.note.length>70?'…':'') : null;
+  return `<div class="popup-inner">
+    <div class="popup-header"><div class="popup-name">${escHtml(p.MUNICIPAL1)}</div></div>
+    <table class="popup-table">
+      <tr><td>Type</td><td>${formatClass(p.CLASS_OF_M)}</td></tr>
+      <tr><td>County</td><td>${titleCase(p.COUNTY_NAM)}</td></tr>
+      <tr><td>Permit</td><td>${permitHtml}</td></tr>
+      <tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>
+      ${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}
+    </table>
+    <div class="popup-footer">
+      <a class="popup-edit-link" href="#" onclick="openSidebarFor('${escJs(p.MUNICIPAL1)}','${escJs(p.CLASS_OF_M)}','${escJs(p.COUNTY_NAM)}');return false;">✎ Edit notes / color</a>
+    </div>
+  </div>`;
+}
+
+function updateLabels() {
+  if (!geoLayer) return;
+  const show = map.getZoom() >= 10;
+  geoLayer.eachLayer(l => {
+    if (!l._label) return;
+    show ? l._label.addTo(map) : map.removeLayer(l._label);
+  });
+}
+
+function refreshLayerStyle(muniName) {
+  if (!geoLayer) return;
+  geoLayer.eachLayer(l => {
+    if (l._muniName===muniName) {
+      const saved = getNoteForMuni(muniName);
+      const fill  = (saved&&saved.color) ? saved.color : defaultColor(l.feature);
+      l.setStyle({ color:'#555', weight:0.8, fillColor:fill, fillOpacity:0.55 });
+    }
+  });
+}
+
+// ── Map padding so shapes show above chrome ──
+function updateMapPadding() {
+  if (isMobile()) {
+    // Calculate total chrome height for map padding
+    const chromeH = document.getElementById('bottomChrome').offsetHeight;
+    map.invalidateSize();
+    // Leaflet doesn't have setPadding; instead keep map full-screen and rely on
+    // the fixed chrome layering. Just invalidate size on resize.
+  } else {
+    map.invalidateSize();
+  }
+}
+window.addEventListener('resize', updateMapPadding);
+// Run after fonts/layout settle
+setTimeout(updateMapPadding, 300);
+
+// ═══════════════════════════════════════════════════════
+//  COLORS
 // ═══════════════════════════════════════════════════════
 const PRESET_COLORS = [
-  { hex: '#cccccc', label: 'Default gray' }, { hex: '#a8c66c', label: 'Default green' },
-  { hex: '#c49a6c', label: 'Default tan' },  { hex: '#f59e0b', label: 'Amber' },
-  { hex: '#ef4444', label: 'Red' },          { hex: '#3b82f6', label: 'Blue' },
-  { hex: '#8b5cf6', label: 'Purple' },       { hex: '#10b981', label: 'Emerald' },
-  { hex: '#f97316', label: 'Orange' },       { hex: '#ec4899', label: 'Pink' },
+  {hex:'#cccccc',label:'Default gray'},{hex:'#a8c66c',label:'Default green'},
+  {hex:'#c49a6c',label:'Default tan'}, {hex:'#f59e0b',label:'Amber'},
+  {hex:'#ef4444',label:'Red'},         {hex:'#3b82f6',label:'Blue'},
+  {hex:'#8b5cf6',label:'Purple'},      {hex:'#10b981',label:'Emerald'},
+  {hex:'#f97316',label:'Orange'},      {hex:'#ec4899',label:'Pink'},
 ];
 
 function renderSwatches(selectedColor) {
-  const container = document.getElementById('colorSwatches');
-  container.innerHTML = '';
-  PRESET_COLORS.forEach(c => {
+  const c = document.getElementById('colorSwatches');
+  c.innerHTML = '';
+  PRESET_COLORS.forEach(p => {
     const el = document.createElement('div');
-    el.className = 'swatch' + (c.hex === selectedColor ? ' active' : '');
-    el.style.background = c.hex; el.title = c.label;
-    el.onclick = () => selectColor(c.hex);
-    container.appendChild(el);
+    el.className = 'swatch' + (p.hex===selectedColor?' active':'');
+    el.style.background = p.hex; el.title = p.label;
+    el.onclick = () => selectColor(p.hex);
+    c.appendChild(el);
   });
 }
 function selectColor(hex) {
@@ -802,131 +1305,38 @@ function selectColor(hex) {
   document.getElementById('customColorLabel').textContent = hex;
   renderSwatches(hex); markUnsaved();
 }
-document.getElementById('customColorPicker').addEventListener('input', function() { selectColor(this.value); });
+document.getElementById('customColorPicker').addEventListener('input', function(){ selectColor(this.value); });
 
 // ═══════════════════════════════════════════════════════
-//  STAR RATING
+//  STARS
 // ═══════════════════════════════════════════════════════
 let currentRating = 0;
 function setStars(val) {
   currentRating = val;
   document.querySelectorAll('.star').forEach(s => {
     const v = parseInt(s.dataset.val);
-    s.textContent = v <= val ? '★' : '☆';
-    s.classList.toggle('on', v <= val);
-  }); markUnsaved();
+    s.textContent = v<=val ? '★' : '☆';
+    s.classList.toggle('on', v<=val);
+  });
+  markUnsaved();
 }
-document.getElementById('starRating').addEventListener('click', e => { const star = e.target.closest('.star'); if (star) setStars(parseInt(star.dataset.val)); });
-document.getElementById('starRating').addEventListener('mouseover', e => { const star = e.target.closest('.star'); if (!star) return; const hov = parseInt(star.dataset.val); document.querySelectorAll('.star').forEach(s => { s.textContent = parseInt(s.dataset.val) <= hov ? '★' : '☆'; }); });
-document.getElementById('starRating').addEventListener('mouseleave', () => { setStars(currentRating); });
+document.getElementById('starRating').addEventListener('click', e => {
+  const star = e.target.closest('.star');
+  if (star) setStars(parseInt(star.dataset.val));
+});
+document.getElementById('starRating').addEventListener('mouseover', e => {
+  const star = e.target.closest('.star');
+  if (!star) return;
+  const h = parseInt(star.dataset.val);
+  document.querySelectorAll('.star').forEach(s => { s.textContent = parseInt(s.dataset.val)<=h ? '★' : '☆'; });
+});
+document.getElementById('starRating').addEventListener('mouseleave', () => setStars(currentRating));
 document.querySelectorAll('input[name="checkedIn"]').forEach(r => r.addEventListener('change', markUnsaved));
 
 // ═══════════════════════════════════════════════════════
-//  MAP SETUP
+//  SIDEBAR / BOTTOM SHEET
 // ═══════════════════════════════════════════════════════
-const map = L.map('map', { zoomControl: true }).setView([40.9, -77.8], 7);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap © CARTO', maxZoom: 19 }).addTo(map);
-
-let geoLayer;
-let pinMarker = null;
-
-function defaultColor(feature) {
-  const cls = (feature.properties.CLASS_OF_M || '').toUpperCase();
-  if (cls.includes('TWP') || cls === 'TOWNSHIP') return '#cccccc';
-  if (cls.includes('BOR') || cls === 'BOROUGH')  return '#a8c66c';
-  return '#c49a6c';
-}
-function styleForLayer(feature) {
-  const saved = getNoteForMuni(feature.properties.MUNICIPAL1);
-  const fill = (saved && saved.color) ? saved.color : defaultColor(feature);
-  return { color: '#555', weight: 0.8, fillColor: fill, fillOpacity: 0.55 };
-}
-function formatClass(cls) {
-  const c = (cls || '').toUpperCase();
-  if (c === 'CITY') return 'City';
-  if (c.includes('BOR')) return 'Borough';
-  if (c === '1TWP') return 'Township (1st Class)';
-  if (c === '2TWP') return 'Township (2nd Class)';
-  if (c === '3TWP') return 'Township (3rd Class)';
-  if (c.includes('TWP')) return 'Township';
-  return cls;
-}
-function titleCase(s) { return (s || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()); }
-
-// ═══════════════════════════════════════════════════════
-//  LOAD GEOJSON
-// ═══════════════════════════════════════════════════════
-fetch('pa_municipalities.geojson')
-  .then(r => r.json())
-  .then(data => {
-    geoLayer = L.geoJSON(data, {
-      style: f => styleForLayer(f),
-      onEachFeature: (feature, layer) => {
-        const p = feature.properties;
-        layer.bindPopup(() => {
-          const d = getNoteForMuni(p.MUNICIPAL1);
-          let permitHtml;
-          if (d && d.checkedIn === false)     permitHtml = `<span class="popup-permit no-permit">✓ No permit</span>`;
-          else if (d && d.checkedIn === true) permitHtml = `<span class="popup-permit required">✕ Permit req.</span>`;
-          else                                permitHtml = `<span class="popup-permit none">— Unknown</span>`;
-          const rating = (d && d.rating) ? d.rating : 0;
-          const starsHtml = [1,2,3,4,5].map(i => i <= rating ? '<span>★</span>' : '<span class="empty">★</span>').join('');
-          const noteText = d && d.note ? d.note.substring(0, 70) + (d.note.length > 70 ? '…' : '') : null;
-          return `<div class="popup-inner">
-            <div class="popup-header"><div class="popup-name">${escHtml(p.MUNICIPAL1)}</div></div>
-            <table class="popup-table">
-              <tr><td>Type</td><td>${formatClass(p.CLASS_OF_M)}</td></tr>
-              <tr><td>County</td><td>${titleCase(p.COUNTY_NAM)}</td></tr>
-              <tr><td>Permit</td><td>${permitHtml}</td></tr>
-              <tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>
-              ${noteText ? `<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>` : ''}
-            </table>
-            <div class="popup-footer">
-              <a class="popup-edit-link" href="#" onclick="openSidebarFor('${escJs(p.MUNICIPAL1)}','${escJs(p.CLASS_OF_M)}','${escJs(p.COUNTY_NAM)}');return false;">✎ Edit notes / color</a>
-            </div>
-          </div>`;
-        }, { maxWidth: 280 });
-        layer.on('click', () => {
-          geoLayer.resetStyle();
-          geoLayer.eachLayer(l => { if (l.feature) { const s = getNoteForMuni(l._muniName); if (s && s.color) l.setStyle({ fillColor: s.color }); } });
-          layer.setStyle({ color: '#e63946', weight: 2.5, fillOpacity: 0.75 });
-          const saved = getNoteForMuni(feature.properties.MUNICIPAL1);
-          if (saved && saved.color) layer.setStyle({ fillColor: saved.color, fillOpacity: 0.85, color: '#e63946', weight: 2.5 });
-        });
-        const center = layer.getBounds().getCenter();
-        layer._label = L.marker(center, { icon: L.divIcon({ className: 'muni-label', html: p.MUNICIPAL1, iconAnchor: [0, 0] }), interactive: false });
-        layer._muniName = p.MUNICIPAL1;
-        layer._class = p.CLASS_OF_M;
-        layer._county = p.COUNTY_NAM;
-      }
-    }).addTo(map);
-
-    map.fitBounds(geoLayer.getBounds());
-    updateLabels();
-    map.on('zoomend', updateLabels);
-  })
-  .catch(err => console.error('GeoJSON load failed:', err));
-
-function updateLabels() {
-  if (!geoLayer) return;
-  const show = map.getZoom() >= 10;
-  geoLayer.eachLayer(l => { if (!l._label) return; show ? l._label.addTo(map) : map.removeLayer(l._label); });
-}
-function refreshLayerStyle(muniName) {
-  if (!geoLayer) return;
-  geoLayer.eachLayer(l => {
-    if (l._muniName === muniName) {
-      const saved = getNoteForMuni(muniName);
-      const fill = (saved && saved.color) ? saved.color : defaultColor(l.feature);
-      l.setStyle({ color: '#555', weight: 0.8, fillColor: fill, fillOpacity: 0.55 });
-    }
-  });
-}
-
-// ═══════════════════════════════════════════════════════
-//  SIDEBAR
-// ═══════════════════════════════════════════════════════
-let currentMuni = null;
+let currentMuni  = null;
 let currentColor = '#cccccc';
 
 function openSidebarFor(name, cls, county) {
@@ -935,66 +1345,76 @@ function openSidebarFor(name, cls, county) {
   document.getElementById('sidebarTitle').textContent = name;
   document.getElementById('sidebarSub').textContent = `${formatClass(cls)} · ${titleCase(county)} County`;
 
-  const saved = getNoteForMuni(name);
-  const color     = (saved && saved.color)     ? saved.color     : defaultColor({ properties: { CLASS_OF_M: cls } });
-  const note      = (saved && saved.note)      ? saved.note      : '';
-  const checkedIn = saved ? (saved.checkedIn === true ? 'true' : saved.checkedIn === false ? 'false' : '') : '';
-  const utilities = (saved && saved.utilities) ? saved.utilities : [];
-  const rating    = (saved && saved.rating)    ? saved.rating    : 0;
+  const saved  = getNoteForMuni(name);
+  const color  = (saved&&saved.color) ? saved.color : defaultColor({ properties:{ CLASS_OF_M:cls } });
+  const note   = (saved&&saved.note)  ? saved.note  : '';
+  const ciRaw  = saved ? (saved.checkedIn===true?'true':saved.checkedIn===false?'false':'') : '';
+  const utils  = (saved&&saved.utilities) ? saved.utilities : [];
+  const rating = (saved&&saved.rating)    ? saved.rating    : 0;
 
   currentColor = color;
   renderSwatches(color);
   document.getElementById('customColorPicker').value = color;
   document.getElementById('customColorLabel').textContent = color;
   document.getElementById('noteTextarea').value = note;
-  setUtilDropdownValues(utilities);
-  const radioEl = document.querySelector(`input[name="checkedIn"][value="${checkedIn}"]`);
-  if (radioEl) radioEl.checked = true; else document.getElementById('checkedNone').checked = true;
+  setUtilDropdownValues(utils);
+  const radio = document.querySelector(`input[name="checkedIn"][value="${ciRaw}"]`);
+  if (radio) radio.checked=true; else document.getElementById('checkedNone').checked=true;
   currentRating = rating;
-  document.querySelectorAll('.star').forEach(s => { const v = parseInt(s.dataset.val); s.textContent = v <= rating ? '★' : '☆'; s.classList.toggle('on', v <= rating); });
-
+  document.querySelectorAll('.star').forEach(s => {
+    const v = parseInt(s.dataset.val);
+    s.textContent = v<=rating?'★':'☆'; s.classList.toggle('on', v<=rating);
+  });
   markSaved(!!saved);
-  document.getElementById('sidebar').classList.add('open');
-  document.getElementById('legend').classList.add('shifted');
 
-  // Mobile backdrop
+  // Open sheet
+  const sidebar   = document.getElementById('sidebar');
+  const backdrop  = document.getElementById('sheetBackdrop');
+  sidebar.classList.add('open');
+  backdrop.classList.add('visible');
+  requestAnimationFrame(() => backdrop.classList.add('show'));
+
   if (isMobile()) {
-    document.getElementById('sheetBackdrop').classList.add('show');
-    // Dismiss keyboard if open
+    // Dismiss any open keyboard first
     document.activeElement && document.activeElement.blur();
+    // Clear search suggestions
+    clearSuggestionsMobile();
   } else {
     document.getElementById('noteTextarea').focus();
+    document.getElementById('legend').classList.add('shifted');
   }
 }
 
 function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('legend').classList.remove('shifted');
-  document.getElementById('sheetBackdrop').classList.remove('show');
+  const sidebar  = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sheetBackdrop');
+  sidebar.classList.remove('open');
+  backdrop.classList.remove('show');
+  setTimeout(() => backdrop.classList.remove('visible'), 300);
+  if (!isMobile()) document.getElementById('legend').classList.remove('shifted');
   currentMuni = null;
 }
 
 async function saveNote() {
   if (!currentMuni) return;
-  const note = document.getElementById('noteTextarea').value.trim();
-  const checkedInRaw = document.querySelector('input[name="checkedIn"]:checked')?.value || '';
-  const checkedIn = checkedInRaw === 'true' ? true : checkedInRaw === 'false' ? false : null;
+  const note     = document.getElementById('noteTextarea').value.trim();
+  const ciRaw    = document.querySelector('input[name="checkedIn"]:checked')?.value||'';
+  const checkedIn = ciRaw==='true' ? true : ciRaw==='false' ? false : null;
   const utilities = getUtilDropdownValues();
-  const rating    = currentRating;
-  markStatus('saving', 'Saving…');
+  markStatus('saving','Saving…');
   try {
-    await upsertNote(currentMuni.name, { color: currentColor, note, checkedIn, utilities, rating, updatedAt: new Date().toISOString() });
+    await upsertNote(currentMuni.name, { color:currentColor, note, checkedIn, utilities, rating:currentRating, updatedAt:new Date().toISOString() });
     refreshLayerStyle(currentMuni.name);
     markSaved(true);
   } catch(e) {
-    markStatus('', 'Save failed');
+    markStatus('','Save failed');
     alert('Save failed — check connection.');
   }
 }
 
 async function clearNote() {
   if (!currentMuni) return;
-  if (!confirm(`Remove all notes and data for "${currentMuni.name}"?`)) return;
+  if (!confirm(`Remove all data for "${currentMuni.name}"?`)) return;
   try {
     await deleteNote(currentMuni.name);
     refreshLayerStyle(currentMuni.name);
@@ -1003,177 +1423,298 @@ async function clearNote() {
 }
 
 function markSaved(isSaved) {
-  document.getElementById('statusDot').className = isSaved ? 'saved' : '';
+  document.getElementById('statusDot').className  = isSaved ? 'saved' : '';
   document.getElementById('statusText').textContent = isSaved ? 'Saved' : 'Unsaved';
 }
 function markStatus(dotClass, text) {
-  document.getElementById('statusDot').className = dotClass;
+  document.getElementById('statusDot').className  = dotClass;
   document.getElementById('statusText').textContent = text;
 }
 function markUnsaved() { markSaved(false); }
 document.getElementById('noteTextarea').addEventListener('input', markUnsaved);
 
+// Swipe-to-dismiss bottom sheet
+(function() {
+  const sidebar = document.getElementById('sidebar');
+  let startY=0, startTranslate=0, dragging=false;
+  function getTranslateY(el) {
+    const t = getComputedStyle(el).transform;
+    if (t==='none') return 0;
+    return parseFloat(t.split(',')[5]);
+  }
+  sidebar.addEventListener('touchstart', e => {
+    if (e.target.closest('#sidebarBody') && sidebar.querySelector('#sidebarBody').scrollTop > 0) return;
+    startY = e.touches[0].clientY;
+    startTranslate = getTranslateY(sidebar);
+    dragging = true;
+    sidebar.style.transition = 'none';
+  }, { passive:true });
+  sidebar.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy < 0) return;
+    sidebar.style.transform = `translateY(${dy}px)`;
+  }, { passive:true });
+  sidebar.addEventListener('touchend', e => {
+    if (!dragging) return;
+    dragging = false;
+    sidebar.style.transition = '';
+    const dy = e.changedTouches[0].clientY - startY;
+    if (dy > 100) { closeSidebar(); sidebar.style.transform=''; }
+    else { sidebar.style.transform=''; }
+  });
+})();
+
 // ═══════════════════════════════════════════════════════
-//  LEGEND MOBILE TOGGLE
+//  LEGEND
 // ═══════════════════════════════════════════════════════
 let legendVisible = true;
-function toggleLegendMobile() {
+function toggleLegend() {
   legendVisible = !legendVisible;
-  const el = document.getElementById('legend');
-  el.style.display = legendVisible ? '' : 'none';
+  document.getElementById('legend').classList.toggle('hidden', !legendVisible);
   document.getElementById('mobLegendBtn').classList.toggle('active', legendVisible);
 }
 
 // ═══════════════════════════════════════════════════════
 //  LIVE LOCATION
 // ═══════════════════════════════════════════════════════
-let locationMarker = null, locationCircle = null, locationWatchId = null;
+let locationMarker=null, locationCircle=null, locationWatchId=null;
 
 function startLocationTracking() {
   if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
   locationWatchId = navigator.geolocation.watchPosition(
     pos => {
-      const { latitude: lat, longitude: lon, accuracy: acc } = pos.coords;
+      const { latitude:lat, longitude:lon, accuracy:acc } = pos.coords;
       if (!locationMarker) {
-        locationMarker = L.marker([lat, lon], { icon: L.divIcon({ className: 'location-pin', iconSize: [16,16], iconAnchor: [8,8] }), zIndexOffset: 500 }).addTo(map);
-        locationCircle = L.circle([lat, lon], { radius: acc, color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.12, weight: 1 }).addTo(map);
-        map.flyTo([lat, lon], 14, { duration: 1.2 });
-      } else { locationMarker.setLatLng([lat, lon]); locationCircle.setLatLng([lat, lon]); locationCircle.setRadius(acc); }
+        locationMarker = L.marker([lat,lon], {
+          icon: L.divIcon({ className:'location-pin', iconSize:[16,16], iconAnchor:[8,8] }),
+          zIndexOffset:500
+        }).addTo(map);
+        locationCircle = L.circle([lat,lon], { radius:acc, color:'#3b82f6', fillColor:'#3b82f6', fillOpacity:0.12, weight:1 }).addTo(map);
+        map.flyTo([lat,lon], 14, { duration:1.2 });
+      } else {
+        locationMarker.setLatLng([lat,lon]);
+        locationCircle.setLatLng([lat,lon]); locationCircle.setRadius(acc);
+      }
     },
-    err => { console.warn('Location error:', err.message); alert('Could not get your location.'); stopLocationTracking(); setLocBtnActive(false); },
-    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+    err => { console.warn('Location error:', err.message); stopLocationTracking(); setLocActive(false); },
+    { enableHighAccuracy:true, maximumAge:5000, timeout:10000 }
   );
 }
 
 function stopLocationTracking() {
-  if (locationWatchId !== null) { navigator.geolocation.clearWatch(locationWatchId); locationWatchId = null; }
-  if (locationMarker) { map.removeLayer(locationMarker); locationMarker = null; }
-  if (locationCircle) { map.removeLayer(locationCircle); locationCircle = null; }
+  if (locationWatchId!==null) { navigator.geolocation.clearWatch(locationWatchId); locationWatchId=null; }
+  if (locationMarker) { map.removeLayer(locationMarker); locationMarker=null; }
+  if (locationCircle) { map.removeLayer(locationCircle); locationCircle=null; }
 }
 
-function setLocBtnActive(active) {
-  document.getElementById('locBtn').classList.toggle('active', active);
+function setLocActive(active) {
   document.getElementById('mobLocBtn').classList.toggle('active', active);
+  document.getElementById('locBtnDesktop').classList.toggle('active', active);
 }
 
 function toggleLocation() {
-  if (locationWatchId !== null) { stopLocationTracking(); setLocBtnActive(false); }
-  else { startLocationTracking(); setLocBtnActive(true); }
+  if (locationWatchId!==null) { stopLocationTracking(); setLocActive(false); }
+  else { startLocationTracking(); setLocActive(true); }
 }
 
 // ═══════════════════════════════════════════════════════
-//  SEARCH
+//  SEARCH — shared logic, dual inputs (mobile / desktop)
 // ═══════════════════════════════════════════════════════
-const searchInput   = document.getElementById('search');
-const suggestionsEl = document.getElementById('suggestions');
-const statusEl      = document.getElementById('statusMsg');
-const clearBtn      = document.getElementById('clearBtn');
 let debounceTimer = null;
 
-searchInput.addEventListener('input', () => {
-  clearBtn.style.display = searchInput.value ? 'block' : 'none';
-  clearStatus();
-  clearTimeout(debounceTimer);
-  const q = searchInput.value.trim();
-  if (q.length < 2) { clearSuggestions(); return; }
-  debounceTimer = setTimeout(() => fetchSuggestions(q), 280);
-});
+// ── Desktop search ──
+(function() {
+  const input     = document.getElementById('search');
+  const clearBtn  = document.getElementById('clearBtn');
+  const suggestEl = document.getElementById('suggestions');
+  if (!input) return;
 
-clearBtn.addEventListener('click', () => {
-  searchInput.value = ''; clearBtn.style.display = 'none';
-  clearSuggestions(); clearStatus();
-  if (pinMarker) { map.removeLayer(pinMarker); pinMarker = null; }
-});
+  input.addEventListener('input', () => {
+    clearBtn.style.display = input.value ? 'block' : 'none';
+    clearTimeout(debounceTimer);
+    const q = input.value.trim();
+    if (q.length < 2) { hideSuggestionsDesktop(); return; }
+    debounceTimer = setTimeout(() => fetchSuggestions(q, 'desktop'), 280);
+  });
+  clearBtn.addEventListener('click', () => {
+    input.value=''; clearBtn.style.display='none';
+    hideSuggestionsDesktop();
+    if (pinMarker) { map.removeLayer(pinMarker); pinMarker=null; }
+  });
+  input.addEventListener('keydown', e => {
+    if (e.key==='Enter') { hideSuggestionsDesktop(); geocodeAndFly(input.value.trim()); input.blur(); }
+    if (e.key==='Escape') { hideSuggestionsDesktop(); input.blur(); }
+  });
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#desktopSearch')) hideSuggestionsDesktop();
+  });
+})();
 
-searchInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') { clearSuggestions(); geocodeAndFly(searchInput.value.trim()); searchInput.blur(); }
-  if (e.key === 'Escape') { clearSuggestions(); searchInput.blur(); }
-});
+// ── Mobile search ──
+(function() {
+  const input    = document.getElementById('searchMobile');
+  const clearBtn = document.getElementById('clearBtnMobile');
+  if (!input) return;
 
-document.addEventListener('click', e => { if (!e.target.closest('#searchPanel')) clearSuggestions(); });
+  input.addEventListener('focus', () => {
+    document.getElementById('searchWrapMobile').style.borderColor = '#222';
+    document.getElementById('searchWrapMobile').style.background = '#fff';
+  });
+  input.addEventListener('blur', () => {
+    document.getElementById('searchWrapMobile').style.borderColor = '';
+    document.getElementById('searchWrapMobile').style.background = '';
+  });
+  input.addEventListener('input', () => {
+    clearBtn.style.display = input.value ? 'block' : 'none';
+    clearTimeout(debounceTimer);
+    const q = input.value.trim();
+    if (q.length < 2) { clearSuggestionsMobile(); return; }
+    debounceTimer = setTimeout(() => fetchSuggestions(q, 'mobile'), 280);
+  });
+  clearBtn.addEventListener('click', () => {
+    input.value=''; clearBtn.style.display='none';
+    clearSuggestionsMobile();
+    if (pinMarker) { map.removeLayer(pinMarker); pinMarker=null; }
+  });
+  input.addEventListener('keydown', e => {
+    if (e.key==='Enter') { clearSuggestionsMobile(); geocodeAndFly(input.value.trim()); input.blur(); }
+    if (e.key==='Escape') { clearSuggestionsMobile(); input.blur(); }
+  });
+  // Dismiss suggestions when tapping map
+  document.getElementById('map').addEventListener('touchstart', () => {
+    clearSuggestionsMobile(); input.blur();
+  }, { passive:true });
+})();
 
-function fetchSuggestions(q) {
-  const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q + ' Pennsylvania')}&limit=8&lang=en&bbox=-80.5,39.7,-74.7,42.3`;
-  showStatus('Searching…');
-  fetch(url).then(r => r.json()).then(data => {
-    clearStatus();
-    const features = (data.features || []).filter(f => { const s = (f.properties.state || '').toLowerCase(); return s === 'pennsylvania' || s === 'pa'; }).slice(0, 6);
-    if (features.length === 0) { showStatus('No results in Pennsylvania.'); return; }
-    renderSuggestions(features);
-  }).catch(() => showStatus('Search unavailable — press Enter to try anyway.'));
+function hideSuggestionsDesktop() {
+  const el = document.getElementById('suggestions');
+  if (!el) return;
+  el.querySelectorAll('.suggestion-item').forEach(e=>e.remove());
+  document.getElementById('statusMsg').style.display='none';
+  el.style.display='none';
 }
 
-function renderSuggestions(features) {
-  Array.from(suggestionsEl.querySelectorAll('.suggestion-item')).forEach(el => el.remove());
+function clearSuggestionsMobile() {
+  const el = document.getElementById('suggestionsMobile');
+  el.querySelectorAll('.suggestion-item').forEach(e=>e.remove());
+  document.getElementById('statusMsgMobile').style.display='none';
+  el.style.display='none';
+}
+
+function fetchSuggestions(q, target) {
+  const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q+' Pennsylvania')}&limit=8&lang=en&bbox=-80.5,39.7,-74.7,42.3`;
+  showStatus('Searching…', target);
+  fetch(url).then(r=>r.json()).then(data => {
+    clearStatus(target);
+    const features = (data.features||[]).filter(f => {
+      const s=(f.properties.state||'').toLowerCase();
+      return s==='pennsylvania'||s==='pa';
+    }).slice(0,6);
+    if (features.length===0) { showStatus('No results in Pennsylvania.', target); return; }
+    renderSuggestions(features, target);
+  }).catch(() => showStatus('Search unavailable.', target));
+}
+
+function renderSuggestions(features, target) {
+  const isMob    = target==='mobile';
+  const container = isMob ? document.getElementById('suggestionsMobile') : document.getElementById('suggestions');
+  container.querySelectorAll('.suggestion-item').forEach(e=>e.remove());
+
   features.forEach(f => {
-    const p = f.properties; const coords = f.geometry.coordinates;
-    const parts = [p.name, p.street, p.city, p.county ? p.county + ' County' : '', 'PA'].filter(Boolean);
-    const deduped = parts.filter((v, i) => v !== parts[i - 1]);
-    const primary = deduped[0] || 'Unknown';
-    const secondary = deduped.slice(1).join(', ');
-    const item = document.createElement('div');
-    item.className = 'suggestion-item';
-    item.innerHTML = `<span class="suggestion-name">${escHtml(primary)}</span>${secondary ? `<span class="suggestion-sub">${escHtml(secondary)}</span>` : ''}`;
-    item.addEventListener('click', () => { searchInput.value = primary + (secondary ? `, ${secondary}` : ''); clearSuggestions(); flyToPoint(coords[1], coords[0]); searchInput.blur(); });
-    suggestionsEl.insertBefore(item, statusEl);
+    const p=f.properties; const coords=f.geometry.coordinates;
+    const parts=[p.name,p.street,p.city,p.county?p.county+' County':'','PA'].filter(Boolean);
+    const deduped=parts.filter((v,i)=>v!==parts[i-1]);
+    const primary=deduped[0]||'Unknown';
+    const secondary=deduped.slice(1).join(', ');
+    const item=document.createElement('div');
+    item.className='suggestion-item';
+    item.innerHTML=`<span class="suggestion-name">${escHtml(primary)}</span>${secondary?`<span class="suggestion-sub">${escHtml(secondary)}</span>`:''}`;
+    item.addEventListener('click', () => {
+      if (isMob) {
+        document.getElementById('searchMobile').value=primary+(secondary?`, ${secondary}`:'');
+        clearSuggestionsMobile();
+        document.getElementById('searchMobile').blur();
+      } else {
+        document.getElementById('search').value=primary+(secondary?`, ${secondary}`:'');
+        hideSuggestionsDesktop();
+        document.getElementById('search').blur();
+      }
+      flyToPoint(coords[1], coords[0]);
+    });
+    const statusEl = isMob ? document.getElementById('statusMsgMobile') : document.getElementById('statusMsg');
+    container.insertBefore(item, statusEl);
   });
-  suggestionsEl.style.display = 'block';
+  container.style.display='block';
+
+  // Position the mobile suggestions above the chrome
+  if (isMob) {
+    const chromeRect = document.getElementById('bottomChrome').getBoundingClientRect();
+    document.getElementById('suggestionsMobile').style.bottom = (window.innerHeight - chromeRect.top + 4) + 'px';
+  }
 }
 
 function geocodeAndFly(q) {
   if (!q) return;
-  showStatus('Looking up address…');
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ', Pennsylvania')}&limit=1&countrycodes=us`;
-  fetch(url, { headers: { 'Accept-Language': 'en' } }).then(r => r.json()).then(data => {
-    clearStatus();
-    if (!data || data.length === 0) { showStatus('Address not found in Pennsylvania.'); return; }
+  const url=`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q+', Pennsylvania')}&limit=1&countrycodes=us`;
+  fetch(url, { headers:{'Accept-Language':'en'} }).then(r=>r.json()).then(data => {
+    if (!data||data.length===0) return;
     flyToPoint(parseFloat(data[0].lat), parseFloat(data[0].lon));
-  }).catch(() => showStatus('Geocoding failed. Check your connection.'));
+  }).catch(()=>{});
 }
 
 function flyToPoint(lat, lon) {
   if (pinMarker) map.removeLayer(pinMarker);
-  pinMarker = L.marker([lat, lon], { icon: L.divIcon({ className: 'search-pin', iconSize: [14,14], iconAnchor: [7,7] }) }).addTo(map);
-  map.flyTo([lat, lon], 14, { duration: 1.0 });
+  pinMarker = L.marker([lat,lon], {
+    icon: L.divIcon({ className:'search-pin', iconSize:[14,14], iconAnchor:[7,7] })
+  }).addTo(map);
+  map.flyTo([lat,lon], 14, { duration:1.0 });
   if (geoLayer) {
     geoLayer.resetStyle();
-    geoLayer.eachLayer(l => { if (l.feature) { const saved = getNoteForMuni(l._muniName); if (saved && saved.color) l.setStyle({ fillColor: saved.color }); } });
+    geoLayer.eachLayer(l => {
+      if (l.feature) { const s=getNoteForMuni(l._muniName); if(s&&s.color) l.setStyle({fillColor:s.color}); }
+    });
     geoLayer.eachLayer(layer => {
-      if (layer.feature && isPointInLayer(lat, lon, layer)) {
-        layer.setStyle({ color: '#e63946', weight: 2.5, fillOpacity: 0.75 });
+      if (layer.feature && isPointInLayer(lat,lon,layer)) {
+        layer.setStyle({ color:'#e63946', weight:2.5, fillOpacity:0.75 });
         setTimeout(() => layer.openPopup(), 800);
       }
     });
   }
 }
 
-// ═══════════════════════════════════════════════════════
-//  POINT-IN-POLYGON
-// ═══════════════════════════════════════════════════════
+function showStatus(msg, target) {
+  const isMob = target==='mobile';
+  const el  = isMob ? document.getElementById('statusMsgMobile') : document.getElementById('statusMsg');
+  const con = isMob ? document.getElementById('suggestionsMobile') : document.getElementById('suggestions');
+  el.style.display='block'; el.textContent=msg; con.style.display='block';
+  if (isMob) {
+    const chromeRect = document.getElementById('bottomChrome').getBoundingClientRect();
+    con.style.bottom = (window.innerHeight - chromeRect.top + 4) + 'px';
+  }
+}
+function clearStatus(target) {
+  const isMob = target==='mobile';
+  const el  = isMob ? document.getElementById('statusMsgMobile') : document.getElementById('statusMsg');
+  el.style.display='none'; el.textContent='';
+}
+
+// ── Point-in-polygon ──
 function isPointInLayer(lat, lon, layer) {
-  try { if (!layer.getBounds().contains([lat, lon])) return false; } catch(e) { return false; }
-  const pt = [lon, lat]; const geom = layer.feature.geometry;
-  if (geom.type === 'Polygon')      return pointInPolygon(pt, geom.coordinates[0]);
-  if (geom.type === 'MultiPolygon') return geom.coordinates.some(poly => pointInPolygon(pt, poly[0]));
+  try { if (!layer.getBounds().contains([lat,lon])) return false; } catch(e) { return false; }
+  const pt=[ lon,lat ]; const geom=layer.feature.geometry;
+  if (geom.type==='Polygon')      return pointInPolygon(pt, geom.coordinates[0]);
+  if (geom.type==='MultiPolygon') return geom.coordinates.some(poly=>pointInPolygon(pt,poly[0]));
   return false;
 }
 function pointInPolygon(point, polygon) {
-  let inside = false; const x = point[0], y = point[1];
-  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const xi = polygon[i][0], yi = polygon[i][1]; const xj = polygon[j][0], yj = polygon[j][1];
-    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) inside = !inside;
+  let inside=false; const x=point[0],y=point[1];
+  for (let i=0,j=polygon.length-1;i<polygon.length;j=i++) {
+    const xi=polygon[i][0],yi=polygon[i][1],xj=polygon[j][0],yj=polygon[j][1];
+    if (((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi)) inside=!inside;
   }
   return inside;
 }
-
-// ═══════════════════════════════════════════════════════
-//  HELPERS
-// ═══════════════════════════════════════════════════════
-function clearSuggestions() { Array.from(suggestionsEl.querySelectorAll('.suggestion-item')).forEach(el => el.remove()); clearStatus(); }
-function showStatus(msg) { statusEl.style.display = 'block'; statusEl.textContent = msg; suggestionsEl.style.display = 'block'; }
-function clearStatus() { statusEl.style.display = 'none'; statusEl.textContent = ''; if (!suggestionsEl.querySelector('.suggestion-item')) suggestionsEl.style.display = 'none'; }
-function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function escJs(s)   { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 
 // ═══════════════════════════════════════════════════════
 //  UTILITY MULTI-SELECT
@@ -1186,50 +1727,44 @@ function toggleUtilPanel() {
 }
 function toggleUtil(el) { el.classList.toggle('selected'); renderUtilTrigger(); markUnsaved(); }
 function renderUtilTrigger() {
-  const trigger = document.getElementById('utilTrigger');
+  const trigger     = document.getElementById('utilTrigger');
   const placeholder = document.getElementById('utilPlaceholder');
-  const selected = Array.from(document.querySelectorAll('#utilPanel .util-option.selected'));
-  trigger.querySelectorAll('.util-pill').forEach(p => p.remove());
-  if (selected.length === 0) { placeholder.style.display = ''; }
+  const selected    = Array.from(document.querySelectorAll('#utilPanel .util-option.selected'));
+  trigger.querySelectorAll('.util-pill').forEach(p=>p.remove());
+  if (selected.length===0) { placeholder.style.display=''; }
   else {
-    placeholder.style.display = 'none';
+    placeholder.style.display='none';
     selected.forEach(opt => {
-      const pill = document.createElement('span');
-      pill.className = 'util-pill';
-      const label = opt.dataset.value.replace(/\s*\(.*?\)/g, '');
-      pill.innerHTML = `${escHtml(label)}<button class="util-pill-remove" onclick="removeUtil(event,'${escJs(opt.dataset.value)}')" title="Remove">×</button>`;
+      const pill=document.createElement('span');
+      pill.className='util-pill';
+      const label=opt.dataset.value.replace(/\s*\(.*?\)/g,'');
+      pill.innerHTML=`${escHtml(label)}<button class="util-pill-remove" onclick="removeUtil(event,'${escJs(opt.dataset.value)}')" title="Remove">×</button>`;
       trigger.insertBefore(pill, trigger.querySelector('.util-trigger-arrow'));
     });
   }
 }
 function removeUtil(e, value) {
   e.stopPropagation();
-  const opt = document.querySelector(`#utilPanel .util-option[data-value="${CSS.escape(value)}"]`);
+  const opt=document.querySelector(`#utilPanel .util-option[data-value="${CSS.escape(value)}"]`);
   if (opt) opt.classList.remove('selected');
   renderUtilTrigger(); markUnsaved();
 }
-function getUtilDropdownValues() { return Array.from(document.querySelectorAll('#utilPanel .util-option.selected')).map(el => el.dataset.value); }
-function setUtilDropdownValues(values) { document.querySelectorAll('#utilPanel .util-option').forEach(el => { el.classList.toggle('selected', values.includes(el.dataset.value)); }); renderUtilTrigger(); }
+function getUtilDropdownValues() { return Array.from(document.querySelectorAll('#utilPanel .util-option.selected')).map(el=>el.dataset.value); }
+function setUtilDropdownValues(values) {
+  document.querySelectorAll('#utilPanel .util-option').forEach(el=>{ el.classList.toggle('selected',values.includes(el.dataset.value)); });
+  renderUtilTrigger();
+}
 document.addEventListener('click', e => {
   if (utilOpen && !e.target.closest('#utilDropdown')) {
-    utilOpen = false;
+    utilOpen=false;
     document.getElementById('utilPanel').classList.remove('open');
     document.getElementById('utilTrigger').classList.remove('open');
   }
 });
 
 // ═══════════════════════════════════════════════════════
-//  MAP PADDING FOR MOBILE
+//  GLOBALS FOR POPUP
 // ═══════════════════════════════════════════════════════
-function applyMapPadding() {
-  if (isMobile()) {
-    // Push map content up from the bottom bar + search bar
-    map.setPadding ? map.setPadding({ bottom: 130 }) : null;
-  }
-}
-window.addEventListener('resize', applyMapPadding);
-applyMapPadding();
-
 window.openSidebarFor = openSidebarFor;
 </script>
 </body>
