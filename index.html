@@ -1497,7 +1497,7 @@ function startLocationTracking() {
         locationCircle.setLatLng([lat,lon]); locationCircle.setRadius(acc);
       }
     },
-    err => { console.warn('Location error:', err.message); stopLocationTracking(); setLocActive(false); },
+    err => { console.warn('Location error:', err.message); stopLocationTracking(); setLocActive(false); if (err.code === 1) alert('Location access denied. Please allow location in your browser settings.'); },
     { enableHighAccuracy:true, maximumAge:5000, timeout:10000 }
   );
 }
@@ -1509,13 +1509,24 @@ function stopLocationTracking() {
 }
 
 function setLocActive(active) {
-  document.getElementById('mobLocBtn').classList.toggle('active', active);
-  document.getElementById('locBtnDesktop').classList.toggle('active', active);
+  const mob = document.getElementById('mobLocBtn');
+  const desk = document.getElementById('locBtnDesktop');
+  if (mob) {
+    mob.classList.toggle('active', active);
+    const svg = mob.querySelector('svg');
+    if (svg) svg.setAttribute('stroke', active ? '#3b82f6' : '#999');
+  }
+  if (desk) desk.classList.toggle('active', active);
 }
 
 function toggleLocation() {
-  if (locationWatchId!==null) { stopLocationTracking(); setLocActive(false); }
-  else { startLocationTracking(); setLocActive(true); }
+  if (locationWatchId !== null) {
+    stopLocationTracking();
+    setLocActive(false);
+  } else {
+    setLocActive(true); // immediate feedback before permission resolves
+    startLocationTracking();
+  }
 }
 
 // ═══════════════════════════════════════════════════════
