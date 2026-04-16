@@ -388,9 +388,9 @@
     <div class="layers-section-title">Fill opacity</div>
     <div class="opacity-presets">
       <button class="opacity-btn" data-opacity="0" onclick="setOpacityPreset(this)">None</button>
-      <button class="opacity-btn" data-opacity="0.3" onclick="setOpacityPreset(this)">Light</button>
-      <button class="opacity-btn active" data-opacity="0.55" onclick="setOpacityPreset(this)">Med</button>
-      <button class="opacity-btn" data-opacity="0.8" onclick="setOpacityPreset(this)">Solid</button>
+      <button class="opacity-btn" data-opacity="0.2" onclick="setOpacityPreset(this)">Light</button>
+      <button class="opacity-btn active" data-opacity="0.45" onclick="setOpacityPreset(this)">Med</button>
+      <button class="opacity-btn" data-opacity="0.75" onclick="setOpacityPreset(this)">Solid</button>
     </div>
   </div>
   <!-- Base map -->
@@ -445,7 +445,7 @@
 </div>
 
 <!-- LEGEND -->
-<div id="legend">
+<div id="legend" class="hidden">
   <h4>Municipality Type</h4>
   <div class="legend-row"><div class="legend-swatch" style="background:#cccccc"></div> Township</div>
   <div class="legend-row"><div class="legend-swatch" style="background:#a8c66c"></div> Borough</div>
@@ -746,12 +746,16 @@ const TILE_ATTRIBS = {
   topo:      '© OpenStreetMap © OpenTopoMap'
 };
 
-const map = L.map('map',{zoomControl:true}).setView([40.9,-77.8],7);
+const map = L.map('map',{zoomControl:true,preferCanvas:true}).setView([40.9,-77.8],7);
 let currentTileLayer = L.tileLayer(TILE_URLS.light,{attribution:TILE_ATTRIBS.light,maxZoom:19}).addTo(map);
 let geoLayer, pinMarker=null;
-let currentFillOpacity = 0.55;
+let currentFillOpacity = 0.45;
 let bordersVisible = true;
 let labelsEnabled = true;
+
+// Debounced label updater — only fires 200ms after pan/zoom stops
+let _labelTimer=null;
+function scheduleUpdateLabels(){clearTimeout(_labelTimer);_labelTimer=setTimeout(updateLabels,200);}
 
 function defaultColor(feature) {
   const cls=(feature.properties.CLASS_OF_M||'').toUpperCase();
@@ -791,7 +795,7 @@ fetch('pa_municipalities.geojson')
     }).addTo(map);
     map.fitBounds(geoLayer.getBounds());
     updateLabels();
-    map.on('zoomend moveend',updateLabels);
+    map.on('zoomend moveend',scheduleUpdateLabels);
   })
   .catch(err=>console.error('GeoJSON load failed:',err));
 
@@ -807,18 +811,22 @@ function buildPopup(p) {
   return `<div class="popup-inner"><div class="popup-header"><div class="popup-name">${escHtml(p.MUNICIPAL1)}</div></div><table class="popup-table"><tr><td>Type</td><td>${formatClass(p.CLASS_OF_M)}</td></tr><tr><td>County</td><td>${titleCase(p.COUNTY_NAM)}</td></tr><tr><td>Permit</td><td>${permitHtml}</td></tr><tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}</table><div class="popup-footer"><a class="popup-edit-link" href="#" onclick="openSidebarFor('${escJs(p.MUNICIPAL1)}','${escJs(p.CLASS_OF_M)}','${escJs(p.COUNTY_NAM)}');return false;">✎ Edit notes / color</a></div></div>`;
 }
 
-// Smart labels: only show labels whose center is within current map bounds, zoom >= 10
+// Smart labels: viewport-culled, debounced via scheduleUpdateLabels
 function updateLabels() {
   if(!geoLayer)return;
   const zoom=map.getZoom();
+  // Fast path: below threshold — remove all visible labels in one pass and stop
+  if(!labelsEnabled||zoom<10){
+    geoLayer.eachLayer(l=>{if(l._label&&map.hasLayer(l._label))map.removeLayer(l._label);});
+    return;
+  }
   const bounds=map.getBounds();
   geoLayer.eachLayer(l=>{
     if(!l._label)return;
     const center=l.getBounds().getCenter();
     const inView=bounds.contains(center);
-    const show=labelsEnabled&&zoom>=10&&inView;
-    if(show&&!map.hasLayer(l._label))l._label.addTo(map);
-    else if(!show&&map.hasLayer(l._label))map.removeLayer(l._label);
+    if(inView&&!map.hasLayer(l._label))l._label.addTo(map);
+    else if(!inView&&map.hasLayer(l._label))map.removeLayer(l._label);
   });
 }
 
@@ -845,15 +853,15 @@ function toggleLayersPanel() {
   layersPanelOpen=!layersPanelOpen;
   document.getElementById('layersPanel').classList.toggle('open',layersPanelOpen);
   document.getElementById('mobLayersBtn').classList.toggle('active',layersPanelOpen);
-  if(!isMobile()){
-    const shifted=layersPanelOpen;
-    document.getElementById('layersPanel').classList.toggle('shifted',false); // handled by CSS .open
-  }
+  // Hide legend while layers panel is open — they occupy the same space
+  document.getElementById('legend').classList.toggle('hidden', layersPanelOpen||!legendVisible);
 }
 function closeLayersPanel() {
   layersPanelOpen=false;
   document.getElementById('layersPanel').classList.remove('open');
   document.getElementById('mobLayersBtn')&&document.getElementById('mobLayersBtn').classList.remove('active');
+  // Restore legend if it was visible before
+  document.getElementById('legend').classList.toggle('hidden',!legendVisible);
 }
 
 // Close layers panel when clicking outside (desktop)
@@ -992,8 +1000,12 @@ document.getElementById('noteTextarea').addEventListener('input',markUnsaved);
 // ═══════════════════════════════════════
 //  LEGEND
 // ═══════════════════════════════════════
-let legendVisible=true;
-function toggleLegend(){legendVisible=!legendVisible;document.getElementById('legend').classList.toggle('hidden',!legendVisible);document.getElementById('mobLegendBtn').classList.toggle('active',legendVisible);}
+let legendVisible=false;
+function toggleLegend(){
+  legendVisible=!legendVisible;
+  document.getElementById('legend').classList.toggle('hidden',!legendVisible||layersPanelOpen);
+  document.getElementById('mobLegendBtn').classList.toggle('active',legendVisible);
+}
 
 // ═══════════════════════════════════════
 //  LIVE LOCATION
