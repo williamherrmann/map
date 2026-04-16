@@ -13,24 +13,18 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
 
   <style>
-    /* ══════════════════════════════════════════════
-       RESET & TOKENS
-    ══════════════════════════════════════════════ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      /* Safe areas */
       --sat: env(safe-area-inset-top, 0px);
       --sar: env(safe-area-inset-right, 0px);
       --sab: env(safe-area-inset-bottom, 0px);
       --sal: env(safe-area-inset-left, 0px);
 
-      /* Layout */
-      --nav-h: 56px;           /* bottom nav bar */
-      --search-h: 60px;        /* search bar above nav */
+      --nav-h: 56px;
+      --search-h: 60px;
       --total-chrome: calc(var(--nav-h) + var(--search-h) + var(--sab));
 
-      /* Colors */
       --bg:       #0f0f13;
       --surface:  #1a1a24;
       --border:   #2e2e40;
@@ -41,37 +35,28 @@
       --red:      #ef4444;
       --green:    #4ade80;
 
-      /* Sheets */
       --sheet-radius: 20px;
     }
 
     html, body {
       height: 100%;
-      /* Use dvh where supported for correct iOS behavior */
       height: 100dvh;
       overflow: hidden;
       font-family: 'DM Sans', sans-serif;
       background: var(--bg);
     }
 
-    /* ══════════════════════════════════════════════
-       MAP — fills entire viewport
-    ══════════════════════════════════════════════ */
     #map {
       position: fixed;
       inset: 0;
       z-index: 0;
     }
 
-    /* Push Leaflet zoom controls above chrome on mobile */
     .leaflet-control-zoom {
       margin-bottom: calc(var(--total-chrome) + 8px) !important;
       margin-right: calc(var(--sar) + 12px) !important;
     }
 
-    /* ══════════════════════════════════════════════
-       LOCATION PIN
-    ══════════════════════════════════════════════ */
     .location-pin {
       width: 16px; height: 16px;
       background: var(--blue);
@@ -80,16 +65,127 @@
       box-shadow: 0 0 0 3px rgba(59,130,246,0.3), 0 2px 8px rgba(59,130,246,0.5);
     }
 
-    /* ══════════════════════════════════════════════
-       BOTTOM CHROME — search + nav
-       Anchored to bottom with safe-area padding
-    ══════════════════════════════════════════════ */
+    /* ══ GEAR BUTTON (mobile only) ══ */
+    #gearBtn {
+      display: none;
+      position: fixed;
+      top: calc(12px + env(safe-area-inset-top, 0px));
+      right: 12px;
+      z-index: 400;
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1.5px solid #ddd;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      cursor: pointer;
+      color: #444;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s;
+    }
+    #gearBtn:active { background: #f0f0f0; }
+
+    /* ══ SETTINGS SHEET (mobile) ══ */
+    #settingsBackdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 800;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    #settingsSheet {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 900;
+      background: #fff;
+      border-top: 1.5px solid #ddd;
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.2);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      transform: translateY(110%);
+      transition: transform 0.32s cubic-bezier(0.32,0.72,0,1);
+      will-change: transform;
+    }
+    #settingsSheet::before {
+      content: '';
+      display: block;
+      width: 36px; height: 4px;
+      background: #ddd; border-radius: 2px;
+      margin: 10px auto 0;
+    }
+    #settingsSheetHeader {
+      padding: 14px 20px 14px;
+      border-bottom: 1.5px solid #eee;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    #settingsSheetTitle { font-size: 17px; font-weight: 700; color: #111; }
+    #settingsCloseBtn {
+      background: #f0f0f0; border: none; border-radius: 50%;
+      width: 30px; height: 30px;
+      cursor: pointer; font-size: 18px; color: #666;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+      line-height: 1;
+    }
+    #settingsBody {
+      padding: 18px 20px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .settings-section-label {
+      font-size: 11px; font-weight: 700; color: #888;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      margin-bottom: 10px;
+    }
+    #settingsAccountRow {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px;
+      background: #f5f5f8; border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    #settingsAvatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: #e0e7ff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 600; color: #4338ca;
+      flex-shrink: 0;
+    }
+    #settingsEmail {
+      font-size: 14px; font-weight: 600; color: #111;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    #settingsEmailSub {
+      font-size: 11px; color: #888; font-family: 'DM Mono', monospace;
+    }
+    #settingsSignOutBtn {
+      width: 100%; padding: 13px 16px;
+      background: #fff0f1; border: 1.5px solid #fca5a5; border-radius: 10px;
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+      color: #dc2626; cursor: pointer;
+      display: flex; align-items: center; gap: 10px;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s;
+    }
+    #settingsSignOutBtn:active { background: #ffe4e6; }
+    .settings-info-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-radius: 10px;
+    }
+    .settings-info-label { font-size: 14px; color: #111; }
+    .settings-info-value {
+      font-family: 'DM Mono', monospace; font-size: 12px; color: #888;
+      background: #f0f0f3; padding: 3px 8px; border-radius: 6px;
+    }
+
+    /* ══ BOTTOM CHROME ══ */
     #bottomChrome {
       position: fixed;
-      bottom: 0;
-      left: 0; right: 0;
+      bottom: 0; left: 0; right: 0;
       z-index: 500;
-      /* Glass background */
       background: rgba(255,255,255,0.97);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -98,7 +194,6 @@
       padding-bottom: var(--sab);
     }
 
-    /* ── Search row ── */
     #searchRow {
       display: flex;
       align-items: center;
@@ -123,55 +218,36 @@
     }
     #searchIcon {
       padding: 0 8px 0 12px;
-      color: #888;
-      font-size: 17px;
-      line-height: 1;
-      user-select: none;
-      flex-shrink: 0;
+      color: #888; font-size: 17px; line-height: 1;
+      user-select: none; flex-shrink: 0;
     }
     #search {
-      flex: 1;
-      border: none;
-      outline: none;
+      flex: 1; border: none; outline: none;
       padding: 11px 4px;
       font-family: 'DM Sans', sans-serif;
-      font-size: 16px; /* critical: prevents iOS auto-zoom */
-      color: #111;
-      background: transparent;
-      min-width: 0;
+      font-size: 16px; color: #111; background: transparent; min-width: 0;
     }
     #search::placeholder { color: #aaa; }
     #clearBtn {
-      display: none;
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0 12px;
-      color: #bbb;
-      font-size: 20px;
-      line-height: 1;
-      flex-shrink: 0;
-      -webkit-tap-highlight-color: transparent;
+      display: none; background: none; border: none; cursor: pointer;
+      padding: 0 12px; color: #bbb; font-size: 20px; line-height: 1;
+      flex-shrink: 0; -webkit-tap-highlight-color: transparent;
     }
 
-    /* ── Suggestions (floats UP above chrome) ── */
     #suggestions {
       display: none;
       position: fixed;
       bottom: calc(var(--total-chrome) + 4px);
       left: 12px; right: 12px;
       background: #fff;
-      border: 1.5px solid #222;
-      border-radius: 14px;
+      border: 1.5px solid #222; border-radius: 14px;
       z-index: 600;
-      max-height: 55vh;
-      overflow-y: auto;
+      max-height: 55vh; overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       box-shadow: 0 -8px 32px rgba(0,0,0,0.18);
     }
     .suggestion-item {
-      padding: 13px 16px;
-      cursor: pointer;
+      padding: 13px 16px; cursor: pointer;
       border-bottom: 1px solid #f0f0f0;
       display: flex; flex-direction: column; gap: 3px;
       -webkit-tap-highlight-color: transparent;
@@ -182,32 +258,24 @@
     .suggestion-name { font-size: 14px; font-weight: 600; color: #111; }
     .suggestion-sub  { font-size: 12px; color: #888; font-family: 'DM Mono', monospace; }
     #statusMsg {
-      display: none;
-      padding: 14px 16px;
-      font-size: 13px;
-      color: #888;
-      font-family: 'DM Mono', monospace;
-      text-align: center;
+      display: none; padding: 14px 16px;
+      font-size: 13px; color: #888; font-family: 'DM Mono', monospace; text-align: center;
     }
 
-    /* ── Nav row ── */
     #navRow {
-      display: flex;
-      align-items: center;
-      justify-content: space-around;
+      display: flex; align-items: center; justify-content: space-around;
       height: var(--nav-h);
     }
     .nav-btn {
       display: flex; flex-direction: column; align-items: center; gap: 3px;
-      flex: 1;
-      background: none; border: none; cursor: pointer;
+      flex: 1; background: none; border: none; cursor: pointer;
       padding: 6px 4px;
       font-family: 'DM Sans', sans-serif;
       font-size: 10px; font-weight: 600; color: #999;
       letter-spacing: 0.04em; text-transform: uppercase;
       -webkit-tap-highlight-color: transparent;
       transition: color 0.12s;
-      min-height: 44px; /* accessible tap target */
+      min-height: 44px;
     }
     .nav-btn svg { flex-shrink: 0; }
     .nav-btn.active { color: var(--blue); }
@@ -215,17 +283,17 @@
     .nav-btn.danger { color: var(--red); }
     .nav-btn.danger svg { stroke: var(--red) !important; }
 
-    /* ══════════════════════════════════════════════
-       DESKTOP OVERRIDES (≥ 768px)
-       Sidebar + floating search panel
-    ══════════════════════════════════════════════ */
+    /* ══ DESKTOP ══ */
     @media (min-width: 768px) {
       #bottomChrome { display: none; }
+      #gearBtn { display: none !important; }
+      #settingsBackdrop { display: none !important; }
+      #settingsSheet { display: none !important; }
+
       #suggestions {
         position: absolute;
         bottom: auto; left: auto; right: auto;
-        top: 100%;
-        width: 100%;
+        top: 100%; width: 100%;
         max-height: 300px;
         border-top: none;
         border-radius: 0 0 10px 10px;
@@ -236,22 +304,18 @@
         display: block;
         position: absolute;
         top: 14px; left: 54px;
-        z-index: 500;
-        width: 300px;
+        z-index: 500; width: 300px;
       }
       #desktopSearch #searchWrap {
-        background: #fff;
-        border: 2px solid #222;
-        border-radius: 8px;
-        box-shadow: 3px 3px 0 #222;
+        background: #fff; border: 2px solid #222;
+        border-radius: 8px; box-shadow: 3px 3px 0 #222;
       }
       #desktopSearch #search { font-size: 13px; }
       #desktopSearch .suggestions-wrap { position: relative; }
 
       #locBtnDesktop {
         display: flex;
-        position: absolute;
-        top: 14px; left: 14px;
+        position: absolute; top: 14px; left: 14px;
         z-index: 500;
         width: 36px; height: 36px;
         background: #fff; border: 2px solid #222; border-radius: 8px;
@@ -278,27 +342,19 @@
       }
       #badgeLogout {
         background: none; border: none; cursor: pointer;
-        font-size: 11px; color: #4a4a6a;
-        font-family: 'DM Mono', monospace;
+        font-size: 11px; color: #4a4a6a; font-family: 'DM Mono', monospace;
         transition: color 0.15s;
       }
       #badgeLogout:hover { color: var(--red); }
       #badgeVersion {
-        font-family: 'DM Mono', monospace; font-size: 10px;
-        color: #3a3a55;
-        background: #12121a;
-        border: 1px solid #2e2e40;
-        border-radius: 4px;
-        padding: 2px 6px;
-        letter-spacing: 0.06em;
-        user-select: none;
-        flex-shrink: 0;
+        font-family: 'DM Mono', monospace; font-size: 10px; color: #3a3a55;
+        background: #12121a; border: 1px solid #2e2e40; border-radius: 4px;
+        padding: 2px 6px; letter-spacing: 0.06em; user-select: none; flex-shrink: 0;
       }
 
       #legend {
         position: absolute;
-        bottom: 30px; right: 14px;
-        z-index: 500;
+        bottom: 30px; right: 14px; z-index: 500;
         background: #fff; border: 2px solid #222; border-radius: 8px;
         padding: 12px 16px; box-shadow: 3px 3px 0 #222;
         font-size: 12px;
@@ -310,9 +366,7 @@
         width: 320px;
         height: 100dvh;
         top: 0; right: 0; bottom: auto; left: auto;
-        border-radius: 0;
-        border-top: none;
-        border-left: 2px solid #222;
+        border-radius: 0; border-top: none; border-left: 2px solid #222;
         transform: translateX(100%);
         transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
         box-shadow: -4px 0 16px rgba(0,0,0,0.12);
@@ -321,33 +375,27 @@
       #sidebar::before { display: none; }
     }
 
-    /* ══════════════════════════════════════════════
-       DESKTOP-ONLY ELEMENTS (hidden on mobile)
-    ══════════════════════════════════════════════ */
     #desktopSearch { display: none; }
     #locBtnDesktop { display: none; }
-    #sessionBadge  { display: none; } /* shown via JS on desktop */
+    #sessionBadge  { display: none; }
 
-    /* ══════════════════════════════════════════════
-       BOTTOM SHEET (sidebar on mobile)
-    ══════════════════════════════════════════════ */
+    /* ══ SHEET BACKDROP ══ */
     #sheetBackdrop {
       display: none;
       position: fixed; inset: 0;
       background: rgba(0,0,0,0.45);
-      z-index: 800;
-      opacity: 0;
+      z-index: 800; opacity: 0;
       transition: opacity 0.3s;
       -webkit-tap-highlight-color: transparent;
     }
     #sheetBackdrop.visible { display: block; }
     #sheetBackdrop.show    { opacity: 1; }
 
+    /* ══ NOTES SIDEBAR ══ */
     #sidebar {
       position: fixed;
       bottom: 0; left: 0; right: 0;
       z-index: 900;
-      /* Use max safe height leaving room for iOS home indicator */
       max-height: calc(94dvh - var(--sab));
       background: #fff;
       border-top: 1.5px solid #ddd;
@@ -356,30 +404,20 @@
       display: flex; flex-direction: column;
       transform: translateY(110%);
       transition: transform 0.32s cubic-bezier(0.32,0.72,0,1);
-      /* Prevent content from going under home indicator */
       padding-bottom: var(--sab);
       will-change: transform;
     }
-    #sidebar.open {
-      transform: translateY(0);
-    }
-
-    /* Drag handle */
+    #sidebar.open { transform: translateY(0); }
     #sidebar::before {
-      content: '';
-      display: block;
+      content: ''; display: block;
       width: 36px; height: 4px;
       background: #ddd; border-radius: 2px;
-      margin: 10px auto 0;
-      flex-shrink: 0;
+      margin: 10px auto 0; flex-shrink: 0;
     }
 
-    /* ── Sidebar inner layout ── */
     #sidebarHeader {
       display: flex; align-items: flex-start; justify-content: space-between;
-      padding: 14px 20px 14px;
-      border-bottom: 1.5px solid #eee;
-      flex-shrink: 0;
+      padding: 14px 20px 14px; border-bottom: 1.5px solid #eee; flex-shrink: 0;
     }
     #sidebarTitle { font-size: 17px; font-weight: 700; color: #111; line-height: 1.2; }
     #sidebarSub   { font-size: 12px; color: #888; margin-top: 3px; font-family: 'DM Mono', monospace; }
@@ -389,8 +427,7 @@
       cursor: pointer; font-size: 18px; color: #666;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0; margin-left: 8px;
-      -webkit-tap-highlight-color: transparent;
-      line-height: 1;
+      -webkit-tap-highlight-color: transparent; line-height: 1;
     }
 
     #sidebarBody {
@@ -402,21 +439,16 @@
     }
 
     #sidebarFooter {
-      padding: 14px 20px;
-      border-top: 1.5px solid #eee;
+      padding: 14px 20px; border-top: 1.5px solid #eee;
       display: flex; gap: 10px; align-items: center;
-      flex-shrink: 0;
-      background: #fff;
+      flex-shrink: 0; background: #fff;
     }
 
-    /* ── Form Controls ── */
     .section-label {
       font-size: 11px; font-weight: 700; color: #888;
-      text-transform: uppercase; letter-spacing: 0.07em;
-      margin-bottom: 10px;
+      text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px;
     }
 
-    /* Color swatches */
     #colorSwatches { display: flex; gap: 8px; flex-wrap: wrap; }
     .swatch {
       width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
@@ -433,7 +465,6 @@
     }
     #customColorLabel { font-size: 12px; color: #666; font-family: 'DM Mono', monospace; }
 
-    /* Permit radios */
     .permit-row { display: flex; gap: 8px; flex-wrap: wrap; }
     .check-radio-label {
       display: flex; align-items: center; gap: 6px; cursor: pointer;
@@ -442,13 +473,11 @@
       border: 1.5px solid #ddd; border-radius: 10px;
       transition: border-color 0.15s, background 0.15s;
       -webkit-tap-highlight-color: transparent;
-      flex: 1; min-width: 0; justify-content: center;
-      font-weight: 500;
+      flex: 1; min-width: 0; justify-content: center; font-weight: 500;
     }
     .check-radio-label:has(input:checked) { border-color: #222; background: #f5f5f5; font-weight: 600; }
     .check-radio-label input { accent-color: #222; }
 
-    /* Utility multi-select */
     .util-dropdown { position: relative; width: 100%; }
     .util-trigger {
       width: 100%; min-height: 48px; padding: 8px 36px 8px 12px;
@@ -494,8 +523,7 @@
       display: flex; align-items: center; gap: 10px; padding: 12px 14px;
       cursor: pointer; font-size: 13px; color: #111;
       transition: background 0.08s; user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      min-height: 44px;
+      -webkit-tap-highlight-color: transparent; min-height: 44px;
     }
     .util-option:active { background: #f5f5f5; }
     .util-option.selected { background: #f0f7ff; color: #1d4ed8; }
@@ -508,18 +536,15 @@
     }
     .util-option.selected .util-check-icon { background: #1d4ed8; border-color: #1d4ed8; }
 
-    /* Star rating */
     #starRating { display: flex; gap: 6px; }
     .star {
       font-size: 34px; color: #ddd; cursor: pointer;
       transition: color 0.1s, transform 0.1s;
-      user-select: none; -webkit-tap-highlight-color: transparent;
-      line-height: 1;
+      user-select: none; -webkit-tap-highlight-color: transparent; line-height: 1;
     }
     .star:active { transform: scale(0.9); }
     .star.on { color: var(--accent); }
 
-    /* Note textarea */
     #noteTextarea {
       width: 100%; min-height: 90px; resize: vertical;
       border: 1.5px solid #ddd; border-radius: 10px;
@@ -529,7 +554,6 @@
     }
     #noteTextarea:focus { border-color: #222; }
 
-    /* Save status */
     #saveStatus { display: flex; align-items: center; gap: 7px; margin-top: 8px; }
     #statusDot {
       width: 8px; height: 8px; border-radius: 50%; background: #ddd;
@@ -539,14 +563,12 @@
     #statusDot.saving  { background: var(--accent); }
     #statusText { font-size: 12px; color: #999; font-family: 'DM Mono', monospace; }
 
-    /* Buttons */
     .btn {
       flex: 1; padding: 13px 16px; border-radius: 10px;
       border: 1.5px solid #222; font-family: 'DM Sans', sans-serif;
       font-size: 14px; font-weight: 600; cursor: pointer;
       transition: background 0.15s, transform 0.1s;
-      -webkit-tap-highlight-color: transparent;
-      min-height: 48px;
+      -webkit-tap-highlight-color: transparent; min-height: 48px;
     }
     .btn:active { transform: scale(0.97); }
     .btn-primary { background: #222; color: #fff; border-color: #222; }
@@ -556,21 +578,15 @@
     .btn-danger  { background: #fff; color: var(--red); border-color: var(--red); }
     .btn-danger:hover { background: #fff0f1; }
 
-    /* ══════════════════════════════════════════════
-       LEGEND
-    ══════════════════════════════════════════════ */
+    /* ══ LEGEND ══ */
     #legend {
       position: fixed;
-      bottom: calc(var(--total-chrome) + 10px);
-      left: 12px;
+      bottom: calc(var(--total-chrome) + 10px); left: 12px;
       z-index: 400;
       background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1.5px solid #ddd;
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 12px;
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border: 1.5px solid #ddd; border-radius: 10px;
+      padding: 10px 14px; font-size: 12px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.1);
       transition: opacity 0.2s, transform 0.2s;
     }
@@ -583,9 +599,7 @@
     .legend-row:last-child { margin-bottom: 0; }
     .legend-swatch { width: 14px; height: 14px; border: 1.5px solid #aaa; border-radius: 3px; flex-shrink: 0; }
 
-    /* ══════════════════════════════════════════════
-       AUTH GATE
-    ══════════════════════════════════════════════ */
+    /* ══ AUTH GATE ══ */
     #authGate {
       position: fixed; inset: 0; z-index: 9999;
       background: var(--bg);
@@ -675,15 +689,11 @@
     .auth-success-sub { font-size: 12px; color: #6b8a7a; font-family: 'DM Mono', monospace; line-height: 1.6; }
     .auth-note { font-size: 11px; color: #4a4a6a; font-family: 'DM Mono', monospace; line-height: 1.6; margin-top: 18px; }
 
-    /* ══════════════════════════════════════════════
-       POPUP
-    ══════════════════════════════════════════════ */
+    /* ══ POPUP ══ */
     .leaflet-popup-content-wrapper {
-      border-radius: 12px !important;
-      border: 1.5px solid #222 !important;
-      box-shadow: 4px 4px 0 #222 !important;
-      padding: 0 !important; overflow: hidden;
-      font-family: 'DM Sans', sans-serif !important;
+      border-radius: 12px !important; border: 1.5px solid #222 !important;
+      box-shadow: 4px 4px 0 #222 !important; padding: 0 !important;
+      overflow: hidden; font-family: 'DM Sans', sans-serif !important;
     }
     .leaflet-popup-content { margin: 0 !important; width: auto !important; }
     .leaflet-popup-tip-container { display: none; }
@@ -707,13 +717,11 @@
     .popup-edit-link { font-size: 13px; color: var(--blue); font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 5px; }
     .popup-edit-link:hover { color: #1d4ed8; }
 
-    /* Municipality labels */
     .muni-label {
       font-size: 10px; font-weight: 600; font-family: 'DM Sans', sans-serif;
       color: #222; text-shadow: 0 0 4px #fff, 0 0 4px #fff, 0 0 3px #fff;
       white-space: nowrap; pointer-events: none;
     }
-    /* Search pin */
     .search-pin {
       width: 14px; height: 14px; background: var(--red);
       border: 2.5px solid #fff; border-radius: 50%;
@@ -766,6 +774,55 @@
      MAP
 ═══════════════════════════════════════════ -->
 <div id="map"></div>
+
+<!-- ═══════════════════════════════════════════
+     GEAR BUTTON (mobile, shown after sign-in)
+═══════════════════════════════════════════ -->
+<button id="gearBtn" onclick="openSettings()" title="Settings">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</button>
+
+<!-- ═══════════════════════════════════════════
+     SETTINGS SHEET (mobile)
+═══════════════════════════════════════════ -->
+<div id="settingsBackdrop" onclick="closeSettings()"></div>
+
+<div id="settingsSheet">
+  <div id="settingsSheetHeader">
+    <div id="settingsSheetTitle">Settings</div>
+    <button id="settingsCloseBtn" onclick="closeSettings()" aria-label="Close">×</button>
+  </div>
+  <div id="settingsBody">
+    <div>
+      <div class="settings-section-label">Account</div>
+      <div id="settingsAccountRow">
+        <div id="settingsAvatar">?</div>
+        <div style="min-width:0;">
+          <div id="settingsEmail">—</div>
+          <div id="settingsEmailSub">signed in</div>
+        </div>
+      </div>
+      <button id="settingsSignOutBtn" onclick="logout()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Sign out
+      </button>
+    </div>
+    <div>
+      <div class="settings-section-label">App</div>
+      <div class="settings-info-row">
+        <span class="settings-info-label">Version</span>
+        <span class="settings-info-value">v1</span>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════════
      DESKTOP ELEMENTS
@@ -824,7 +881,6 @@
   </div>
 
   <div id="sidebarBody">
-    <!-- Color -->
     <div>
       <div class="section-label">Municipality Color</div>
       <div id="colorSwatches"></div>
@@ -834,7 +890,6 @@
       </div>
     </div>
 
-    <!-- Permit -->
     <div>
       <div class="section-label">Permit Required?</div>
       <div class="permit-row">
@@ -844,7 +899,6 @@
       </div>
     </div>
 
-    <!-- Utility -->
     <div>
       <div class="section-label">Utility Providers</div>
       <div class="util-dropdown" id="utilDropdown">
@@ -876,7 +930,6 @@
       </div>
     </div>
 
-    <!-- Stars -->
     <div>
       <div class="section-label">Territory Rating</div>
       <div id="starRating">
@@ -888,7 +941,6 @@
       </div>
     </div>
 
-    <!-- Notes -->
     <div>
       <div class="section-label">Notes</div>
       <textarea id="noteTextarea" placeholder="Add notes about this municipality…" rows="4"></textarea>
@@ -910,7 +962,6 @@
      BOTTOM CHROME (mobile)
 ═══════════════════════════════════════════ -->
 <div id="bottomChrome">
-  <!-- Search bar -->
   <div id="searchRow">
     <div id="searchWrapMobile" style="flex:1;display:flex;align-items:center;background:#f4f4f6;border:1.5px solid #e0e0e6;border-radius:12px;overflow:visible;position:relative;transition:border-color 0.15s,box-shadow 0.15s;">
       <span style="padding:0 8px 0 12px;color:#888;font-size:17px;line-height:1;user-select:none;flex-shrink:0;">⌕</span>
@@ -925,7 +976,6 @@
     </div>
   </div>
 
-  <!-- Nav bar -->
   <div id="navRow">
     <button class="nav-btn" id="mobLocBtn" onclick="toggleLocation()">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -950,7 +1000,7 @@
   </div>
 </div>
 
-<!-- Suggestions for mobile (separate from bottom chrome, floats above it) -->
+<!-- Mobile suggestions (floats above chrome) -->
 <div id="suggestionsMobile" style="
   display:none;
   position:fixed;
@@ -972,9 +1022,6 @@
 <script>
 'use strict';
 
-// ═══════════════════════════════════════════════════════
-//  UTILS
-// ═══════════════════════════════════════════════════════
 const isMobile = () => window.innerWidth < 768;
 const escHtml  = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const escJs    = s => String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
@@ -1004,7 +1051,8 @@ async function signInWithPassword() {
   const email = document.getElementById('pwEmail').value.trim();
   const pass  = document.getElementById('pwPassword').value;
   const err   = document.getElementById('pwError');
-  err.style.display='none'; err.style.color=getComputedStyle(document.documentElement).getPropertyValue('--red').trim()||'#ef4444';
+  err.style.display='none';
+  err.style.color=getComputedStyle(document.documentElement).getPropertyValue('--red').trim()||'#ef4444';
   if (!isValidEmail(email)) { showAuthErr(err,'Please enter a valid email.'); return; }
   if (!pass) { showAuthErr(err,'Please enter your password.'); return; }
   const btn = document.getElementById('pwSignInBtn');
@@ -1066,13 +1114,18 @@ function startSession(user) {
   currentUser = user;
   document.getElementById('authGate').classList.add('hidden');
   document.getElementById('badgeEmail').textContent = user.email;
+
   if (!isMobile()) {
     document.getElementById('sessionBadge').style.display = 'flex';
     document.getElementById('sessionBadge').classList.remove('hidden');
   }
-  document.getElementById('mobSignLabel').textContent = 'Sign Out';
-  document.getElementById('mobSignIcon').setAttribute('stroke','#ef4444');
-  document.getElementById('mobSignBtn').classList.add('danger');
+
+  // Mobile: show gear, hide sign-in nav button
+  if (isMobile()) {
+    document.getElementById('gearBtn').style.display = 'flex';
+    document.getElementById('mobSignBtn').style.display = 'none';
+  }
+
   loadAllNotesFromSupabase();
 }
 
@@ -1091,14 +1144,22 @@ async function logout() {
   await sb.auth.signOut();
   currentUser=null; noteCache={};
   closeSidebar();
+  closeSettings();
   if (geoLayer) geoLayer.eachLayer(l => { if(l.feature) l.setStyle(styleForLayer(l.feature)); });
+
+  // Desktop badge
   document.getElementById('sessionBadge').classList.add('hidden');
   document.getElementById('sessionBadge').style.display='none';
-  resetAuthUI();
-  document.getElementById('authGate').classList.remove('hidden');
-  document.getElementById('mobSignLabel').textContent='Sign In';
+
+  // Mobile: hide gear, show sign-in nav button
+  document.getElementById('gearBtn').style.display = 'none';
+  document.getElementById('mobSignBtn').style.display = '';
+  document.getElementById('mobSignLabel').textContent = 'Sign In';
   document.getElementById('mobSignIcon').setAttribute('stroke','#999');
   document.getElementById('mobSignBtn').classList.remove('danger');
+
+  resetAuthUI();
+  document.getElementById('authGate').classList.remove('hidden');
 }
 
 function handleMobSignBtn() {
@@ -1109,6 +1170,56 @@ function handleMobSignBtn() {
 sb.auth.onAuthStateChange(async (event, session) => {
   if (session && session.user) startSession(session.user);
 });
+
+// ═══════════════════════════════════════════════════════
+//  SETTINGS SHEET (mobile)
+// ═══════════════════════════════════════════════════════
+function openSettings() {
+  const email = currentUser ? currentUser.email : '—';
+  document.getElementById('settingsEmail').textContent = email;
+  const initials = (email && email !== '—') ? email.slice(0,2).toUpperCase() : '?';
+  document.getElementById('settingsAvatar').textContent = initials;
+
+  const sheet    = document.getElementById('settingsSheet');
+  const backdrop = document.getElementById('settingsBackdrop');
+  backdrop.style.display = 'block';
+  requestAnimationFrame(() => {
+    backdrop.style.opacity = '1';
+    sheet.style.transform  = 'translateY(0)';
+  });
+}
+
+function closeSettings() {
+  const sheet    = document.getElementById('settingsSheet');
+  const backdrop = document.getElementById('settingsBackdrop');
+  sheet.style.transform  = 'translateY(110%)';
+  backdrop.style.opacity = '0';
+  setTimeout(() => { backdrop.style.display = 'none'; }, 300);
+}
+
+// Swipe to dismiss settings sheet
+(function() {
+  const sheet = document.getElementById('settingsSheet');
+  let startY = 0, dragging = false;
+  sheet.addEventListener('touchstart', e => {
+    startY = e.touches[0].clientY; dragging = true;
+    sheet.style.transition = 'none';
+  }, { passive: true });
+  sheet.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy < 0) return;
+    sheet.style.transform = `translateY(${dy}px)`;
+  }, { passive: true });
+  sheet.addEventListener('touchend', e => {
+    if (!dragging) return;
+    dragging = false;
+    sheet.style.transition = '';
+    const dy = e.changedTouches[0].clientY - startY;
+    if (dy > 80) { closeSettings(); sheet.style.transform = ''; }
+    else { sheet.style.transform = ''; }
+  });
+})();
 
 // ═══════════════════════════════════════════════════════
 //  SUPABASE DATA
@@ -1180,7 +1291,6 @@ function formatClass(cls) {
 }
 function titleCase(s) { return (s||'').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()); }
 
-// ── Load GeoJSON ──
 fetch('pa_municipalities.geojson')
   .then(r => r.json())
   .then(data => {
@@ -1261,20 +1371,10 @@ function refreshLayerStyle(muniName) {
   });
 }
 
-// ── Map padding so shapes show above chrome ──
 function updateMapPadding() {
-  if (isMobile()) {
-    // Calculate total chrome height for map padding
-    const chromeH = document.getElementById('bottomChrome').offsetHeight;
-    map.invalidateSize();
-    // Leaflet doesn't have setPadding; instead keep map full-screen and rely on
-    // the fixed chrome layering. Just invalidate size on resize.
-  } else {
-    map.invalidateSize();
-  }
+  map.invalidateSize();
 }
 window.addEventListener('resize', updateMapPadding);
-// Run after fonts/layout settle
 setTimeout(updateMapPadding, 300);
 
 // ═══════════════════════════════════════════════════════
@@ -1367,17 +1467,14 @@ function openSidebarFor(name, cls, county) {
   });
   markSaved(!!saved);
 
-  // Open sheet
-  const sidebar   = document.getElementById('sidebar');
-  const backdrop  = document.getElementById('sheetBackdrop');
+  const sidebar  = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sheetBackdrop');
   sidebar.classList.add('open');
   backdrop.classList.add('visible');
   requestAnimationFrame(() => backdrop.classList.add('show'));
 
   if (isMobile()) {
-    // Dismiss any open keyboard first
     document.activeElement && document.activeElement.blur();
-    // Clear search suggestions
     clearSuggestionsMobile();
   } else {
     document.getElementById('noteTextarea').focus();
@@ -1397,8 +1494,8 @@ function closeSidebar() {
 
 async function saveNote() {
   if (!currentMuni) return;
-  const note     = document.getElementById('noteTextarea').value.trim();
-  const ciRaw    = document.querySelector('input[name="checkedIn"]:checked')?.value||'';
+  const note      = document.getElementById('noteTextarea').value.trim();
+  const ciRaw     = document.querySelector('input[name="checkedIn"]:checked')?.value||'';
   const checkedIn = ciRaw==='true' ? true : ciRaw==='false' ? false : null;
   const utilities = getUtilDropdownValues();
   markStatus('saving','Saving…');
@@ -1433,20 +1530,13 @@ function markStatus(dotClass, text) {
 function markUnsaved() { markSaved(false); }
 document.getElementById('noteTextarea').addEventListener('input', markUnsaved);
 
-// Swipe-to-dismiss bottom sheet
+// Swipe-to-dismiss notes sidebar
 (function() {
   const sidebar = document.getElementById('sidebar');
-  let startY=0, startTranslate=0, dragging=false;
-  function getTranslateY(el) {
-    const t = getComputedStyle(el).transform;
-    if (t==='none') return 0;
-    return parseFloat(t.split(',')[5]);
-  }
+  let startY=0, dragging=false;
   sidebar.addEventListener('touchstart', e => {
     if (e.target.closest('#sidebarBody') && sidebar.querySelector('#sidebarBody').scrollTop > 0) return;
-    startY = e.touches[0].clientY;
-    startTranslate = getTranslateY(sidebar);
-    dragging = true;
+    startY = e.touches[0].clientY; dragging = true;
     sidebar.style.transition = 'none';
   }, { passive:true });
   sidebar.addEventListener('touchmove', e => {
@@ -1509,7 +1599,7 @@ function stopLocationTracking() {
 }
 
 function setLocActive(active) {
-  const mob = document.getElementById('mobLocBtn');
+  const mob  = document.getElementById('mobLocBtn');
   const desk = document.getElementById('locBtnDesktop');
   if (mob) {
     mob.classList.toggle('active', active);
@@ -1521,26 +1611,23 @@ function setLocActive(active) {
 
 function toggleLocation() {
   if (locationWatchId !== null) {
-    stopLocationTracking();
-    setLocActive(false);
+    stopLocationTracking(); setLocActive(false);
   } else {
-    setLocActive(true); // immediate feedback before permission resolves
+    setLocActive(true);
     startLocationTracking();
   }
 }
 
 // ═══════════════════════════════════════════════════════
-//  SEARCH — shared logic, dual inputs (mobile / desktop)
+//  SEARCH
 // ═══════════════════════════════════════════════════════
 let debounceTimer = null;
 
-// ── Desktop search ──
+// Desktop search
 (function() {
-  const input     = document.getElementById('search');
-  const clearBtn  = document.getElementById('clearBtn');
-  const suggestEl = document.getElementById('suggestions');
+  const input    = document.getElementById('search');
+  const clearBtn = document.getElementById('clearBtn');
   if (!input) return;
-
   input.addEventListener('input', () => {
     clearBtn.style.display = input.value ? 'block' : 'none';
     clearTimeout(debounceTimer);
@@ -1562,12 +1649,11 @@ let debounceTimer = null;
   });
 })();
 
-// ── Mobile search ──
+// Mobile search
 (function() {
   const input    = document.getElementById('searchMobile');
   const clearBtn = document.getElementById('clearBtnMobile');
   if (!input) return;
-
   input.addEventListener('focus', () => {
     document.getElementById('searchWrapMobile').style.borderColor = '#222';
     document.getElementById('searchWrapMobile').style.background = '#fff';
@@ -1592,7 +1678,6 @@ let debounceTimer = null;
     if (e.key==='Enter') { clearSuggestionsMobile(); geocodeAndFly(input.value.trim()); input.blur(); }
     if (e.key==='Escape') { clearSuggestionsMobile(); input.blur(); }
   });
-  // Dismiss suggestions when tapping map
   document.getElementById('map').addEventListener('touchstart', () => {
     clearSuggestionsMobile(); input.blur();
   }, { passive:true });
@@ -1628,10 +1713,9 @@ function fetchSuggestions(q, target) {
 }
 
 function renderSuggestions(features, target) {
-  const isMob    = target==='mobile';
+  const isMob     = target==='mobile';
   const container = isMob ? document.getElementById('suggestionsMobile') : document.getElementById('suggestions');
   container.querySelectorAll('.suggestion-item').forEach(e=>e.remove());
-
   features.forEach(f => {
     const p=f.properties; const coords=f.geometry.coordinates;
     const parts=[p.name,p.street,p.city,p.county?p.county+' County':'','PA'].filter(Boolean);
@@ -1657,8 +1741,6 @@ function renderSuggestions(features, target) {
     container.insertBefore(item, statusEl);
   });
   container.style.display='block';
-
-  // Position the mobile suggestions above the chrome
   if (isMob) {
     const chromeRect = document.getElementById('bottomChrome').getBoundingClientRect();
     document.getElementById('suggestionsMobile').style.bottom = (window.innerHeight - chromeRect.top + 4) + 'px';
@@ -1710,7 +1792,6 @@ function clearStatus(target) {
   el.style.display='none'; el.textContent='';
 }
 
-// ── Point-in-polygon ──
 function isPointInLayer(lat, lon, layer) {
   try { if (!layer.getBounds().contains([lat,lon])) return false; } catch(e) { return false; }
   const pt=[ lon,lat ]; const geom=layer.feature.geometry;
