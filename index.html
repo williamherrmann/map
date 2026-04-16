@@ -1242,9 +1242,119 @@ let debounceTimer=null;
 
 function hideSuggestionsDesktop(){const el=document.getElementById('suggestions');if(!el)return;el.querySelectorAll('.suggestion-item').forEach(e=>e.remove());document.getElementById('statusMsg').style.display='none';el.style.display='none';}
 function clearSuggestionsMobile(){const el=document.getElementById('suggestionsMobile');el.querySelectorAll('.suggestion-item').forEach(e=>e.remove());document.getElementById('statusMsgMobile').style.display='none';el.style.display='none';}
-function fetchSuggestions(q,target){const url=`https://photon.komoot.io/api/?q=${encodeURIComponent(q+' Pennsylvania')}&limit=8&lang=en&bbox=-80.5,39.7,-74.7,42.3`;showStatus('Searching…',target);fetch(url).then(r=>r.json()).then(data=>{clearStatus(target);const features=(data.features||[]).filter(f=>{const s=(f.properties.state||'').toLowerCase();return s==='pennsylvania'||s==='pa';}).slice(0,6);if(features.length===0){showStatus('No results in Pennsylvania.',target);return;}renderSuggestions(features,target);}).catch(()=>showStatus('Search unavailable.',target));}
-function renderSuggestions(features,target){const isMob=target==='mobile';const container=isMob?document.getElementById('suggestionsMobile'):document.getElementById('suggestions');container.querySelectorAll('.suggestion-item').forEach(e=>e.remove());features.forEach(f=>{const p=f.properties,coords=f.geometry.coordinates;const parts=[p.name,p.street,p.city,p.county?p.county+' County':'','PA'].filter(Boolean);const deduped=parts.filter((v,i)=>v!==parts[i-1]);const primary=deduped[0]||'Unknown',secondary=deduped.slice(1).join(', ');const item=document.createElement('div');item.className='suggestion-item';item.innerHTML=`<span class="suggestion-name">${escHtml(primary)}</span>${secondary?`<span class="suggestion-sub">${escHtml(secondary)}</span>`:''}`;item.addEventListener('click',()=>{if(isMob){document.getElementById('searchMobile').value=primary+(secondary?`, ${secondary}`:'');clearSuggestionsMobile();document.getElementById('searchMobile').blur();}else{document.getElementById('search').value=primary+(secondary?`, ${secondary}`:'');hideSuggestionsDesktop();document.getElementById('search').blur();}flyToPoint(coords[1],coords[0]);});const statusEl=isMob?document.getElementById('statusMsgMobile'):document.getElementById('statusMsg');container.insertBefore(item,statusEl);});container.style.display='block';if(isMob){const chromeRect=document.getElementById('bottomChrome').getBoundingClientRect();document.getElementById('suggestionsMobile').style.bottom=(window.innerHeight-chromeRect.top+4)+'px';}}
-function geocodeAndFly(q){if(!q)return;const url=`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q+', Pennsylvania')}&limit=1&countrycodes=us`;fetch(url,{headers:{'Accept-Language':'en'}}).then(r=>r.json()).then(data=>{if(!data||data.length===0)return;flyToPoint(parseFloat(data[0].lat),parseFloat(data[0].lon));}).catch(()=>{});}
+function fetchSuggestions(q,target){
+  // If query starts with a number it's likely a house address — use Nominatim directly
+  const looksLikeAddress=/^\d+\s/.test(q.trim());
+  if(looksLikeAddress){fetchSuggestionsNominatim(q,target);return;}
+  const hasComma=q.includes(',');
+  const hasPA=/(,?\s*(pa|pennsylvania))\s*$/i.test(q);
+  const searchQ=(hasPA||hasComma)?q:q+' Pennsylvania';
+  const url=`https://photon.komoot.io/api/?q=${encodeURIComponent(searchQ)}&limit=10&lang=en&bbox=-80.5,39.7,-74.7,42.3`;
+  showStatus('Searching…',target);
+  fetch(url).then(r=>r.json()).then(data=>{
+    clearStatus(target);
+    const features=(data.features||[]).filter(f=>{
+      const s=(f.properties.state||'').toLowerCase();
+      return s==='pennsylvania'||s==='pa'||s==='';
+    }).slice(0,6);
+    if(features.length===0){fetchSuggestionsNominatim(q,target);return;}
+    renderSuggestions(features,target);
+  }).catch(()=>fetchSuggestionsNominatim(q,target));
+}
+
+function fetchSuggestionsNominatim(q,target){
+  const hasPA=/(,?\s*(pa|pennsylvania))\s*$/i.test(q);
+  const searchQ=hasPA?q:q+', Pennsylvania';
+  const url=`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQ)}&limit=6&countrycodes=us&viewbox=-80.5,39.7,-74.7,42.3&bounded=0&addressdetails=1`;
+  showStatus('Searching…',target);
+  fetch(url,{headers:{'Accept-Language':'en'}}).then(r=>r.json()).then(data=>{
+    clearStatus(target);
+    if(!data||data.length===0){showStatus('No results found.',target);return;}
+    // Convert Nominatim results to same shape as Photon for renderSuggestions
+    const features=data.map(r=>{
+      const a=r.address||{};
+      // Build a clean primary label: "33 Main Street" or "Main Street" or place name
+      let primary;
+      if(a.house_number&&a.road) primary=a.house_number+' '+a.road;
+      else if(a.road) primary=a.road;
+      else if(r.name) primary=r.name;
+      else primary=r.display_name.split(',')[0];
+      // Secondary: city, county, PA
+      const city=a.city||a.town||a.village||a.municipality||a.hamlet||'';
+      const county=a.county?a.county.replace(/ County$/i,'')+' County':'';
+      const secondary=[city,county,'PA'].filter(Boolean).join(', ');
+      return {
+        type:'Feature',
+        geometry:{type:'Point',coordinates:[parseFloat(r.lon),parseFloat(r.lat)]},
+        properties:{_primary:primary,_secondary:secondary}
+      };
+    });
+    renderSuggestionsNominatim(features,target);
+  }).catch(()=>showStatus('Search unavailable.',target));
+}
+
+function renderSuggestionsNominatim(features,target){
+  const isMob=target==='mobile';
+  const container=isMob?document.getElementById('suggestionsMobile'):document.getElementById('suggestions');
+  container.querySelectorAll('.suggestion-item').forEach(e=>e.remove());
+  features.forEach(f=>{
+    const p=f.properties;
+    const coords=f.geometry.coordinates;
+    const item=document.createElement('div');
+    item.className='suggestion-item';
+    item.innerHTML=`<span class="suggestion-name">${escHtml(p._primary)}</span>${p._secondary?`<span class="suggestion-sub">${escHtml(p._secondary)}</span>`:''}`;
+    item.addEventListener('click',()=>{
+      if(isMob){document.getElementById('searchMobile').value=p._primary+(p._secondary?', '+p._secondary:'');clearSuggestionsMobile();document.getElementById('searchMobile').blur();}
+      else{document.getElementById('search').value=p._primary+(p._secondary?', '+p._secondary:'');hideSuggestionsDesktop();document.getElementById('search').blur();}
+      flyToPoint(coords[1],coords[0]);
+    });
+    const statusEl=isMob?document.getElementById('statusMsgMobile'):document.getElementById('statusMsg');
+    container.insertBefore(item,statusEl);
+  });
+  container.style.display='block';
+  if(isMob){
+    const chromeRect=document.getElementById('bottomChrome').getBoundingClientRect();
+    document.getElementById('suggestionsMobile').style.bottom=(window.innerHeight-chromeRect.top+4)+'px';
+  }
+}
+function renderSuggestions(features,target){
+  const isMob=target==='mobile';
+  const container=isMob?document.getElementById('suggestionsMobile'):document.getElementById('suggestions');
+  container.querySelectorAll('.suggestion-item').forEach(e=>e.remove());
+  features.forEach(f=>{
+    const p=f.properties,coords=f.geometry.coordinates;
+    // Fix "York County County" — only append " County" if not already ending in it
+    const countyLabel=p.county?(/ county$/i.test(p.county)?p.county:p.county+' County'):'';
+    const parts=[p.name,p.street,p.city,countyLabel,'PA'].filter(Boolean);
+    const deduped=parts.filter((v,i)=>v!==parts[i-1]);
+    const primary=deduped[0]||'Unknown', secondary=deduped.slice(1).join(', ');
+    const item=document.createElement('div');
+    item.className='suggestion-item';
+    item.innerHTML=`<span class="suggestion-name">${escHtml(primary)}</span>${secondary?`<span class="suggestion-sub">${escHtml(secondary)}</span>`:''}`;
+    item.addEventListener('click',()=>{
+      if(isMob){document.getElementById('searchMobile').value=primary+(secondary?`, ${secondary}`:'');clearSuggestionsMobile();document.getElementById('searchMobile').blur();}
+      else{document.getElementById('search').value=primary+(secondary?`, ${secondary}`:'');hideSuggestionsDesktop();document.getElementById('search').blur();}
+      flyToPoint(coords[1],coords[0]);
+    });
+    const statusEl=isMob?document.getElementById('statusMsgMobile'):document.getElementById('statusMsg');
+    container.insertBefore(item,statusEl);
+  });
+  container.style.display='block';
+  if(isMob){
+    const chromeRect=document.getElementById('bottomChrome').getBoundingClientRect();
+    document.getElementById('suggestionsMobile').style.bottom=(window.innerHeight-chromeRect.top+4)+'px';
+  }
+}
+function geocodeAndFly(q){
+  if(!q)return;
+  const hasPA=/(,?\s*(pa|pennsylvania))\s*$/i.test(q);
+  const searchQ=hasPA?q:q+', Pennsylvania';
+  const url=`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQ)}&limit=3&countrycodes=us&viewbox=-80.5,39.7,-74.7,42.3&bounded=0`;
+  fetch(url,{headers:{'Accept-Language':'en'}}).then(r=>r.json()).then(data=>{
+    if(!data||data.length===0)return;
+    flyToPoint(parseFloat(data[0].lat),parseFloat(data[0].lon));
+  }).catch(()=>{});
+}
 function flyToPoint(lat,lon){if(pinMarker)map.removeLayer(pinMarker);pinMarker=L.marker([lat,lon],{icon:L.divIcon({className:'search-pin',iconSize:[14,14],iconAnchor:[7,7]})}).addTo(map);map.flyTo([lat,lon],14,{duration:1.0});if(geoLayer){geoLayer.resetStyle();geoLayer.eachLayer(l=>{if(l.feature){const s=getNoteForMuni(l._muniName);if(s&&s.color)l.setStyle({fillColor:s.color});}});geoLayer.eachLayer(layer=>{if(layer.feature&&isPointInLayer(lat,lon,layer)){layer.setStyle({color:'#e63946',weight:2.5,fillOpacity:Math.max(currentFillOpacity,0.4)});setTimeout(()=>layer.openPopup(),800);}});}}
 function showStatus(msg,target){const isMob=target==='mobile';const el=isMob?document.getElementById('statusMsgMobile'):document.getElementById('statusMsg');const con=isMob?document.getElementById('suggestionsMobile'):document.getElementById('suggestions');el.style.display='block';el.textContent=msg;con.style.display='block';if(isMob){const chromeRect=document.getElementById('bottomChrome').getBoundingClientRect();con.style.bottom=(window.innerHeight-chromeRect.top+4)+'px';}}
 function clearStatus(target){const isMob=target==='mobile';const el=isMob?document.getElementById('statusMsgMobile'):document.getElementById('statusMsg');el.style.display='none';el.textContent='';}
