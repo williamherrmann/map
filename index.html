@@ -32,6 +32,27 @@
     .muni-label { font-size:10px; font-weight:600; font-family:'DM Sans',sans-serif; color:#222; text-shadow:0 0 4px #fff,0 0 4px #fff,0 0 3px #fff; white-space:nowrap; pointer-events:none; }
     .search-pin { width:14px; height:14px; background:var(--red); border:2.5px solid #fff; border-radius:50%; box-shadow:0 0 0 2px var(--red),0 2px 8px rgba(0,0,0,0.35); }
 
+    /* ══ CUSTOM MAP PINS ══ */
+    .map-pin-wrapper {
+      display: flex; flex-direction: column; align-items: center;
+      cursor: pointer; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
+      transition: transform 0.15s;
+    }
+    .map-pin-wrapper:hover { transform: scale(1.15) translateY(-2px); }
+    .map-pin-head {
+      width: 28px; height: 28px; border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg); border: 2.5px solid rgba(255,255,255,0.8);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .map-pin-icon {
+      transform: rotate(45deg); font-size: 13px; line-height: 1;
+    }
+    .map-pin-tail {
+      width: 3px; height: 8px; margin-top: -1px;
+      border-radius: 0 0 3px 3px;
+    }
+
     /* ══ GEAR BUTTON ══ */
     #gearBtn { display:none; position:fixed; top:calc(12px + env(safe-area-inset-top,0px)); right:12px; z-index:400; width:36px; height:36px; background:rgba(255,255,255,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1.5px solid #ddd; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.12); cursor:pointer; color:#444; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; transition:background 0.15s; }
     #gearBtn:active { background:#f0f0f0; }
@@ -66,7 +87,6 @@
       width:220px;
       opacity:0; pointer-events:none; transform:scale(0.96) translateY(6px);
       transition:opacity 0.18s, transform 0.18s;
-      /* mobile: anchored above chrome, left-aligned */
       bottom: calc(var(--total-chrome) + 10px);
       left: 12px;
     }
@@ -75,20 +95,17 @@
     .layers-section:last-child { border-bottom:none; }
     .layers-section-title { font-size:10px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:9px; }
 
-    /* opacity presets */
     .opacity-presets { display:flex; gap:5px; }
     .opacity-btn { flex:1; padding:6px 4px; border:1.5px solid #ddd; border-radius:7px; background:#fff; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600; color:#666; cursor:pointer; text-align:center; -webkit-tap-highlight-color:transparent; transition:all 0.12s; }
     .opacity-btn:active { transform:scale(0.95); }
     .opacity-btn.active { background:#222; color:#fff; border-color:#222; }
 
-    /* base map grid */
     .basemap-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
     .basemap-btn { border:1.5px solid #ddd; border-radius:8px; padding:8px 6px; background:#fff; cursor:pointer; text-align:center; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600; color:#555; -webkit-tap-highlight-color:transparent; transition:all 0.12s; line-height:1.3; }
     .basemap-btn:active { transform:scale(0.95); }
     .basemap-btn.active { background:#222; color:#fff; border-color:#222; }
     .basemap-btn .bm-icon { font-size:16px; display:block; margin-bottom:3px; }
 
-    /* toggle rows */
     .toggle-row { display:flex; align-items:center; justify-content:space-between; padding:5px 0; }
     .toggle-row:not(:last-child) { margin-bottom:4px; }
     .toggle-label { font-size:13px; color:#222; font-weight:500; }
@@ -99,7 +116,6 @@
     .toggle-switch input:checked + .toggle-track { background:#222; }
     .toggle-switch input:checked + .toggle-track::after { transform:translateX(18px); }
 
-    /* desktop overrides for layers panel */
     @media (min-width:768px) {
       #layersPanel {
         position:absolute;
@@ -127,12 +143,14 @@
     .suggestion-sub { font-size:12px; color:#888; font-family:'DM Mono',monospace; }
     #statusMsg { display:none; padding:14px 16px; font-size:13px; color:#888; font-family:'DM Mono',monospace; text-align:center; }
     #navRow { display:flex; align-items:center; justify-content:space-around; height:var(--nav-h); }
-    .nav-btn { display:flex; flex-direction:column; align-items:center; gap:3px; flex:1; background:none; border:none; cursor:pointer; padding:6px 4px; font-family:'DM Sans',sans-serif; font-size:10px; font-weight:600; color:#999; letter-spacing:0.04em; text-transform:uppercase; -webkit-tap-highlight-color:transparent; transition:color 0.12s; min-height:44px; }
+    .nav-btn { display:flex; flex-direction:column; align-items:center; gap:3px; flex:1; background:none; border:none; cursor:pointer; padding:6px 2px; font-family:'DM Sans',sans-serif; font-size:9px; font-weight:600; color:#999; letter-spacing:0.03em; text-transform:uppercase; -webkit-tap-highlight-color:transparent; transition:color 0.12s; min-height:44px; }
     .nav-btn svg { flex-shrink:0; }
     .nav-btn.active { color:var(--blue); }
     .nav-btn.active svg { stroke:var(--blue) !important; }
     .nav-btn.danger { color:var(--red); }
     .nav-btn.danger svg { stroke:var(--red) !important; }
+    .nav-btn.pin-active { color:#8b5cf6; }
+    .nav-btn.pin-active svg { stroke:#8b5cf6 !important; }
 
     /* ══ DESKTOP ══ */
     @media (min-width:768px) {
@@ -161,6 +179,9 @@
       #drawBtnDesktop { display:flex; position:absolute; bottom:30px; right:56px; z-index:500; width:36px; height:36px; background:#fff; border:2px solid #222; border-radius:8px; box-shadow:3px 3px 0 #222; align-items:center; justify-content:center; cursor:pointer; color:#555; transition:background 0.15s,color 0.15s; }
       #drawBtnDesktop:hover { background:#f5f5f5; }
       #drawBtnDesktop.active { background:#3b82f6; border-color:#3b82f6; color:#fff; box-shadow:3px 3px 0 #1d4ed8; }
+      #pinBtnDesktop { display:flex; position:absolute; bottom:30px; right:100px; z-index:500; width:36px; height:36px; background:#fff; border:2px solid #222; border-radius:8px; box-shadow:3px 3px 0 #222; align-items:center; justify-content:center; cursor:pointer; color:#555; transition:background 0.15s,color 0.15s; }
+      #pinBtnDesktop:hover { background:#f5f5f5; }
+      #pinBtnDesktop.active { background:#8b5cf6; border-color:#8b5cf6; color:#fff; box-shadow:3px 3px 0 #6d28d9; }
       #sidebar { width:320px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:2px solid #222; transform:translateX(100%); transition:transform 0.25s cubic-bezier(0.4,0,0.2,1); box-shadow:-4px 0 16px rgba(0,0,0,0.12); }
       #sidebar.open { transform:translateX(0); }
       #sidebar::before { display:none; }
@@ -170,6 +191,7 @@
     #locBtnDesktop { display:none; }
     #sessionBadge { display:none; }
     #drawBtnDesktop { display:none; }
+    #pinBtnDesktop { display:none; }
 
     /* ══ SHEET BACKDROP ══ */
     #sheetBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:800; opacity:0; transition:opacity 0.3s; -webkit-tap-highlight-color:transparent; }
@@ -187,7 +209,7 @@
     #sidebarBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:18px 20px; display:flex; flex-direction:column; gap:22px; }
     #sidebarFooter { padding:14px 20px; border-top:1.5px solid #eee; display:flex; gap:10px; align-items:center; flex-shrink:0; background:#fff; }
 
-    /* ══ SHAPE SIDEBAR (mirrors notes sidebar) ══ */
+    /* ══ SHAPE SIDEBAR ══ */
     #shapeSidebar { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:var(--sheet-radius) var(--sheet-radius) 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
     #shapeSidebar.open { transform:translateY(0); }
     #shapeSidebar::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
@@ -202,6 +224,66 @@
       #shapeSidebar.open { transform:translateX(0); }
       #shapeSidebar::before { display:none; }
     }
+
+    /* ══ PIN SIDEBAR ══ */
+    #pinSidebar { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:var(--sheet-radius) var(--sheet-radius) 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
+    #pinSidebar.open { transform:translateY(0); }
+    #pinSidebar::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #pinSidebarHeader { display:flex; align-items:flex-start; justify-content:space-between; padding:14px 20px; border-bottom:1.5px solid #eee; flex-shrink:0; }
+    #pinSidebarTitle { font-size:17px; font-weight:700; color:#111; line-height:1.2; }
+    #pinSidebarSub { font-size:12px; color:#888; margin-top:3px; font-family:'DM Mono',monospace; }
+    #pinCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-left:8px; -webkit-tap-highlight-color:transparent; line-height:1; }
+    #pinSidebarBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:18px 20px; display:flex; flex-direction:column; gap:20px; }
+    #pinSidebarFooter { padding:14px 20px; border-top:1.5px solid #eee; display:flex; gap:10px; align-items:center; flex-shrink:0; background:#fff; }
+    @media (min-width:768px) {
+      #pinSidebar { width:320px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:2px solid #222; transform:translateX(100%); transition:transform 0.25s cubic-bezier(0.4,0,0.2,1); box-shadow:-4px 0 16px rgba(0,0,0,0.12); }
+      #pinSidebar.open { transform:translateX(0); }
+      #pinSidebar::before { display:none; }
+    }
+
+    /* pin type selector */
+    .pin-type-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .pin-type-btn { padding:10px 8px; border:1.5px solid #ddd; border-radius:10px; background:#fff; cursor:pointer; text-align:center; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; color:#555; -webkit-tap-highlight-color:transparent; transition:all 0.12s; display:flex; flex-direction:column; align-items:center; gap:4px; line-height:1.2; }
+    .pin-type-btn:active { transform:scale(0.95); }
+    .pin-type-btn.active { border-color:#8b5cf6; background:#f5f3ff; color:#6d28d9; }
+    .pin-type-btn .pt-icon { font-size:20px; }
+
+    /* pin mode cursor hint */
+    body.pin-mode { cursor: crosshair; }
+    body.pin-mode .leaflet-grab { cursor: crosshair !important; }
+
+    /* pin mode toolbar */
+    #pinToolbar {
+      display: none;
+      position: fixed;
+      left: 50%; transform: translateX(-50%);
+      z-index: 600;
+      background: #1a1a24;
+      border: 1.5px solid #2e2e40;
+      border-radius: 12px;
+      padding: 8px 16px;
+      gap: 10px;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+      white-space: nowrap;
+      bottom: calc(var(--total-chrome) + 10px);
+    }
+    #pinToolbar.visible { display: flex; }
+    @media (min-width:768px) { #pinToolbar { bottom: 30px; } }
+    #pinToolbarLabel {
+      font-family: 'DM Mono', monospace; font-size: 12px;
+      color: #a78bfa; display:flex; align-items:center; gap:6px;
+    }
+    .pin-tb-btn {
+      padding: 6px 14px; border-radius: 8px; border: 1.5px solid #3a3a55;
+      background: #12121a; font-family: 'DM Sans', sans-serif;
+      font-size: 12px; font-weight: 600; color: #e8e8ee;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      transition: background 0.12s;
+    }
+    .pin-tb-btn.danger { border-color:#ef4444; color:#ef4444; }
+    .pin-tb-btn.danger:hover { background:#1a0a0a; }
+
     .section-label { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:10px; }
     #colorSwatches { display:flex; gap:8px; flex-wrap:wrap; }
     .swatch { width:36px; height:36px; border-radius:8px; cursor:pointer; border:2.5px solid transparent; transition:transform 0.1s,border-color 0.1s; -webkit-tap-highlight-color:transparent; }
@@ -265,7 +347,6 @@
     body.draw-mode .leaflet-grab { cursor: crosshair !important; }
     body.draw-mode .leaflet-crosshair { cursor: crosshair !important; }
 
-    /* vertex markers during draw */
     .draw-vertex {
       width: 12px; height: 12px;
       background: #fff; border: 2.5px solid #3b82f6;
@@ -283,7 +364,6 @@
     }
     .draw-vertex.dragging { cursor: grabbing; transform: scale(1.3); }
 
-    /* edit-mode vertex handles on saved shapes */
     .edit-handle {
       width: 11px; height: 11px;
       background: #fff; border: 2px solid #f59e0b;
@@ -293,7 +373,6 @@
     }
     .edit-handle.dragging { cursor: grabbing; }
 
-    /* custom shape name label */
     .shape-label {
       font-size: 11px; font-weight: 700; font-family: 'DM Sans', sans-serif;
       color: #1d4ed8;
@@ -304,7 +383,6 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.12);
     }
 
-    /* draw toolbar (floats above chrome) */
     #drawToolbar {
       display: none;
       position: fixed;
@@ -318,11 +396,9 @@
       align-items: center;
       box-shadow: 0 4px 20px rgba(0,0,0,0.35);
       white-space: nowrap;
+      bottom: calc(var(--total-chrome) + 10px);
     }
     #drawToolbar.visible { display: flex; }
-    /* mobile: sit above nav chrome */
-    #drawToolbar { bottom: calc(var(--total-chrome) + 10px); }
-    /* desktop: sit near bottom */
     @media (min-width: 768px) { #drawToolbar { bottom: 30px; } }
     #drawVertexCount {
       font-family: 'DM Mono', monospace; font-size: 11px;
@@ -341,7 +417,6 @@
     .draw-tb-btn.danger { border-color: #ef4444; color: #ef4444; }
     .draw-tb-btn.danger:hover { background: #1a0a0a; }
 
-    /* shape sidebar extras */
     #shapeName {
       width: 100%; border: 1.5px solid #ddd; border-radius: 10px;
       padding: 12px 14px; font-family: 'DM Sans', sans-serif;
@@ -349,6 +424,15 @@
       transition: border-color 0.15s; background: #fff;
     }
     #shapeName:focus { border-color: #222; }
+
+    /* shared text inputs in pin sidebar */
+    .pin-text-input {
+      width: 100%; border: 1.5px solid #ddd; border-radius: 10px;
+      padding: 12px 14px; font-family: 'DM Sans', sans-serif;
+      font-size: 16px; color: #111; outline: none;
+      transition: border-color 0.15s; background: #fff;
+    }
+    .pin-text-input:focus { border-color: #8b5cf6; }
 
     /* ══ AUTH GATE ══ */
     #authGate { position:fixed; inset:0; z-index:9999; background:var(--bg); display:flex; align-items:center; justify-content:center; padding:max(20px,calc(var(--sat) + 16px)) 20px max(20px,calc(var(--sab) + 16px)); overflow-y:auto; }
@@ -485,7 +569,7 @@
       <div class="settings-section-label">App</div>
       <div class="settings-info-row">
         <span class="settings-info-label">Version</span>
-        <span class="settings-info-value">v1</span>
+        <span class="settings-info-value">v2</span>
       </div>
     </div>
   </div>
@@ -493,7 +577,6 @@
 
 <!-- LAYERS PANEL -->
 <div id="layersPanel">
-  <!-- Opacity -->
   <div class="layers-section">
     <div class="layers-section-title">Fill opacity</div>
     <div class="opacity-presets">
@@ -503,7 +586,6 @@
       <button class="opacity-btn" data-opacity="0.75" onclick="setOpacityPreset(this)">Solid</button>
     </div>
   </div>
-  <!-- Base map -->
   <div class="layers-section">
     <div class="layers-section-title">Base map</div>
     <div class="basemap-grid">
@@ -513,7 +595,6 @@
       <button class="basemap-btn" data-map="topo" onclick="setBasemap(this)"><span class="bm-icon">🗻</span>Topo</button>
     </div>
   </div>
-  <!-- Toggles -->
   <div class="layers-section">
     <div class="toggle-row">
       <span class="toggle-label">Borders</span>
@@ -536,18 +617,30 @@
         <span class="toggle-track"></span>
       </label>
     </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Pins</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="togglePins" checked onchange="applyPinsToggle()">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
   </div>
 </div>
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v1</span>
+  <span id="badgeVersion">v2</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
 <button id="locBtnDesktop" onclick="toggleLocation()" title="My location">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7" stroke-width="1.5"/>
+  </svg>
+</button>
+<button id="pinBtnDesktop" onclick="togglePinMode()" title="Place pin">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
   </svg>
 </button>
 <button id="drawBtnDesktop" onclick="toggleDrawMode()" title="Draw shape">
@@ -582,8 +675,17 @@
   <button class="draw-tb-btn danger" onclick="cancelDrawing()">Cancel</button>
 </div>
 
+<!-- PIN TOOLBAR -->
+<div id="pinToolbar">
+  <span id="pinToolbarLabel">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    Tap map to place pin
+  </span>
+  <button class="pin-tb-btn danger" onclick="cancelPinMode()">Cancel</button>
+</div>
+
 <!-- SHEET BACKDROP -->
-<div id="sheetBackdrop" onclick="closeSidebar()"></div>
+<div id="sheetBackdrop" onclick="handleBackdropClick()"></div>
 
 <!-- NOTES SIDEBAR -->
 <div id="sidebar">
@@ -709,6 +811,74 @@
     <button class="btn btn-danger" onclick="deleteShape()">Delete</button>
   </div>
 </div>
+
+<!-- PIN SIDEBAR -->
+<div id="pinSidebar">
+  <div id="pinSidebarHeader">
+    <div>
+      <div id="pinSidebarTitle">New Pin</div>
+      <div id="pinSidebarSub">Custom marker</div>
+    </div>
+    <button id="pinCloseBtn" onclick="closePinSidebar()" aria-label="Close">×</button>
+  </div>
+  <div id="pinSidebarBody">
+    <div>
+      <div class="section-label">Name / Label</div>
+      <input type="text" id="pinName" class="pin-text-input" placeholder="e.g. John Smith, 123 Main St…" autocomplete="off" />
+    </div>
+    <div>
+      <div class="section-label">Pin Type</div>
+      <div class="pin-type-grid" id="pinTypeGrid">
+        <button class="pin-type-btn active" data-type="callback" onclick="selectPinType(this)">
+          <span class="pt-icon">📞</span>Call Back
+        </button>
+        <button class="pin-type-btn" data-type="lead" onclick="selectPinType(this)">
+          <span class="pt-icon">⭐</span>Lead
+        </button>
+        <button class="pin-type-btn" data-type="customer" onclick="selectPinType(this)">
+          <span class="pt-icon">✅</span>Customer
+        </button>
+        <button class="pin-type-btn" data-type="noanswer" onclick="selectPinType(this)">
+          <span class="pt-icon">🚪</span>No Answer
+        </button>
+        <button class="pin-type-btn" data-type="notinterested" onclick="selectPinType(this)">
+          <span class="pt-icon">🚫</span>Not Interested
+        </button>
+        <button class="pin-type-btn" data-type="competitor" onclick="selectPinType(this)">
+          <span class="pt-icon">⚡</span>Competitor
+        </button>
+        <button class="pin-type-btn" data-type="note" onclick="selectPinType(this)">
+          <span class="pt-icon">📝</span>Note
+        </button>
+        <button class="pin-type-btn" data-type="other" onclick="selectPinType(this)">
+          <span class="pt-icon">📍</span>Other
+        </button>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Pin Color</div>
+      <div id="pinColorSwatches" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+        <input type="color" id="pinColorPicker" value="#8b5cf6" title="Custom color" style="width:40px;height:40px;border:2px solid #ddd;border-radius:8px;cursor:pointer;padding:2px;background:none;" />
+        <span id="pinColorLabel" style="font-size:12px;color:#666;font-family:'DM Mono',monospace;">#8b5cf6</span>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Notes</div>
+      <textarea id="pinNoteTextarea" placeholder="Add notes about this location…" rows="3" style="width:100%;min-height:80px;resize:vertical;border:1.5px solid #ddd;border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.5;color:#111;outline:none;transition:border-color 0.15s;background:#fff;"></textarea>
+    </div>
+    <div id="pinSaveStatus" style="display:flex;align-items:center;gap:7px;">
+      <span id="pinStatusDot" style="width:8px;height:8px;border-radius:50%;background:#ddd;flex-shrink:0;transition:background 0.3s;"></span>
+      <span id="pinStatusText" style="font-size:12px;color:#999;font-family:'DM Mono',monospace;">Unsaved</span>
+    </div>
+  </div>
+  <div id="pinSidebarFooter">
+    <button class="btn btn-primary" onclick="savePin()">Save</button>
+    <button class="btn btn-ghost" onclick="closePinSidebar()">Cancel</button>
+    <button class="btn btn-danger" onclick="deletePin()">Delete</button>
+  </div>
+</div>
+
 <div id="bottomChrome">
   <div id="searchRow">
     <div id="searchWrapMobile" style="flex:1;display:flex;align-items:center;background:#f4f4f6;border:1.5px solid #e0e0e6;border-radius:12px;overflow:visible;position:relative;transition:border-color 0.15s,box-shadow 0.15s;">
@@ -719,32 +889,38 @@
   </div>
   <div id="navRow">
     <button class="nav-btn" id="mobLocBtn" onclick="toggleLocation()">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7" stroke-width="1.5"/>
       </svg>
       Locate
     </button>
     <button class="nav-btn" id="mobLegendBtn" onclick="toggleLegend()">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="3" y="3" width="5" height="5" rx="1"/><rect x="3" y="10" width="5" height="5" rx="1"/><rect x="3" y="17" width="5" height="5" rx="1"/>
         <line x1="12" y1="5.5" x2="21" y2="5.5"/><line x1="12" y1="12.5" x2="21" y2="12.5"/><line x1="12" y1="19.5" x2="21" y2="19.5"/>
       </svg>
       Legend
     </button>
     <button class="nav-btn" id="mobLayersBtn" onclick="toggleLayersPanel()">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
       </svg>
       Layers
     </button>
+    <button class="nav-btn" id="mobPinBtn" onclick="togglePinMode()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobPinIcon">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+      </svg>
+      Pins
+    </button>
     <button class="nav-btn" id="mobDrawBtn" onclick="toggleDrawMode()">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobDrawIcon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobDrawIcon">
         <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
       </svg>
       Draw
     </button>
     <button class="nav-btn" id="mobSignBtn" onclick="handleMobSignBtn()">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobSignIcon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobSignIcon">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
       </svg>
       <span id="mobSignLabel">Sign In</span>
@@ -832,7 +1008,7 @@ function startSession(user) {
   currentUser=user;
   document.getElementById('authGate').classList.add('hidden');
   document.getElementById('badgeEmail').textContent=user.email;
-  if(!isMobile()){document.getElementById('sessionBadge').style.display='flex';document.getElementById('sessionBadge').classList.remove('hidden');document.getElementById('drawBtnDesktop').style.display='flex';}
+  if(!isMobile()){document.getElementById('sessionBadge').style.display='flex';document.getElementById('sessionBadge').classList.remove('hidden');document.getElementById('drawBtnDesktop').style.display='flex';document.getElementById('pinBtnDesktop').style.display='flex';}
   if(isMobile()){document.getElementById('gearBtn').style.display='flex';document.getElementById('mobSignBtn').style.display='none';}
   loadAllNotesFromSupabase();
 }
@@ -850,12 +1026,14 @@ async function logout() {
   await sb.auth.signOut();
   currentUser=null; noteCache={};
   closeSidebar(); closeSettings(); closeLayersPanel();
-  cancelDrawing();
+  cancelDrawing(); cancelPinMode();
   shapesLayerGroup.clearLayers(); shapesCache={};
+  pinsLayerGroup.clearLayers(); pinsCache={};
   if(geoLayer)geoLayer.eachLayer(l=>{if(l.feature)l.setStyle(styleForLayer(l.feature));});
   document.getElementById('sessionBadge').classList.add('hidden');
   document.getElementById('sessionBadge').style.display='none';
   document.getElementById('drawBtnDesktop').style.display='none';
+  document.getElementById('pinBtnDesktop').style.display='none';
   document.getElementById('gearBtn').style.display='none';
   document.getElementById('mobSignBtn').style.display='';
   document.getElementById('mobSignLabel').textContent='Sign In';
@@ -930,7 +1108,6 @@ let currentFillOpacity = 0.45;
 let bordersVisible = true;
 let labelsEnabled = true;
 
-// Debounced label updater — only fires 200ms after pan/zoom stops
 let _labelTimer=null;
 function scheduleUpdateLabels(){clearTimeout(_labelTimer);_labelTimer=setTimeout(updateLabels,200);}
 
@@ -957,7 +1134,7 @@ fetch('pa_municipalities.geojson')
         const p=feature.properties;
         layer.bindPopup(()=>buildPopup(p),{maxWidth:280});
         layer.on('click',(e)=>{
-          if(drawMode){L.DomEvent.stopPropagation(e);return;}
+          if(drawMode||pinMode){L.DomEvent.stopPropagation(e);return;}
           geoLayer.resetStyle();
           geoLayer.eachLayer(l=>{if(l.feature){const s=getNoteForMuni(l._muniName);if(s&&s.color)l.setStyle({fillColor:s.color});}});
           layer.setStyle({color:'#e63946',weight:2.5,fillOpacity:Math.max(currentFillOpacity,0.4)});
@@ -989,13 +1166,10 @@ function buildPopup(p) {
   return `<div class="popup-inner"><div class="popup-header"><div class="popup-name">${escHtml(p.MUNICIPAL1)}</div></div><table class="popup-table"><tr><td>Type</td><td>${formatClass(p.CLASS_OF_M)}</td></tr><tr><td>County</td><td>${titleCase(p.COUNTY_NAM)}</td></tr><tr><td>Permit</td><td>${permitHtml}</td></tr><tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}</table><div class="popup-footer"><a class="popup-edit-link" href="#" onclick="openSidebarFor('${escJs(p.MUNICIPAL1)}','${escJs(p.CLASS_OF_M)}','${escJs(p.COUNTY_NAM)}');return false;">✎ Edit notes / color</a></div></div>`;
 }
 
-// Smart labels: viewport-culled, debounced via scheduleUpdateLabels
 function updateLabels() {
   const zoom=map.getZoom();
   const bounds=map.getBounds();
   const show=labelsEnabled&&zoom>=10;
-
-  // Municipality labels
   if(geoLayer){
     if(!show){
       geoLayer.eachLayer(l=>{if(l._label&&map.hasLayer(l._label))map.removeLayer(l._label);});
@@ -1008,14 +1182,9 @@ function updateLabels() {
       });
     }
   }
-
-  // Shape labels — same zoom threshold and viewport culling
   shapesLayerGroup.eachLayer(l=>{
     if(!l._labelMarker)return;
-    if(!show||!l._labelPt){
-      if(map.hasLayer(l._labelMarker))map.removeLayer(l._labelMarker);
-      return;
-    }
+    if(!show||!l._labelPt){if(map.hasLayer(l._labelMarker))map.removeLayer(l._labelMarker);return;}
     const inView=bounds.contains(l._labelPt);
     if(inView&&!map.hasLayer(l._labelMarker))l._labelMarker.addTo(map);
     else if(!inView&&map.hasLayer(l._labelMarker))map.removeLayer(l._labelMarker);
@@ -1040,55 +1209,41 @@ setTimeout(()=>map.invalidateSize(),300);
 //  LAYERS PANEL
 // ═══════════════════════════════════════
 let layersPanelOpen = false;
-
 function toggleLayersPanel() {
   layersPanelOpen=!layersPanelOpen;
   document.getElementById('layersPanel').classList.toggle('open',layersPanelOpen);
   document.getElementById('mobLayersBtn').classList.toggle('active',layersPanelOpen);
-  // Hide legend while layers panel is open — they occupy the same space
   document.getElementById('legend').classList.toggle('hidden', layersPanelOpen||!legendVisible);
 }
 function closeLayersPanel() {
   layersPanelOpen=false;
   document.getElementById('layersPanel').classList.remove('open');
   document.getElementById('mobLayersBtn')&&document.getElementById('mobLayersBtn').classList.remove('active');
-  // Restore legend if it was visible before
   document.getElementById('legend').classList.toggle('hidden',!legendVisible);
 }
-
-// Close layers panel when clicking outside (desktop)
 document.addEventListener('click',e=>{
   if(layersPanelOpen&&!e.target.closest('#layersPanel')&&!e.target.closest('#mobLayersBtn')){
     if(!isMobile()){closeLayersPanel();}
   }
 });
-
-// Opacity presets
 function setOpacityPreset(btn) {
   document.querySelectorAll('.opacity-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   currentFillOpacity=parseFloat(btn.dataset.opacity);
   if(geoLayer)geoLayer.eachLayer(l=>{if(l.feature)l.setStyle({fillOpacity:currentFillOpacity});});
 }
-
-// Base map swap
 function setBasemap(btn) {
   document.querySelectorAll('.basemap-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   const key=btn.dataset.map;
   map.removeLayer(currentTileLayer);
   currentTileLayer=L.tileLayer(TILE_URLS[key],{attribution:TILE_ATTRIBS[key],maxZoom:19}).addTo(map);
-  // Keep geo layer on top
   if(geoLayer)geoLayer.bringToFront();
 }
-
-// Border toggle
 function applyBorderToggle() {
   bordersVisible=document.getElementById('toggleBorders').checked;
   if(geoLayer)geoLayer.eachLayer(l=>{if(l.feature)l.setStyle({color:bordersVisible?'#555':'transparent',weight:bordersVisible?0.8:0});});
 }
-
-// Label toggle
 function applyLabelToggle() {
   labelsEnabled=document.getElementById('toggleLabels').checked;
   updateLabels();
@@ -1181,7 +1336,6 @@ function markStatus(dotClass,text){document.getElementById('statusDot').classNam
 function markUnsaved(){markSaved(false);}
 document.getElementById('noteTextarea').addEventListener('input',markUnsaved);
 
-// Swipe-to-dismiss sidebar
 (function(){
   const sidebar=document.getElementById('sidebar'); let startY=0,dragging=false;
   sidebar.addEventListener('touchstart',e=>{if(e.target.closest('#sidebarBody')&&sidebar.querySelector('#sidebarBody').scrollTop>0)return;startY=e.touches[0].clientY;dragging=true;sidebar.style.transition='none';},{passive:true});
@@ -1243,7 +1397,6 @@ let debounceTimer=null;
 function hideSuggestionsDesktop(){const el=document.getElementById('suggestions');if(!el)return;el.querySelectorAll('.suggestion-item').forEach(e=>e.remove());document.getElementById('statusMsg').style.display='none';el.style.display='none';}
 function clearSuggestionsMobile(){const el=document.getElementById('suggestionsMobile');el.querySelectorAll('.suggestion-item').forEach(e=>e.remove());document.getElementById('statusMsgMobile').style.display='none';el.style.display='none';}
 function fetchSuggestions(q,target){
-  // If query starts with a number it's likely a house address — use Nominatim directly
   const looksLikeAddress=/^\d+\s/.test(q.trim());
   if(looksLikeAddress){fetchSuggestionsNominatim(q,target);return;}
   const hasComma=q.includes(',');
@@ -1253,15 +1406,11 @@ function fetchSuggestions(q,target){
   showStatus('Searching…',target);
   fetch(url).then(r=>r.json()).then(data=>{
     clearStatus(target);
-    const features=(data.features||[]).filter(f=>{
-      const s=(f.properties.state||'').toLowerCase();
-      return s==='pennsylvania'||s==='pa'||s==='';
-    }).slice(0,6);
+    const features=(data.features||[]).filter(f=>{const s=(f.properties.state||'').toLowerCase();return s==='pennsylvania'||s==='pa'||s==='';}).slice(0,6);
     if(features.length===0){fetchSuggestionsNominatim(q,target);return;}
     renderSuggestions(features,target);
   }).catch(()=>fetchSuggestionsNominatim(q,target));
 }
-
 function fetchSuggestionsNominatim(q,target){
   const hasPA=/(,?\s*(pa|pennsylvania))\s*$/i.test(q);
   const searchQ=hasPA?q:q+', Pennsylvania';
@@ -1270,36 +1419,27 @@ function fetchSuggestionsNominatim(q,target){
   fetch(url,{headers:{'Accept-Language':'en'}}).then(r=>r.json()).then(data=>{
     clearStatus(target);
     if(!data||data.length===0){showStatus('No results found.',target);return;}
-    // Convert Nominatim results to same shape as Photon for renderSuggestions
     const features=data.map(r=>{
       const a=r.address||{};
-      // Build a clean primary label: "33 Main Street" or "Main Street" or place name
       let primary;
-      if(a.house_number&&a.road) primary=a.house_number+' '+a.road;
-      else if(a.road) primary=a.road;
-      else if(r.name) primary=r.name;
+      if(a.house_number&&a.road)primary=a.house_number+' '+a.road;
+      else if(a.road)primary=a.road;
+      else if(r.name)primary=r.name;
       else primary=r.display_name.split(',')[0];
-      // Secondary: city, county, PA
       const city=a.city||a.town||a.village||a.municipality||a.hamlet||'';
       const county=a.county?a.county.replace(/ County$/i,'')+' County':'';
       const secondary=[city,county,'PA'].filter(Boolean).join(', ');
-      return {
-        type:'Feature',
-        geometry:{type:'Point',coordinates:[parseFloat(r.lon),parseFloat(r.lat)]},
-        properties:{_primary:primary,_secondary:secondary}
-      };
+      return {type:'Feature',geometry:{type:'Point',coordinates:[parseFloat(r.lon),parseFloat(r.lat)]},properties:{_primary:primary,_secondary:secondary}};
     });
     renderSuggestionsNominatim(features,target);
   }).catch(()=>showStatus('Search unavailable.',target));
 }
-
 function renderSuggestionsNominatim(features,target){
   const isMob=target==='mobile';
   const container=isMob?document.getElementById('suggestionsMobile'):document.getElementById('suggestions');
   container.querySelectorAll('.suggestion-item').forEach(e=>e.remove());
   features.forEach(f=>{
-    const p=f.properties;
-    const coords=f.geometry.coordinates;
+    const p=f.properties,coords=f.geometry.coordinates;
     const item=document.createElement('div');
     item.className='suggestion-item';
     item.innerHTML=`<span class="suggestion-name">${escHtml(p._primary)}</span>${p._secondary?`<span class="suggestion-sub">${escHtml(p._secondary)}</span>`:''}`;
@@ -1312,10 +1452,7 @@ function renderSuggestionsNominatim(features,target){
     container.insertBefore(item,statusEl);
   });
   container.style.display='block';
-  if(isMob){
-    const chromeRect=document.getElementById('bottomChrome').getBoundingClientRect();
-    document.getElementById('suggestionsMobile').style.bottom=(window.innerHeight-chromeRect.top+4)+'px';
-  }
+  if(isMob){const chromeRect=document.getElementById('bottomChrome').getBoundingClientRect();document.getElementById('suggestionsMobile').style.bottom=(window.innerHeight-chromeRect.top+4)+'px';}
 }
 function renderSuggestions(features,target){
   const isMob=target==='mobile';
@@ -1323,7 +1460,6 @@ function renderSuggestions(features,target){
   container.querySelectorAll('.suggestion-item').forEach(e=>e.remove());
   features.forEach(f=>{
     const p=f.properties,coords=f.geometry.coordinates;
-    // Fix "York County County" — only append " County" if not already ending in it
     const countyLabel=p.county?(/ county$/i.test(p.county)?p.county:p.county+' County'):'';
     const parts=[p.name,p.street,p.city,countyLabel,'PA'].filter(Boolean);
     const deduped=parts.filter((v,i)=>v!==parts[i-1]);
@@ -1340,20 +1476,14 @@ function renderSuggestions(features,target){
     container.insertBefore(item,statusEl);
   });
   container.style.display='block';
-  if(isMob){
-    const chromeRect=document.getElementById('bottomChrome').getBoundingClientRect();
-    document.getElementById('suggestionsMobile').style.bottom=(window.innerHeight-chromeRect.top+4)+'px';
-  }
+  if(isMob){const chromeRect=document.getElementById('bottomChrome').getBoundingClientRect();document.getElementById('suggestionsMobile').style.bottom=(window.innerHeight-chromeRect.top+4)+'px';}
 }
 function geocodeAndFly(q){
   if(!q)return;
   const hasPA=/(,?\s*(pa|pennsylvania))\s*$/i.test(q);
   const searchQ=hasPA?q:q+', Pennsylvania';
   const url=`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQ)}&limit=3&countrycodes=us&viewbox=-80.5,39.7,-74.7,42.3&bounded=0`;
-  fetch(url,{headers:{'Accept-Language':'en'}}).then(r=>r.json()).then(data=>{
-    if(!data||data.length===0)return;
-    flyToPoint(parseFloat(data[0].lat),parseFloat(data[0].lon));
-  }).catch(()=>{});
+  fetch(url,{headers:{'Accept-Language':'en'}}).then(r=>r.json()).then(data=>{if(!data||data.length===0)return;flyToPoint(parseFloat(data[0].lat),parseFloat(data[0].lon));}).catch(()=>{});
 }
 function flyToPoint(lat,lon){if(pinMarker)map.removeLayer(pinMarker);pinMarker=L.marker([lat,lon],{icon:L.divIcon({className:'search-pin',iconSize:[14,14],iconAnchor:[7,7]})}).addTo(map);map.flyTo([lat,lon],14,{duration:1.0});if(geoLayer){geoLayer.resetStyle();geoLayer.eachLayer(l=>{if(l.feature){const s=getNoteForMuni(l._muniName);if(s&&s.color)l.setStyle({fillColor:s.color});}});geoLayer.eachLayer(layer=>{if(layer.feature&&isPointInLayer(lat,lon,layer)){layer.setStyle({color:'#e63946',weight:2.5,fillOpacity:Math.max(currentFillOpacity,0.4)});setTimeout(()=>layer.openPopup(),800);}});}}
 function showStatus(msg,target){const isMob=target==='mobile';const el=isMob?document.getElementById('statusMsgMobile'):document.getElementById('statusMsg');const con=isMob?document.getElementById('suggestionsMobile'):document.getElementById('suggestions');el.style.display='block';el.textContent=msg;con.style.display='block';if(isMob){const chromeRect=document.getElementById('bottomChrome').getBoundingClientRect();con.style.bottom=(window.innerHeight-chromeRect.top+4)+'px';}}
@@ -1375,11 +1505,22 @@ document.addEventListener('click',e=>{if(utilOpen&&!e.target.closest('#utilDropd
 
 window.openSidebarFor=openSidebarFor;
 window.openShapeSidebarFor=openShapeSidebarFor;
+window.openPinSidebarFor=openPinSidebarFor;
+
+// ═══════════════════════════════════════
+//  BACKDROP CLICK HANDLER
+// ═══════════════════════════════════════
+function handleBackdropClick() {
+  // close whichever sidebar is open
+  if(document.getElementById('sidebar').classList.contains('open'))closeSidebar();
+  else if(document.getElementById('shapeSidebar').classList.contains('open'))closeShapeSidebar();
+  else if(document.getElementById('pinSidebar').classList.contains('open'))closePinSidebar();
+}
 
 // ═══════════════════════════════════════
 //  CUSTOM SHAPES — SUPABASE
 // ═══════════════════════════════════════
-let shapesCache = {}; // id -> shape data
+let shapesCache = {};
 let shapesLayerGroup = L.layerGroup().addTo(map);
 let shapesVisible = true;
 
@@ -1394,7 +1535,6 @@ async function loadShapesFromSupabase() {
     renderSavedShape(shapesCache[row.id]);
   });
 }
-
 async function upsertShape(shapeData) {
   if(!currentUser)return;
   const payload={user_id:currentUser.id,name:shapeData.name,color:shapeData.color,vertices:shapeData.vertices,is_polygon:shapeData.is_polygon,rating:shapeData.rating,notes:shapeData.notes,updated_at:new Date().toISOString()};
@@ -1403,84 +1543,53 @@ async function upsertShape(shapeData) {
   if(error){console.error('Shape save error:',error);throw error;}
   return data;
 }
-
 async function deleteShapeFromDB(id) {
   if(!currentUser)return;
   const{error}=await sb.from('custom_shapes').delete().eq('user_id',currentUser.id).eq('id',id);
   if(error){console.error('Shape delete error:',error);throw error;}
 }
-
 function buildShapePopup(shape) {
   const rating=shape.rating||0;
   const starsHtml=[1,2,3,4,5].map(i=>i<=rating?'<span>★</span>':'<span class="empty">★</span>').join('');
   const noteText=shape.notes?shape.notes.substring(0,70)+(shape.notes.length>70?'…':''):null;
   const typeLabel=shape.is_polygon?'Polygon':'Line';
-  return `<div class="popup-inner">
-    <div class="popup-header" style="background:${shape.color||'#3b82f6'}">
-      <div class="popup-name">${escHtml(shape.name||'Untitled')}</div>
-    </div>
-    <table class="popup-table">
-      <tr><td>Type</td><td>${typeLabel}</td></tr>
-      <tr><td>Points</td><td>${shape.vertices.length}</td></tr>
-      <tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>
-      ${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}
-    </table>
-    <div class="popup-footer">
-      <a class="popup-edit-link" href="#" onclick="openShapeSidebarFor('${escJs(shape.id)}');return false;">✎ Edit shape</a>
-    </div>
-  </div>`;
+  return `<div class="popup-inner"><div class="popup-header" style="background:${shape.color||'#3b82f6'}"><div class="popup-name">${escHtml(shape.name||'Untitled')}</div></div><table class="popup-table"><tr><td>Type</td><td>${typeLabel}</td></tr><tr><td>Points</td><td>${shape.vertices.length}</td></tr><tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}</table><div class="popup-footer"><a class="popup-edit-link" href="#" onclick="openShapeSidebarFor('${escJs(shape.id)}');return false;">✎ Edit shape</a></div></div>`;
 }
-
 function renderSavedShape(shape) {
   if(!shapesVisible)return;
   const verts=shape.vertices;
   if(verts.length<2)return;
   const latlngs=verts.map(v=>L.latLng(v[0],v[1]));
   let layer;
-  if(shape.is_polygon&&verts.length>=3){
-    layer=L.polygon(latlngs,{color:shape.color,weight:2.5,fillColor:shape.color,fillOpacity:0.18,interactive:true});
-  } else {
-    layer=L.polyline(latlngs,{color:shape.color,weight:3,interactive:true});
-  }
+  if(shape.is_polygon&&verts.length>=3){layer=L.polygon(latlngs,{color:shape.color,weight:2.5,fillColor:shape.color,fillOpacity:0.18,interactive:true});}
+  else{layer=L.polyline(latlngs,{color:shape.color,weight:3,interactive:true});}
   layer._shapeId=shape.id;
   layer.bindPopup(()=>buildShapePopup(shape),{maxWidth:280});
   shapesLayerGroup.addLayer(layer);
-
-  // label stored on layer but NOT added to map yet — updateLabels controls visibility
   const labelPt=shape.is_polygon&&verts.length>=3?layer.getBounds().getCenter():latlngs[Math.floor(latlngs.length/2)];
-  const labelMarker=L.marker(labelPt,{
-    icon:L.divIcon({className:'shape-label',html:escHtml(shape.name),iconAnchor:[0,0]}),
-    interactive:false, zIndexOffset:200
-  });
+  const labelMarker=L.marker(labelPt,{icon:L.divIcon({className:'shape-label',html:escHtml(shape.name),iconAnchor:[0,0]}),interactive:false,zIndexOffset:200});
   layer._labelMarker=labelMarker;
   layer._labelPt=labelPt;
   shapesLayerGroup.addLayer(layer);
-  // trigger label visibility check
   scheduleUpdateLabels();
 }
-
 function reRenderAllShapes() {
-  // Remove any label markers that were added directly to the map
-  shapesLayerGroup.eachLayer(l=>{
-    if(l._labelMarker&&map.hasLayer(l._labelMarker))map.removeLayer(l._labelMarker);
-  });
+  shapesLayerGroup.eachLayer(l=>{if(l._labelMarker&&map.hasLayer(l._labelMarker))map.removeLayer(l._labelMarker);});
   shapesLayerGroup.clearLayers();
   Object.values(shapesCache).forEach(s=>renderSavedShape(s));
 }
-
 function applyShapesToggle() {
   shapesVisible=document.getElementById('toggleShapes').checked;
-  if(shapesVisible){reRenderAllShapes();}
-  else{shapesLayerGroup.clearLayers();}
+  if(shapesVisible){reRenderAllShapes();}else{shapesLayerGroup.clearLayers();}
 }
 
 // ═══════════════════════════════════════
 //  DRAW STATE
 // ═══════════════════════════════════════
 let drawMode=false;
-let drawVertices=[]; // [{lat,lng}]
-let drawMarkers=[];  // L.marker vertex dots
-let drawPolyline=null; // preview line
+let drawVertices=[];
+let drawMarkers=[];
+let drawPolyline=null;
 let dragVertexIdx=null;
 
 function setDrawActive(active) {
@@ -1491,60 +1600,37 @@ function setDrawActive(active) {
   document.getElementById('drawBtnDesktop')&&document.getElementById('drawBtnDesktop').classList.toggle('active',active);
   document.getElementById('drawToolbar').classList.toggle('visible',active);
   if(active){
-    map.dragging.disable();
-    map.doubleClickZoom.disable();
-    map.closePopup(); // dismiss any open municipality popup
-    // make geoLayer non-interactive so clicks fall through to map
+    map.dragging.disable(); map.doubleClickZoom.disable(); map.closePopup();
     if(geoLayer)geoLayer.eachLayer(l=>{if(l.setStyle)l.setStyle({interactive:false});if(l.options)l.options.interactive=false;});
   } else {
-    map.dragging.enable();
-    map.doubleClickZoom.enable();
-    // restore geoLayer interactivity
+    map.dragging.enable(); map.doubleClickZoom.enable();
     if(geoLayer)geoLayer.eachLayer(l=>{if(l.options)l.options.interactive=true;});
   }
 }
-
 function toggleDrawMode() {
   if(!currentUser){alert('Sign in to draw shapes.');return;}
-  if(drawMode){cancelDrawing();}
-  else{startDrawing();}
+  if(pinMode)cancelPinMode();
+  if(drawMode){cancelDrawing();}else{startDrawing();}
 }
-
-function startDrawing() {
-  cancelDrawing(); // clean up any previous
-  setDrawActive(true);
-  updateDrawToolbar();
-}
-
+function startDrawing() {cancelDrawing();setDrawActive(true);updateDrawToolbar();}
 function cancelDrawing() {
-  // remove preview elements
-  drawMarkers.forEach(m=>map.removeLayer(m));
-  drawMarkers=[];
-  drawVertices=[];
+  drawMarkers.forEach(m=>map.removeLayer(m));drawMarkers=[];drawVertices=[];
   if(drawPolyline){map.removeLayer(drawPolyline);drawPolyline=null;}
   setDrawActive(false);
 }
-
 function undoLastVertex() {
   if(drawVertices.length===0)return;
-  drawVertices.pop();
-  const m=drawMarkers.pop();
-  if(m)map.removeLayer(m);
-  updateDrawPreview();
-  updateDrawToolbar();
+  drawVertices.pop();const m=drawMarkers.pop();if(m)map.removeLayer(m);
+  updateDrawPreview();updateDrawToolbar();
 }
-
 function updateDrawToolbar() {
-  const n=drawVertices.length;
-  const hint=n>=3?' · tap ● to close':'';
+  const n=drawVertices.length;const hint=n>=3?' · tap ● to close':'';
   document.getElementById('drawVertexCount').textContent=`${n} pt${n!==1?'s':''}${hint}`;
 }
-
-// tap/click on map to add vertex
 map.on('click',function(e){
+  if(pinMode){placePinAtLatLng(e.latlng);return;}
   if(!drawMode)return;
   const{lat,lng}=e.latlng;
-  // check proximity to first vertex to close as polygon
   if(drawVertices.length>=3){
     const first=drawVertices[0];
     const firstPx=map.latLngToContainerPoint(L.latLng(first.lat,first.lng));
@@ -1554,304 +1640,438 @@ map.on('click',function(e){
   }
   addDrawVertex(lat,lng);
 });
-
 function addDrawVertex(lat,lng) {
   const idx=drawVertices.length;
   drawVertices.push({lat,lng});
   const isFirst=idx===0;
-  const marker=L.marker([lat,lng],{
-    icon:L.divIcon({
-      className:'draw-vertex'+(isFirst?' first-vertex':''),
-      iconSize:isFirst?[20,20]:[12,12],
-      iconAnchor:isFirst?[10,10]:[6,6]
-    }),
-    draggable:false,
-    zIndexOffset:300
-  }).addTo(map);
-
-  // Wire direct tap on first vertex to close polygon
+  const marker=L.marker([lat,lng],{icon:L.divIcon({className:'draw-vertex'+(isFirst?' first-vertex':''),iconSize:isFirst?[20,20]:[12,12],iconAnchor:isFirst?[10,10]:[6,6]}),draggable:false,zIndexOffset:300}).addTo(map);
   if(isFirst){
-    // Use setTimeout so the element is in the DOM
     setTimeout(()=>{
-      const el=marker.getElement();
-      if(!el)return;
-      const close=(e)=>{
-        if(!drawMode||drawVertices.length<3)return;
-        e.stopPropagation();
-        e.preventDefault();
-        finishAsPolygon();
-      };
-      el.addEventListener('click',close);
-      el.addEventListener('touchend',close,{passive:false});
+      const el=marker.getElement();if(!el)return;
+      const close=(e)=>{if(!drawMode||drawVertices.length<3)return;e.stopPropagation();e.preventDefault();finishAsPolygon();};
+      el.addEventListener('click',close);el.addEventListener('touchend',close,{passive:false});
     },50);
   }
-  // make draggable via mouse
-  makeDraggableVertex(marker,idx);
-  drawMarkers.push(marker);
-  updateDrawPreview();
-  updateDrawToolbar();
+  makeDraggableVertex(marker,idx);drawMarkers.push(marker);updateDrawPreview();updateDrawToolbar();
 }
-
 function makeDraggableVertex(marker,idx) {
-  const el=marker.getElement();
-  if(!el)return;
-  let dragging=false,startX,startY;
-  const onStart=e=>{
-    dragging=true; dragVertexIdx=idx;
-    const pt=e.touches?e.touches[0]:e;
-    startX=pt.clientX; startY=pt.clientY;
-    el.classList.add('dragging');
-    map.dragging.disable();
-    e.stopPropagation(); e.preventDefault();
-  };
-  const onMove=e=>{
-    if(!dragging)return;
-    const pt=e.touches?e.touches[0]:e;
-    const containerPt=map.getContainer().getBoundingClientRect();
-    const x=pt.clientX-containerPt.left, y=pt.clientY-containerPt.top;
-    const latlng=map.containerPointToLatLng([x,y]);
-    drawVertices[idx]={lat:latlng.lat,lng:latlng.lng};
-    marker.setLatLng(latlng);
-    updateDrawPreview();
-    e.preventDefault();
-  };
-  const onEnd=e=>{
-    if(!dragging)return;
-    dragging=false; dragVertexIdx=null;
-    el.classList.remove('dragging');
-    if(drawMode)map.dragging.disable(); else map.dragging.enable();
-  };
-  el.addEventListener('mousedown',onStart);
-  el.addEventListener('touchstart',onStart,{passive:false});
-  document.addEventListener('mousemove',onMove);
-  document.addEventListener('touchmove',onMove,{passive:false});
-  document.addEventListener('mouseup',onEnd);
-  document.addEventListener('touchend',onEnd);
+  const el=marker.getElement();if(!el)return;
+  let dragging=false;
+  const onStart=e=>{dragging=true;dragVertexIdx=idx;el.classList.add('dragging');map.dragging.disable();e.stopPropagation();e.preventDefault();};
+  const onMove=e=>{if(!dragging)return;const pt=e.touches?e.touches[0]:e;const containerPt=map.getContainer().getBoundingClientRect();const x=pt.clientX-containerPt.left,y=pt.clientY-containerPt.top;const latlng=map.containerPointToLatLng([x,y]);drawVertices[idx]={lat:latlng.lat,lng:latlng.lng};marker.setLatLng(latlng);updateDrawPreview();e.preventDefault();};
+  const onEnd=e=>{if(!dragging)return;dragging=false;dragVertexIdx=null;el.classList.remove('dragging');if(drawMode)map.dragging.disable();else map.dragging.enable();};
+  el.addEventListener('mousedown',onStart);el.addEventListener('touchstart',onStart,{passive:false});
+  document.addEventListener('mousemove',onMove);document.addEventListener('touchmove',onMove,{passive:false});
+  document.addEventListener('mouseup',onEnd);document.addEventListener('touchend',onEnd);
 }
-
 function updateDrawPreview() {
   if(drawPolyline)map.removeLayer(drawPolyline);
   if(drawVertices.length<2){drawPolyline=null;return;}
   const latlngs=drawVertices.map(v=>[v.lat,v.lng]);
   drawPolyline=L.polyline(latlngs,{color:'#3b82f6',weight:2.5,dashArray:'6 4',opacity:0.8}).addTo(map);
 }
-
-function finishAsPolygon() { finishDrawing(true); }
-
+function finishAsPolygon(){finishDrawing(true);}
 function finishDrawing(isPolygon=false) {
   if(drawVertices.length<2){cancelDrawing();return;}
   const verts=drawVertices.map(v=>[v.lat,v.lng]);
-  // clean up draw state
-  drawMarkers.forEach(m=>map.removeLayer(m)); drawMarkers=[];
+  drawMarkers.forEach(m=>map.removeLayer(m));drawMarkers=[];
   if(drawPolyline){map.removeLayer(drawPolyline);drawPolyline=null;}
-  drawVertices=[];
-  setDrawActive(false);
-  // open shape sidebar — isPolygon only true when first vertex was tapped to close
+  drawVertices=[];setDrawActive(false);
   openShapeSidebarFor(null,verts,isPolygon);
 }
 
 // ═══════════════════════════════════════
 //  SHAPE SIDEBAR
 // ═══════════════════════════════════════
-let currentShapeId=null;
-let currentShapeVertices=[];
-let currentShapeIsPolygon=false;
-let currentShapeColor='#3b82f6';
-let currentShapeRating=0;
-let editHandles=[]; // vertex drag handles for saved shape editing
-
+let currentShapeId=null, currentShapeVertices=[], currentShapeIsPolygon=false;
+let currentShapeColor='#3b82f6', currentShapeRating=0;
+let editHandles=[];
 const SHAPE_COLORS=[
   {hex:'#3b82f6',label:'Blue'},{hex:'#ef4444',label:'Red'},
   {hex:'#f59e0b',label:'Amber'},{hex:'#10b981',label:'Emerald'},
   {hex:'#8b5cf6',label:'Purple'},{hex:'#f97316',label:'Orange'},
   {hex:'#ec4899',label:'Pink'},{hex:'#222222',label:'Black'},
 ];
-
 function renderShapeSwatches(selected) {
-  const c=document.getElementById('shapeColorSwatches');
-  c.innerHTML='';
-  c.style.cssText='display:flex;gap:8px;flex-wrap:wrap;';
-  SHAPE_COLORS.forEach(p=>{
-    const el=document.createElement('div');
-    el.className='swatch'+(p.hex===selected?' active':'');
-    el.style.background=p.hex; el.title=p.label;
-    el.onclick=()=>selectShapeColor(p.hex);
-    c.appendChild(el);
-  });
+  const c=document.getElementById('shapeColorSwatches');c.innerHTML='';c.style.cssText='display:flex;gap:8px;flex-wrap:wrap;';
+  SHAPE_COLORS.forEach(p=>{const el=document.createElement('div');el.className='swatch'+(p.hex===selected?' active':'');el.style.background=p.hex;el.title=p.label;el.onclick=()=>selectShapeColor(p.hex);c.appendChild(el);});
 }
-function selectShapeColor(hex){
-  currentShapeColor=hex;
-  document.getElementById('shapeColorPicker').value=hex;
-  document.getElementById('shapeColorLabel').textContent=hex;
-  renderShapeSwatches(hex);
-}
+function selectShapeColor(hex){currentShapeColor=hex;document.getElementById('shapeColorPicker').value=hex;document.getElementById('shapeColorLabel').textContent=hex;renderShapeSwatches(hex);}
 document.getElementById('shapeColorPicker').addEventListener('input',function(){selectShapeColor(this.value);});
-
-function setShapeStars(val){
-  currentShapeRating=val;
-  document.querySelectorAll('.shape-star').forEach(s=>{const v=parseInt(s.dataset.val);s.textContent=v<=val?'★':'☆';s.classList.toggle('on',v<=val);});
-}
+function setShapeStars(val){currentShapeRating=val;document.querySelectorAll('.shape-star').forEach(s=>{const v=parseInt(s.dataset.val);s.textContent=v<=val?'★':'☆';s.classList.toggle('on',v<=val);});}
 document.getElementById('shapeStarRating').addEventListener('click',e=>{const s=e.target.closest('.shape-star');if(s)setShapeStars(parseInt(s.dataset.val));});
 document.getElementById('shapeStarRating').addEventListener('mouseover',e=>{const s=e.target.closest('.shape-star');if(!s)return;const h=parseInt(s.dataset.val);document.querySelectorAll('.shape-star').forEach(st=>{st.textContent=parseInt(st.dataset.val)<=h?'★':'☆';});});
 document.getElementById('shapeStarRating').addEventListener('mouseleave',()=>setShapeStars(currentShapeRating));
 
 function openShapeSidebarFor(id, verts, isPolygon) {
-  // if editing existing, enter vertex-edit mode on map
-  if(id && shapesCache[id]){
-    const shape=shapesCache[id];
-    currentShapeId=id;
-    currentShapeVertices=shape.vertices.map(v=>[...v]);
-    currentShapeIsPolygon=shape.is_polygon;
-    currentShapeColor=shape.color||'#3b82f6';
-    document.getElementById('shapeName').value=shape.name||'';
-    document.getElementById('shapeNoteTextarea').value=shape.notes||'';
-    setShapeStars(shape.rating||0);
-    renderShapeSwatches(currentShapeColor);
-    selectShapeColor(currentShapeColor);
-    document.getElementById('shapeSidebarTitle').textContent=shape.name||'Shape';
-    document.getElementById('shapeSidebarSub').textContent=shape.is_polygon?'Polygon':'Line';
+  // close pin sidebar if open
+  closePinSidebar();
+  if(id&&shapesCache[id]){
+    const shape=shapesCache[id];currentShapeId=id;currentShapeVertices=shape.vertices.map(v=>[...v]);currentShapeIsPolygon=shape.is_polygon;currentShapeColor=shape.color||'#3b82f6';
+    document.getElementById('shapeName').value=shape.name||'';document.getElementById('shapeNoteTextarea').value=shape.notes||'';
+    setShapeStars(shape.rating||0);renderShapeSwatches(currentShapeColor);selectShapeColor(currentShapeColor);
+    document.getElementById('shapeSidebarTitle').textContent=shape.name||'Shape';document.getElementById('shapeSidebarSub').textContent=shape.is_polygon?'Polygon':'Line';
     startEditHandles(id);
   } else {
-    currentShapeId=null;
-    currentShapeVertices=verts||[];
-    currentShapeIsPolygon=isPolygon||false;
-    currentShapeColor='#3b82f6';
-    document.getElementById('shapeName').value='';
-    document.getElementById('shapeNoteTextarea').value='';
-    setShapeStars(0);
-    renderShapeSwatches('#3b82f6');
-    selectShapeColor('#3b82f6');
-    document.getElementById('shapeSidebarTitle').textContent='New Shape';
-    document.getElementById('shapeSidebarSub').textContent=isPolygon?'Polygon':'Line';
-    // show preview of newly drawn shape
+    currentShapeId=null;currentShapeVertices=verts||[];currentShapeIsPolygon=isPolygon||false;currentShapeColor='#3b82f6';
+    document.getElementById('shapeName').value='';document.getElementById('shapeNoteTextarea').value='';
+    setShapeStars(0);renderShapeSwatches('#3b82f6');selectShapeColor('#3b82f6');
+    document.getElementById('shapeSidebarTitle').textContent='New Shape';document.getElementById('shapeSidebarSub').textContent=isPolygon?'Polygon':'Line';
     showNewShapePreview(verts,isPolygon);
   }
   shapeMarkStatus('','Unsaved');
-  const sidebar=document.getElementById('shapeSidebar');
-  const backdrop=document.getElementById('sheetBackdrop');
-  sidebar.classList.add('open');
-  backdrop.classList.add('visible');
-  requestAnimationFrame(()=>backdrop.classList.add('show'));
+  const sidebar=document.getElementById('shapeSidebar'),backdrop=document.getElementById('sheetBackdrop');
+  sidebar.classList.add('open');backdrop.classList.add('visible');requestAnimationFrame(()=>backdrop.classList.add('show'));
   if(!isMobile()){document.getElementById('legend').classList.add('shifted');document.getElementById('layersPanel').classList.add('shifted');}
   setTimeout(()=>document.getElementById('shapeName').focus(),400);
 }
-
 let newShapePreviewLayer=null;
-function showNewShapePreview(verts,isPolygon) {
+function showNewShapePreview(verts,isPolygon){
   if(newShapePreviewLayer){map.removeLayer(newShapePreviewLayer);newShapePreviewLayer=null;}
   if(!verts||verts.length<2)return;
   const latlngs=verts.map(v=>L.latLng(v[0],v[1]));
   if(isPolygon&&verts.length>=3){newShapePreviewLayer=L.polygon(latlngs,{color:'#3b82f6',weight:2.5,fillColor:'#3b82f6',fillOpacity:0.18,dashArray:'6 4'}).addTo(map);}
   else{newShapePreviewLayer=L.polyline(latlngs,{color:'#3b82f6',weight:3,dashArray:'6 4'}).addTo(map);}
 }
-
-// vertex edit handles for existing saved shape
-function startEditHandles(shapeId) {
-  clearEditHandles();
-  const shape=shapesCache[shapeId];
-  if(!shape)return;
+function startEditHandles(shapeId){
+  clearEditHandles();const shape=shapesCache[shapeId];if(!shape)return;
   shape.vertices.forEach((v,idx)=>{
-    const marker=L.marker([v[0],v[1]],{
-      icon:L.divIcon({className:'edit-handle',iconSize:[11,11],iconAnchor:[5,5]}),
-      zIndexOffset:400
-    }).addTo(map);
-    makeEditHandleDraggable(marker,shapeId,idx);
-    editHandles.push(marker);
+    const marker=L.marker([v[0],v[1]],{icon:L.divIcon({className:'edit-handle',iconSize:[11,11],iconAnchor:[5,5]}),zIndexOffset:400}).addTo(map);
+    makeEditHandleDraggable(marker,shapeId,idx);editHandles.push(marker);
   });
 }
 function clearEditHandles(){editHandles.forEach(m=>map.removeLayer(m));editHandles=[];}
-
 function makeEditHandleDraggable(marker,shapeId,idx){
-  const el=marker.getElement();
-  if(!el)return;
-  let dragging=false;
+  const el=marker.getElement();if(!el)return;let dragging=false;
   const onStart=e=>{dragging=true;el.classList.add('dragging');map.dragging.disable();e.stopPropagation();e.preventDefault&&e.preventDefault();};
-  const onMove=e=>{
-    if(!dragging)return;
-    const pt=e.touches?e.touches[0]:e;
-    const r=map.getContainer().getBoundingClientRect();
-    const ll=map.containerPointToLatLng([pt.clientX-r.left,pt.clientY-r.top]);
-    marker.setLatLng(ll);
-    shapesCache[shapeId].vertices[idx]=[ll.lat,ll.lng];
-    currentShapeVertices[idx]=[ll.lat,ll.lng];
-    // live update rendered shape
-    reRenderAllShapes();
-    e.preventDefault&&e.preventDefault();
-  };
+  const onMove=e=>{if(!dragging)return;const pt=e.touches?e.touches[0]:e;const r=map.getContainer().getBoundingClientRect();const ll=map.containerPointToLatLng([pt.clientX-r.left,pt.clientY-r.top]);marker.setLatLng(ll);shapesCache[shapeId].vertices[idx]=[ll.lat,ll.lng];currentShapeVertices[idx]=[ll.lat,ll.lng];reRenderAllShapes();e.preventDefault&&e.preventDefault();};
   const onEnd=e=>{if(!dragging)return;dragging=false;el.classList.remove('dragging');map.dragging.enable();};
-  el.addEventListener('mousedown',onStart);
-  el.addEventListener('touchstart',onStart,{passive:false});
-  document.addEventListener('mousemove',onMove);
-  document.addEventListener('touchmove',onMove,{passive:false});
-  document.addEventListener('mouseup',onEnd);
-  document.addEventListener('touchend',onEnd);
+  el.addEventListener('mousedown',onStart);el.addEventListener('touchstart',onStart,{passive:false});
+  document.addEventListener('mousemove',onMove);document.addEventListener('touchmove',onMove,{passive:false});
+  document.addEventListener('mouseup',onEnd);document.addEventListener('touchend',onEnd);
 }
-
-function closeShapeSidebar() {
+function closeShapeSidebar(){
   clearEditHandles();
   if(newShapePreviewLayer){map.removeLayer(newShapePreviewLayer);newShapePreviewLayer=null;}
-  const sidebar=document.getElementById('shapeSidebar');
-  const backdrop=document.getElementById('sheetBackdrop');
-  sidebar.classList.remove('open');
-  backdrop.classList.remove('show');
-  setTimeout(()=>backdrop.classList.remove('visible'),300);
+  const sidebar=document.getElementById('shapeSidebar'),backdrop=document.getElementById('sheetBackdrop');
+  sidebar.classList.remove('open');backdrop.classList.remove('show');setTimeout(()=>backdrop.classList.remove('visible'),300);
   if(!isMobile()){document.getElementById('legend').classList.remove('shifted');document.getElementById('layersPanel').classList.remove('shifted');}
   currentShapeId=null;
 }
-
-async function saveShape() {
+async function saveShape(){
   const name=document.getElementById('shapeName').value.trim()||'Untitled';
   const notes=document.getElementById('shapeNoteTextarea').value.trim();
   shapeMarkStatus('saving','Saving…');
-  const shapeData={
-    id:currentShapeId,
-    name, color:currentShapeColor,
-    vertices:currentShapeVertices,
-    is_polygon:currentShapeIsPolygon,
-    rating:currentShapeRating,
-    notes
-  };
+  const shapeData={id:currentShapeId,name,color:currentShapeColor,vertices:currentShapeVertices,is_polygon:currentShapeIsPolygon,rating:currentShapeRating,notes};
   try{
-    const saved=await upsertShape(shapeData);
-    shapeData.id=saved.id;
-    shapesCache[saved.id]=shapeData;
-    reRenderAllShapes();
+    const saved=await upsertShape(shapeData);shapeData.id=saved.id;shapesCache[saved.id]=shapeData;reRenderAllShapes();
     if(newShapePreviewLayer){map.removeLayer(newShapePreviewLayer);newShapePreviewLayer=null;}
-    clearEditHandles();
-    shapeMarkStatus('saved','Saved');
-    document.getElementById('shapeSidebarTitle').textContent=name;
-    currentShapeId=saved.id;
-    // restart edit handles on saved shape
-    startEditHandles(saved.id);
+    clearEditHandles();shapeMarkStatus('saved','Saved');document.getElementById('shapeSidebarTitle').textContent=name;currentShapeId=saved.id;startEditHandles(saved.id);
   }catch(e){shapeMarkStatus('','Save failed');alert('Save failed — check connection.');}
 }
-
-async function deleteShape() {
+async function deleteShape(){
   if(!currentShapeId){closeShapeSidebar();return;}
   if(!confirm('Delete this shape?'))return;
-  try{
-    await deleteShapeFromDB(currentShapeId);
-    delete shapesCache[currentShapeId];
-    reRenderAllShapes();
-    closeShapeSidebar();
-  }catch(e){alert('Delete failed — check connection.');}
+  try{await deleteShapeFromDB(currentShapeId);delete shapesCache[currentShapeId];reRenderAllShapes();closeShapeSidebar();}
+  catch(e){alert('Delete failed — check connection.');}
 }
-
 function shapeMarkStatus(dotClass,text){
   const dot=document.getElementById('shapeStatusDot'),txt=document.getElementById('shapeStatusText');
-  dot.style.background=dotClass==='saved'?'#22c55e':dotClass==='saving'?'#f59e0b':'#ddd';
-  txt.textContent=text;
+  dot.style.background=dotClass==='saved'?'#22c55e':dotClass==='saving'?'#f59e0b':'#ddd';txt.textContent=text;
 }
-
-// swipe-to-dismiss shape sidebar
 (function(){
-  const sidebar=document.getElementById('shapeSidebar'); let startY=0,dragging=false;
+  const sidebar=document.getElementById('shapeSidebar');let startY=0,dragging=false;
   sidebar.addEventListener('touchstart',e=>{if(e.target.closest('#shapeSidebarBody')&&sidebar.querySelector('#shapeSidebarBody').scrollTop>0)return;startY=e.touches[0].clientY;dragging=true;sidebar.style.transition='none';},{passive:true});
   sidebar.addEventListener('touchmove',e=>{if(!dragging)return;const dy=e.touches[0].clientY-startY;if(dy<0)return;sidebar.style.transform=`translateY(${dy}px)`;},{passive:true});
   sidebar.addEventListener('touchend',e=>{if(!dragging)return;dragging=false;sidebar.style.transition='';const dy=e.changedTouches[0].clientY-startY;if(dy>100){closeShapeSidebar();sidebar.style.transform='';}else{sidebar.style.transform='';}});
 })();
 
-// extend logout to clear shapes
+// ═══════════════════════════════════════
+//  PINS — SUPABASE
+// ═══════════════════════════════════════
+let pinsCache = {};
+let pinsLayerGroup = L.layerGroup().addTo(map);
+let pinsVisible = true;
+
+const PIN_TYPE_META = {
+  callback:     { icon:'📞', label:'Call Back',      defaultColor:'#3b82f6' },
+  lead:         { icon:'⭐', label:'Lead',            defaultColor:'#f59e0b' },
+  customer:     { icon:'✅', label:'Customer',        defaultColor:'#10b981' },
+  noanswer:     { icon:'🚪', label:'No Answer',      defaultColor:'#6b7280' },
+  notinterested:{ icon:'🚫', label:'Not Interested', defaultColor:'#ef4444' },
+  competitor:   { icon:'⚡', label:'Competitor',     defaultColor:'#f97316' },
+  note:         { icon:'📝', label:'Note',           defaultColor:'#8b5cf6' },
+  other:        { icon:'📍', label:'Other',          defaultColor:'#ec4899' },
+};
+
+async function loadPinsFromSupabase() {
+  if(!currentUser)return;
+  const{data,error}=await sb.from('custom_pins').select('*').eq('user_id',currentUser.id);
+  if(error){console.error('Pins load error:',error);return;}
+  pinsCache={};pinsLayerGroup.clearLayers();
+  (data||[]).forEach(row=>{
+    pinsCache[row.id]={id:row.id,name:row.name,type:row.type||'other',color:row.color||'#8b5cf6',lat:row.lat,lng:row.lng,notes:row.notes||''};
+    renderSavedPin(pinsCache[row.id]);
+  });
+}
+async function upsertPinDB(pinData) {
+  if(!currentUser)return;
+  const payload={user_id:currentUser.id,name:pinData.name,type:pinData.type,color:pinData.color,lat:pinData.lat,lng:pinData.lng,notes:pinData.notes,updated_at:new Date().toISOString()};
+  if(pinData.id)payload.id=pinData.id;
+  const{data,error}=await sb.from('custom_pins').upsert(payload,{onConflict:'id'}).select().single();
+  if(error){console.error('Pin save error:',error);throw error;}
+  return data;
+}
+async function deletePinFromDB(id) {
+  if(!currentUser)return;
+  const{error}=await sb.from('custom_pins').delete().eq('user_id',currentUser.id).eq('id',id);
+  if(error){console.error('Pin delete error:',error);throw error;}
+}
+
+function buildPinIcon(pin) {
+  const meta=PIN_TYPE_META[pin.type]||PIN_TYPE_META.other;
+  const color=pin.color||meta.defaultColor;
+  return L.divIcon({
+    className:'',
+    html:`<div class="map-pin-wrapper">
+      <div class="map-pin-head" style="background:${color};">
+        <span class="map-pin-icon">${meta.icon}</span>
+      </div>
+      <div class="map-pin-tail" style="background:${color};"></div>
+    </div>`,
+    iconSize:[28,40],
+    iconAnchor:[14,40],
+    popupAnchor:[0,-42]
+  });
+}
+
+function buildPinPopup(pin) {
+  const meta=PIN_TYPE_META[pin.type]||PIN_TYPE_META.other;
+  const noteText=pin.notes?pin.notes.substring(0,100)+(pin.notes.length>100?'…':''):null;
+  return `<div class="popup-inner">
+    <div class="popup-header" style="background:${pin.color||meta.defaultColor};">
+      <div class="popup-name">${meta.icon} ${escHtml(pin.name||'Untitled Pin')}</div>
+    </div>
+    <table class="popup-table">
+      <tr><td>Type</td><td>${meta.label}</td></tr>
+      ${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}
+    </table>
+    <div class="popup-footer">
+      <a class="popup-edit-link" href="#" onclick="openPinSidebarFor('${escJs(pin.id)}');return false;">✎ Edit pin</a>
+    </div>
+  </div>`;
+}
+
+function renderSavedPin(pin) {
+  if(!pinsVisible)return;
+  const marker=L.marker([pin.lat,pin.lng],{icon:buildPinIcon(pin),zIndexOffset:600});
+  marker._pinId=pin.id;
+  marker.bindPopup(()=>buildPinPopup(pin),{maxWidth:280});
+  pinsLayerGroup.addLayer(marker);
+}
+
+function reRenderAllPins(){
+  pinsLayerGroup.clearLayers();
+  Object.values(pinsCache).forEach(p=>renderSavedPin(p));
+}
+
+function applyPinsToggle(){
+  pinsVisible=document.getElementById('togglePins').checked;
+  if(pinsVisible){reRenderAllPins();}else{pinsLayerGroup.clearLayers();}
+}
+
+// ═══════════════════════════════════════
+//  PIN MODE
+// ═══════════════════════════════════════
+let pinMode=false;
+let pendingPinLatLng=null;
+let pendingPinMarker=null;
+
+function togglePinMode(){
+  if(!currentUser){alert('Sign in to place pins.');return;}
+  if(drawMode)cancelDrawing();
+  if(pinMode){cancelPinMode();}else{startPinMode();}
+}
+
+function startPinMode(){
+  pinMode=true;
+  document.body.classList.add('pin-mode');
+  document.getElementById('pinToolbar').classList.add('visible');
+  document.getElementById('mobPinBtn').classList.add('pin-active');
+  document.getElementById('mobPinIcon').setAttribute('stroke','#8b5cf6');
+  document.getElementById('pinBtnDesktop')&&document.getElementById('pinBtnDesktop').classList.add('active');
+  map.closePopup();
+}
+
+function cancelPinMode(){
+  pinMode=false;
+  document.body.classList.remove('pin-mode');
+  document.getElementById('pinToolbar').classList.remove('visible');
+  document.getElementById('mobPinBtn').classList.remove('pin-active');
+  document.getElementById('mobPinIcon').setAttribute('stroke','#999');
+  document.getElementById('pinBtnDesktop')&&document.getElementById('pinBtnDesktop').classList.remove('active');
+  // remove pending preview marker
+  if(pendingPinMarker){map.removeLayer(pendingPinMarker);pendingPinMarker=null;}
+  pendingPinLatLng=null;
+}
+
+function placePinAtLatLng(latlng){
+  cancelPinMode(); // exit pin mode after placing
+  pendingPinLatLng=latlng;
+  // show a temporary ghost marker
+  if(pendingPinMarker)map.removeLayer(pendingPinMarker);
+  pendingPinMarker=L.marker([latlng.lat,latlng.lng],{
+    icon:L.divIcon({className:'',html:`<div class="map-pin-wrapper" style="opacity:0.7;"><div class="map-pin-head" style="background:#8b5cf6;"><span class="map-pin-icon">📍</span></div><div class="map-pin-tail" style="background:#8b5cf6;"></div></div>`,iconSize:[28,40],iconAnchor:[14,40]})
+  }).addTo(map);
+  openPinSidebarFor(null);
+}
+
+// ═══════════════════════════════════════
+//  PIN SIDEBAR
+// ═══════════════════════════════════════
+let currentPinId=null;
+let currentPinType='callback';
+let currentPinColor='#3b82f6';
+
+const PIN_COLORS=[
+  {hex:'#3b82f6',label:'Blue'},{hex:'#ef4444',label:'Red'},
+  {hex:'#f59e0b',label:'Amber'},{hex:'#10b981',label:'Green'},
+  {hex:'#8b5cf6',label:'Purple'},{hex:'#f97316',label:'Orange'},
+  {hex:'#6b7280',label:'Gray'},{hex:'#ec4899',label:'Pink'},
+  {hex:'#222222',label:'Black'},
+];
+
+function renderPinColorSwatches(selected){
+  const c=document.getElementById('pinColorSwatches');c.innerHTML='';
+  PIN_COLORS.forEach(p=>{const el=document.createElement('div');el.className='swatch'+(p.hex===selected?' active':'');el.style.background=p.hex;el.title=p.label;el.onclick=()=>selectPinColor(p.hex);c.appendChild(el);});
+}
+function selectPinColor(hex){
+  currentPinColor=hex;
+  document.getElementById('pinColorPicker').value=hex;
+  document.getElementById('pinColorLabel').textContent=hex;
+  renderPinColorSwatches(hex);
+  // update ghost pin if present
+  if(pendingPinMarker&&pendingPinLatLng){
+    const meta=PIN_TYPE_META[currentPinType]||PIN_TYPE_META.other;
+    pendingPinMarker.setIcon(L.divIcon({className:'',html:`<div class="map-pin-wrapper" style="opacity:0.8;"><div class="map-pin-head" style="background:${hex};"><span class="map-pin-icon">${meta.icon}</span></div><div class="map-pin-tail" style="background:${hex};"></div></div>`,iconSize:[28,40],iconAnchor:[14,40]}));
+  }
+}
+document.getElementById('pinColorPicker').addEventListener('input',function(){selectPinColor(this.value);});
+
+function selectPinType(btn){
+  document.querySelectorAll('.pin-type-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentPinType=btn.dataset.type;
+  const meta=PIN_TYPE_META[currentPinType]||PIN_TYPE_META.other;
+  // auto-set color to type default if user hasn't customized
+  selectPinColor(meta.defaultColor);
+  // update ghost marker icon
+  if(pendingPinMarker&&pendingPinLatLng){
+    pendingPinMarker.setIcon(L.divIcon({className:'',html:`<div class="map-pin-wrapper" style="opacity:0.8;"><div class="map-pin-head" style="background:${currentPinColor};"><span class="map-pin-icon">${meta.icon}</span></div><div class="map-pin-tail" style="background:${currentPinColor};"></div></div>`,iconSize:[28,40],iconAnchor:[14,40]}));
+  }
+}
+
+function openPinSidebarFor(id){
+  // close other sidebars
+  if(document.getElementById('sidebar').classList.contains('open'))closeSidebar();
+  if(document.getElementById('shapeSidebar').classList.contains('open'))closeShapeSidebar();
+
+  if(id&&pinsCache[id]){
+    const pin=pinsCache[id];
+    currentPinId=id;currentPinType=pin.type||'other';currentPinColor=pin.color||'#8b5cf6';
+    document.getElementById('pinName').value=pin.name||'';
+    document.getElementById('pinNoteTextarea').value=pin.notes||'';
+    // set type button
+    document.querySelectorAll('.pin-type-btn').forEach(b=>{b.classList.toggle('active',b.dataset.type===pin.type);});
+    renderPinColorSwatches(currentPinColor);
+    document.getElementById('pinColorPicker').value=currentPinColor;
+    document.getElementById('pinColorLabel').textContent=currentPinColor;
+    document.getElementById('pinSidebarTitle').textContent=pin.name||'Edit Pin';
+    document.getElementById('pinSidebarSub').textContent=(PIN_TYPE_META[pin.type]||PIN_TYPE_META.other).label;
+    pinMarkStatus('saved','Saved');
+  } else {
+    currentPinId=null;currentPinType='callback';currentPinColor='#3b82f6';
+    document.getElementById('pinName').value='';
+    document.getElementById('pinNoteTextarea').value='';
+    document.querySelectorAll('.pin-type-btn').forEach(b=>{b.classList.toggle('active',b.dataset.type==='callback');});
+    renderPinColorSwatches('#3b82f6');
+    document.getElementById('pinColorPicker').value='#3b82f6';
+    document.getElementById('pinColorLabel').textContent='#3b82f6';
+    document.getElementById('pinSidebarTitle').textContent='New Pin';
+    document.getElementById('pinSidebarSub').textContent='Tap a type below';
+    pinMarkStatus('','Unsaved');
+  }
+
+  const sidebar=document.getElementById('pinSidebar'),backdrop=document.getElementById('sheetBackdrop');
+  sidebar.classList.add('open');backdrop.classList.add('visible');requestAnimationFrame(()=>backdrop.classList.add('show'));
+  if(!isMobile()){document.getElementById('legend').classList.add('shifted');document.getElementById('layersPanel').classList.add('shifted');}
+  setTimeout(()=>document.getElementById('pinName').focus(),400);
+}
+
+function closePinSidebar(){
+  // remove ghost pin if pin was never saved
+  if(!currentPinId&&pendingPinMarker){map.removeLayer(pendingPinMarker);pendingPinMarker=null;}
+  const sidebar=document.getElementById('pinSidebar'),backdrop=document.getElementById('sheetBackdrop');
+  sidebar.classList.remove('open');backdrop.classList.remove('show');
+  setTimeout(()=>backdrop.classList.remove('visible'),300);
+  if(!isMobile()){document.getElementById('legend').classList.remove('shifted');document.getElementById('layersPanel').classList.remove('shifted');}
+  currentPinId=null;pendingPinLatLng=null;
+}
+
+async function savePin(){
+  const name=document.getElementById('pinName').value.trim()||'Untitled Pin';
+  const notes=document.getElementById('pinNoteTextarea').value.trim();
+  if(!currentPinId&&!pendingPinLatLng){alert('No location set for pin.');return;}
+  pinMarkStatus('saving','Saving…');
+  let lat,lng;
+  if(currentPinId){
+    lat=pinsCache[currentPinId].lat; lng=pinsCache[currentPinId].lng;
+  } else {
+    lat=pendingPinLatLng.lat; lng=pendingPinLatLng.lng;
+  }
+  const pinData={id:currentPinId,name,type:currentPinType,color:currentPinColor,lat,lng,notes};
+  try{
+    const saved=await upsertPinDB(pinData);
+    pinData.id=saved.id;
+    pinsCache[saved.id]=pinData;
+    // remove ghost marker
+    if(pendingPinMarker){map.removeLayer(pendingPinMarker);pendingPinMarker=null;}
+    reRenderAllPins();
+    pinMarkStatus('saved','Saved');
+    document.getElementById('pinSidebarTitle').textContent=name;
+    document.getElementById('pinSidebarSub').textContent=(PIN_TYPE_META[currentPinType]||PIN_TYPE_META.other).label;
+    currentPinId=saved.id;
+    pendingPinLatLng=null;
+  }catch(e){pinMarkStatus('','Save failed');alert('Save failed — check connection.');}
+}
+
+async function deletePin(){
+  if(!currentPinId){closePinSidebar();return;}
+  if(!confirm('Delete this pin?'))return;
+  try{
+    await deletePinFromDB(currentPinId);
+    delete pinsCache[currentPinId];
+    reRenderAllPins();
+    closePinSidebar();
+  }catch(e){alert('Delete failed — check connection.');}
+}
+
+function pinMarkStatus(dotClass,text){
+  const dot=document.getElementById('pinStatusDot'),txt=document.getElementById('pinStatusText');
+  dot.style.background=dotClass==='saved'?'#22c55e':dotClass==='saving'?'#f59e0b':'#ddd';txt.textContent=text;
+}
+
+// swipe-to-dismiss pin sidebar
+(function(){
+  const sidebar=document.getElementById('pinSidebar');let startY=0,dragging=false;
+  sidebar.addEventListener('touchstart',e=>{if(e.target.closest('#pinSidebarBody')&&sidebar.querySelector('#pinSidebarBody').scrollTop>0)return;startY=e.touches[0].clientY;dragging=true;sidebar.style.transition='none';},{passive:true});
+  sidebar.addEventListener('touchmove',e=>{if(!dragging)return;const dy=e.touches[0].clientY-startY;if(dy<0)return;sidebar.style.transform=`translateY(${dy}px)`;},{passive:true});
+  sidebar.addEventListener('touchend',e=>{if(!dragging)return;dragging=false;sidebar.style.transition='';const dy=e.changedTouches[0].clientY-startY;if(dy>100){closePinSidebar();sidebar.style.transform='';}else{sidebar.style.transform='';}});
+})();
+
+// ═══════════════════════════════════════
+//  LOAD ALL DATA
+// ═══════════════════════════════════════
 async function loadAllNotesFromSupabase(){
   if(!currentUser)return;
   const{data,error}=await sb.from('municipality_notes').select('*').eq('user_id',currentUser.id);
@@ -1860,6 +2080,7 @@ async function loadAllNotesFromSupabase(){
   (data||[]).forEach(row=>{noteCache[row.muni_name]={color:row.color,note:row.note,checkedIn:row.permit_required,utilities:row.utilities||[],rating:row.rating||0,updatedAt:row.updated_at};});
   if(geoLayer)geoLayer.eachLayer(l=>{if(l.feature)l.setStyle(styleForLayer(l.feature));});
   await loadShapesFromSupabase();
+  await loadPinsFromSupabase();
 }
 
 </script>
