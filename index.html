@@ -744,7 +744,7 @@
       <div class="settings-section-label">App</div>
       <div class="settings-info-row" style="cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="openChangelog()">
         <span class="settings-info-label">Version</span>
-        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v13 · What's new ›</span>
+        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v16 · What's new ›</span>
       </div>
     </div>
   </div>
@@ -761,7 +761,7 @@
 
     <div class="cl-version">
       <div class="cl-version-header">
-        <span class="cl-version-badge current">v13</span>
+        <span class="cl-version-badge current">v16</span>
         <span class="cl-version-label">Changelog &amp; contact fields</span>
       </div>
       <div class="cl-items">
@@ -890,6 +890,7 @@
       <button class="basemap-btn active" data-map="light" onclick="setBasemap(this)"><span class="bm-icon">☀️</span>Light</button>
       <button class="basemap-btn" data-map="dark" onclick="setBasemap(this)"><span class="bm-icon">🌑</span>Dark</button>
       <button class="basemap-btn" data-map="satellite" onclick="setBasemap(this)"><span class="bm-icon">🛰</span>Satellite</button>
+      <button class="basemap-btn" data-map="street" onclick="setBasemap(this)"><span class="bm-icon">🏠</span>Street</button>
       <button class="basemap-btn" data-map="topo" onclick="setBasemap(this)"><span class="bm-icon">🗻</span>Topo</button>
     </div>
   </div>
@@ -927,7 +928,7 @@
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v13</span>
+  <span id="badgeVersion">v16</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
@@ -1461,17 +1462,19 @@ const TILE_URLS = {
   light:     'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
   dark:      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
   satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  street:    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
   topo:      'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png'
 };
 const TILE_ATTRIBS = {
   light:     '© OpenStreetMap © CARTO',
   dark:      '© OpenStreetMap © CARTO',
   satellite: '© Esri',
+  street:    '© Esri © OpenStreetMap',
   topo:      '© OpenStreetMap © OpenTopoMap'
 };
 
 const map = L.map('map',{zoomControl:true,preferCanvas:true}).setView([40.9,-77.8],7);
-let currentTileLayer = L.tileLayer(TILE_URLS.light,{attribution:TILE_ATTRIBS.light,maxZoom:19}).addTo(map);
+let currentTileLayer = L.tileLayer(TILE_URLS.light,{attribution:TILE_ATTRIBS.light,maxZoom:19,maxNativeZoom:19}).addTo(map);
 let geoLayer, pinMarker=null;
 let currentFillOpacity = 0.45;
 let bordersVisible = true;
@@ -1616,10 +1619,97 @@ function setBasemap(btn) {
   document.querySelectorAll('.basemap-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   const key=btn.dataset.map;
+  currentBasemap=key;
   map.removeLayer(currentTileLayer);
-  currentTileLayer=L.tileLayer(TILE_URLS[key],{attribution:TILE_ATTRIBS[key],maxZoom:19}).addTo(map);
+  const zoomCaps={satellite:19,street:19,light:19,dark:19,topo:17};
+  const maxZ=zoomCaps[key]||19;
+  currentTileLayer=L.tileLayer(TILE_URLS[key],{attribution:TILE_ATTRIBS[key],maxZoom:maxZ,maxNativeZoom:maxZ}).addTo(map);
   if(geoLayer)geoLayer.bringToFront();
+  scheduleAddressLabels();
 }
+
+// ── ADDRESS NUMBER OVERLAY ──
+let currentBasemap='light';
+// ── ADDRESS NUMBER OVERLAY ──
+// Two layers: Esri address labels tile overlay (instant) + Overpass markers (bonus)
+let addressLabelLayer = null;   // overpass markers
+let esriLabelOverlay = null;    // tile overlay
+let _addrLabelTimer = null;
+
+// Esri label-only overlay — shows street names + house numbers on top of any basemap
+const ESRI_LABELS_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}';
+const ESRI_ADDR_URL   = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
+
+function updateEsriLabelOverlay(){
+  const zoom = map.getZoom();
+  const shouldShow = zoom >= 16;
+
+  if(!shouldShow){
+    if(esriLabelOverlay){map.removeLayer(esriLabelOverlay);esriLabelOverlay=null;}
+    return;
+  }
+  // Already showing
+  if(esriLabelOverlay) return;
+
+  // Use Esri "World Boundaries and Places" — has street names + address ranges
+  esriLabelOverlay = L.tileLayer(ESRI_ADDR_URL, {
+    attribution:'© Esri',
+    maxZoom:19, maxNativeZoom:19,
+    opacity:1,
+    pane:'overlayPane'
+  }).addTo(map);
+}
+
+function scheduleAddressLabels(){
+  clearTimeout(_addrLabelTimer);
+  _addrLabelTimer=setTimeout(()=>{
+    updateEsriLabelOverlay();
+    updateOverpassLabels();
+  },350);
+}
+
+async function updateOverpassLabels(){
+  const zoom=map.getZoom();
+  if(zoom<17){
+    if(addressLabelLayer){map.removeLayer(addressLabelLayer);addressLabelLayer=null;}
+    return;
+  }
+
+  const bounds=map.getBounds();
+  const s=bounds.getSouth().toFixed(5), w=bounds.getWest().toFixed(5);
+  const n=bounds.getNorth().toFixed(5), e=bounds.getEast().toFixed(5);
+  const query=`[out:json][timeout:10];(node["addr:housenumber"](${s},${w},${n},${e}););out body;`;
+  const url=`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+
+  try{
+    const res=await fetch(url);
+    if(!res.ok)return;
+    const data=await res.json();
+    if(!data.elements||data.elements.length===0)return;
+    if(map.getZoom()<17)return;
+
+    if(addressLabelLayer){map.removeLayer(addressLabelLayer);addressLabelLayer=null;}
+    addressLabelLayer=L.layerGroup();
+    data.elements.forEach(el=>{
+      if(!el.lat||!el.lon||!el.tags['addr:housenumber'])return;
+      const num=el.tags['addr:housenumber'];
+      const marker=L.marker([el.lat,el.lon],{
+        icon:L.divIcon({
+          className:'',
+          html:`<div style="background:rgba(255,255,255,0.9);color:#1e3a5f;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:800;padding:2px 5px;border-radius:4px;border:1px solid rgba(30,58,95,0.3);white-space:nowrap;pointer-events:none;box-shadow:0 1px 4px rgba(0,0,0,0.25);line-height:1.4;">${escHtml(num)}</div>`,
+          iconAnchor:[0,8],
+          iconSize:[null,null]
+        }),
+        interactive:false,
+        zIndexOffset:200
+      });
+      addressLabelLayer.addLayer(marker);
+    });
+    addressLabelLayer.addTo(map);
+  }catch(e){ /* fail silently */ }
+}
+
+map.on('zoomend moveend', scheduleAddressLabels);
 function applyBorderToggle() {
   bordersVisible=document.getElementById('toggleBorders').checked;
   if(geoLayer)geoLayer.eachLayer(l=>{if(l.feature)l.setStyle({color:bordersVisible?'#555':'transparent',weight:bordersVisible?0.8:0});});
