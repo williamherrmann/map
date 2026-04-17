@@ -569,7 +569,7 @@
       <div class="settings-section-label">App</div>
       <div class="settings-info-row">
         <span class="settings-info-label">Version</span>
-        <span class="settings-info-value">v2</span>
+        <span class="settings-info-value">v4</span>
       </div>
     </div>
   </div>
@@ -629,7 +629,7 @@
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v2</span>
+  <span id="badgeVersion">v4</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
@@ -1210,19 +1210,30 @@ setTimeout(()=>map.invalidateSize(),300);
 // ═══════════════════════════════════════
 let layersPanelOpen = false;
 function toggleLayersPanel() {
-  layersPanelOpen=!layersPanelOpen;
+  const opening=!layersPanelOpen;
+  if(opening){
+    // close legend and cancel modes
+    if(legendVisible){legendVisible=false;document.getElementById('legend').classList.add('hidden');document.getElementById('mobLegendBtn').classList.remove('active');}
+    if(drawMode)cancelDrawing();
+    if(pinMode)cancelPinMode();
+  }
+  layersPanelOpen=opening;
   document.getElementById('layersPanel').classList.toggle('open',layersPanelOpen);
   document.getElementById('mobLayersBtn').classList.toggle('active',layersPanelOpen);
-  document.getElementById('legend').classList.toggle('hidden', layersPanelOpen||!legendVisible);
+  if(!layersPanelOpen) document.getElementById('legend').classList.toggle('hidden',!legendVisible);
 }
 function closeLayersPanel() {
   layersPanelOpen=false;
   document.getElementById('layersPanel').classList.remove('open');
   document.getElementById('mobLayersBtn')&&document.getElementById('mobLayersBtn').classList.remove('active');
-  document.getElementById('legend').classList.toggle('hidden',!legendVisible);
 }
 document.addEventListener('click',e=>{
-  if(layersPanelOpen&&!e.target.closest('#layersPanel')&&!e.target.closest('#mobLayersBtn')){
+  if(layersPanelOpen
+    &&!e.target.closest('#layersPanel')
+    &&!e.target.closest('#mobLayersBtn')
+    &&!e.target.closest('#sidebar')
+    &&!e.target.closest('#shapeSidebar')
+    &&!e.target.closest('#pinSidebar')){
     if(!isMobile()){closeLayersPanel();}
   }
 });
@@ -1322,7 +1333,7 @@ async function saveNote() {
   const checkedIn=ciRaw==='true'?true:ciRaw==='false'?false:null;
   const utilities=getUtilDropdownValues();
   markStatus('saving','Saving…');
-  try{await upsertNote(currentMuni.name,{color:currentColor,note,checkedIn,utilities,rating:currentRating,updatedAt:new Date().toISOString()});refreshLayerStyle(currentMuni.name);markSaved(true);}
+  try{await upsertNote(currentMuni.name,{color:currentColor,note,checkedIn,utilities,rating:currentRating,updatedAt:new Date().toISOString()});refreshLayerStyle(currentMuni.name);markSaved(true);closeSidebar();}
   catch(e){markStatus('','Save failed');alert('Save failed — check connection.');}
 }
 async function clearNote() {
@@ -1349,7 +1360,12 @@ document.getElementById('noteTextarea').addEventListener('input',markUnsaved);
 let legendVisible=false;
 function toggleLegend(){
   legendVisible=!legendVisible;
-  document.getElementById('legend').classList.toggle('hidden',!legendVisible||layersPanelOpen);
+  if(legendVisible){
+    closeLayersPanel();
+    if(drawMode)cancelDrawing();
+    if(pinMode)cancelPinMode();
+  }
+  document.getElementById('legend').classList.toggle('hidden',!legendVisible);
   document.getElementById('mobLegendBtn').classList.toggle('active',legendVisible);
 }
 
@@ -1511,10 +1527,9 @@ window.openPinSidebarFor=openPinSidebarFor;
 //  BACKDROP CLICK HANDLER
 // ═══════════════════════════════════════
 function handleBackdropClick() {
-  // close whichever sidebar is open
-  if(document.getElementById('sidebar').classList.contains('open'))closeSidebar();
+  if(document.getElementById('pinSidebar').classList.contains('open'))closePinSidebar();
   else if(document.getElementById('shapeSidebar').classList.contains('open'))closeShapeSidebar();
-  else if(document.getElementById('pinSidebar').classList.contains('open'))closePinSidebar();
+  else if(document.getElementById('sidebar').classList.contains('open'))closeSidebar();
 }
 
 // ═══════════════════════════════════════
@@ -1610,6 +1625,10 @@ function setDrawActive(active) {
 function toggleDrawMode() {
   if(!currentUser){alert('Sign in to draw shapes.');return;}
   if(pinMode)cancelPinMode();
+  if(!drawMode){
+    closeLayersPanel();
+    if(legendVisible){legendVisible=false;document.getElementById('legend').classList.add('hidden');document.getElementById('mobLegendBtn').classList.remove('active');}
+  }
   if(drawMode){cancelDrawing();}else{startDrawing();}
 }
 function startDrawing() {cancelDrawing();setDrawActive(true);updateDrawToolbar();}
@@ -1766,7 +1785,7 @@ async function saveShape(){
   try{
     const saved=await upsertShape(shapeData);shapeData.id=saved.id;shapesCache[saved.id]=shapeData;reRenderAllShapes();
     if(newShapePreviewLayer){map.removeLayer(newShapePreviewLayer);newShapePreviewLayer=null;}
-    clearEditHandles();shapeMarkStatus('saved','Saved');document.getElementById('shapeSidebarTitle').textContent=name;currentShapeId=saved.id;startEditHandles(saved.id);
+    clearEditHandles();currentShapeId=saved.id;closeShapeSidebar();
   }catch(e){shapeMarkStatus('','Save failed');alert('Save failed — check connection.');}
 }
 async function deleteShape(){
@@ -1890,6 +1909,10 @@ let pendingPinMarker=null;
 function togglePinMode(){
   if(!currentUser){alert('Sign in to place pins.');return;}
   if(drawMode)cancelDrawing();
+  if(!pinMode){
+    closeLayersPanel();
+    if(legendVisible){legendVisible=false;document.getElementById('legend').classList.add('hidden');document.getElementById('mobLegendBtn').classList.remove('active');}
+  }
   if(pinMode){cancelPinMode();}else{startPinMode();}
 }
 
@@ -1900,7 +1923,14 @@ function startPinMode(){
   document.getElementById('mobPinBtn').classList.add('pin-active');
   document.getElementById('mobPinIcon').setAttribute('stroke','#8b5cf6');
   document.getElementById('pinBtnDesktop')&&document.getElementById('pinBtnDesktop').classList.add('active');
+  // disable map dragging and geoLayer interaction — same as draw mode
+  map.dragging.disable();
+  map.doubleClickZoom.disable();
   map.closePopup();
+  if(geoLayer)geoLayer.eachLayer(l=>{if(l.options)l.options.interactive=false;});
+  // close panels
+  closeLayersPanel();
+  if(legendVisible){legendVisible=false;document.getElementById('legend').classList.add('hidden');document.getElementById('mobLegendBtn').classList.remove('active');}
 }
 
 function cancelPinMode(){
@@ -1910,13 +1940,26 @@ function cancelPinMode(){
   document.getElementById('mobPinBtn').classList.remove('pin-active');
   document.getElementById('mobPinIcon').setAttribute('stroke','#999');
   document.getElementById('pinBtnDesktop')&&document.getElementById('pinBtnDesktop').classList.remove('active');
+  // restore map interaction
+  map.dragging.enable();
+  map.doubleClickZoom.enable();
+  if(geoLayer)geoLayer.eachLayer(l=>{if(l.options)l.options.interactive=true;});
   // remove pending preview marker
   if(pendingPinMarker){map.removeLayer(pendingPinMarker);pendingPinMarker=null;}
   pendingPinLatLng=null;
 }
 
 function placePinAtLatLng(latlng){
-  cancelPinMode(); // exit pin mode after placing
+  // restore interaction before opening sidebar
+  pinMode=false;
+  document.body.classList.remove('pin-mode');
+  document.getElementById('pinToolbar').classList.remove('visible');
+  document.getElementById('mobPinBtn').classList.remove('pin-active');
+  document.getElementById('mobPinIcon').setAttribute('stroke','#999');
+  document.getElementById('pinBtnDesktop')&&document.getElementById('pinBtnDesktop').classList.remove('active');
+  map.dragging.enable();
+  map.doubleClickZoom.enable();
+  if(geoLayer)geoLayer.eachLayer(l=>{if(l.options)l.options.interactive=true;});
   pendingPinLatLng=latlng;
   // show a temporary ghost marker
   if(pendingPinMarker)map.removeLayer(pendingPinMarker);
@@ -2034,14 +2077,11 @@ async function savePin(){
     const saved=await upsertPinDB(pinData);
     pinData.id=saved.id;
     pinsCache[saved.id]=pinData;
-    // remove ghost marker
     if(pendingPinMarker){map.removeLayer(pendingPinMarker);pendingPinMarker=null;}
     reRenderAllPins();
-    pinMarkStatus('saved','Saved');
-    document.getElementById('pinSidebarTitle').textContent=name;
-    document.getElementById('pinSidebarSub').textContent=(PIN_TYPE_META[currentPinType]||PIN_TYPE_META.other).label;
     currentPinId=saved.id;
     pendingPinLatLng=null;
+    closePinSidebar();
   }catch(e){pinMarkStatus('','Save failed');alert('Save failed — check connection.');}
 }
 
