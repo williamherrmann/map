@@ -241,12 +241,7 @@
       #pinSidebar::before { display:none; }
     }
 
-    /* pin type selector */
-    .pin-type-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-    .pin-type-btn { padding:10px 8px; border:1.5px solid #ddd; border-radius:10px; background:#fff; cursor:pointer; text-align:center; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; color:#555; -webkit-tap-highlight-color:transparent; transition:all 0.12s; display:flex; flex-direction:column; align-items:center; gap:4px; line-height:1.2; }
-    .pin-type-btn:active { transform:scale(0.95); }
-    .pin-type-btn.active { border-color:#8b5cf6; background:#f5f3ff; color:#6d28d9; }
-    .pin-type-btn .pt-icon { font-size:20px; }
+
 
     /* pin mode cursor hint */
     body.pin-mode { cursor: crosshair; }
@@ -434,6 +429,117 @@
     }
     .pin-text-input:focus { border-color: #8b5cf6; }
 
+
+
+    /* ══ OVERFLOW MENU ══ */
+    #overflowMenu {
+      position: fixed; bottom: calc(var(--total-chrome) + 10px); right: 12px;
+      z-index: 600; background: #fff; border: 1.5px solid #ddd;
+      border-radius: 14px; box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+      padding: 12px; display: none; grid-template-columns: 1fr 1fr;
+      gap: 8px; width: 180px;
+      animation: popIn 0.15s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    #overflowMenu.open { display: grid; }
+    @keyframes popIn { from { opacity:0; transform:scale(0.92) translateY(6px); } to { opacity:1; transform:scale(1) translateY(0); } }
+    .overflow-item {
+      display: flex; flex-direction: column; align-items: center; gap:5px;
+      padding: 10px 6px; border: 1.5px solid #eee; border-radius: 10px;
+      background: #fafafa; cursor: pointer; font-family: 'DM Sans', sans-serif;
+      font-size: 11px; font-weight: 600; color: #555;
+      -webkit-tap-highlight-color: transparent; transition: all 0.12s;
+    }
+    .overflow-item:active { transform: scale(0.95); background: #f0f0f0; }
+    .overflow-item.active { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
+    .overflow-item.pin-active { border-color: #8b5cf6; background: #f5f3ff; color: #6d28d9; }
+    .overflow-item svg { flex-shrink: 0; }
+
+    /* ══ CALENDAR SHEET ══ */
+    #calendarSheet { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
+    #calendarSheet.open { transform:translateY(0); }
+    #calendarSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    @media (min-width:768px) {
+      #calendarSheet { width:360px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:2px solid #222; transform:translateX(110%); }
+      #calendarSheet.open { transform:translateX(0); }
+      #calendarSheet::before { display:none; }
+    }
+    #calendarHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #calendarTitle { font-size:17px; font-weight:700; color:#111; }
+    #calendarCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; }
+    .cal-filter-row { display:flex; gap:6px; padding:12px 20px; overflow-x:auto; flex-shrink:0; border-bottom:1px solid #f0f0f0; -webkit-overflow-scrolling:touch; }
+    .cal-filter-row::-webkit-scrollbar { display:none; }
+    .cal-chip { padding:6px 14px; border:1.5px solid #ddd; border-radius:20px; background:#fff; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; color:#666; cursor:pointer; white-space:nowrap; -webkit-tap-highlight-color:transparent; transition:all 0.12s; flex-shrink:0; }
+    .cal-chip.active { background:#222; color:#fff; border-color:#222; }
+    #calendarBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:16px 20px; display:flex; flex-direction:column; gap:10px; }
+    .cal-empty { text-align:center; padding:40px 20px; color:#aaa; font-size:13px; font-family:'DM Mono',monospace; }
+    .cal-card {
+      border: 1.5px solid #eee; border-radius: 12px; padding: 14px 16px;
+      cursor: pointer; transition: all 0.12s; background: #fff;
+      display: flex; gap: 14px; align-items: flex-start;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cal-card:active { background: #f9f9f9; transform: scale(0.99); }
+    .cal-card.overdue { border-color: #fca5a5; background: #fff8f8; }
+    .cal-card.today { border-color: #86efac; background: #f0fdf4; }
+    .cal-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+    .cal-card-main { flex:1; min-width:0; }
+    .cal-card-name { font-size:14px; font-weight:700; color:#111; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .cal-card-addr { font-size:12px; color:#888; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .cal-card-time { font-size:11px; font-family:'DM Mono',monospace; font-weight:600; display:flex; align-items:center; gap:5px; }
+    .cal-badge { font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; }
+    .cal-badge.overdue { background:#fee2e2; color:#dc2626; }
+    .cal-badge.today { background:#dcfce7; color:#15803d; }
+    .cal-badge.soon { background:#fef9c3; color:#854d0e; }
+
+    /* ══ PIN TYPE DROPDOWN ══ */
+    .pin-type-select {
+      width:100%; padding:12px 36px 12px 14px; border:1.5px solid #ddd;
+      border-radius:10px; background:#fff; font-family:'DM Sans',sans-serif;
+      font-size:15px; font-weight:600; color:#111; outline:none; cursor:pointer;
+      appearance:none; -webkit-appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 14px center;
+      transition:border-color 0.15s;
+    }
+    .pin-type-select:focus { border-color:#8b5cf6; }
+
+    /* ══ CALLBACK FIELDS ══ */
+    #callbackFields {
+      display: none; flex-direction: column; gap: 12px;
+      background: #f8f5ff; border: 1.5px solid #e9d8fd;
+      border-radius: 12px; padding: 14px;
+      animation: fadeSlideIn 0.18s ease;
+    }
+    #callbackFields.visible { display: flex; }
+    @keyframes fadeSlideIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+    .cb-label { font-size: 11px; font-weight: 700; color: #7c3aed;
+      text-transform: uppercase; letter-spacing: 0.07em; margin-bottom:4px; }
+    .cb-row { display:flex; gap:8px; }
+    .cb-row .pin-text-input { flex:1; min-width:0; }
+    /* datetime-local: prevent overflow on iOS, force full width */
+    input[type="datetime-local"].pin-text-input {
+      width: 100%; min-width: 0;
+      font-family: 'DM Mono', monospace; font-size: 15px;
+      -webkit-appearance: none; appearance: none;
+    }
+    .cb-contact-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .cb-contact-row .pin-text-input { min-width:0; width:100%; }
+    .notify-chips { display:flex; gap:6px; flex-wrap:wrap; }
+    .notify-chip { padding:6px 12px; border:1.5px solid #ddd; border-radius:20px; background:#fff; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; color:#666; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:all 0.12s; }
+    .notify-chip.active { background:#8b5cf6; border-color:#8b5cf6; color:#fff; }
+
+    /* ══ ADDRESS AUTOCOMPLETE ══ */
+    .addr-wrap { position:relative; }
+    #addrSuggestions {
+      display:none; position:absolute; bottom:100%; left:0; right:0; margin-bottom:4px;
+      background:#fff; border:1.5px solid #222; border-radius:10px;
+      z-index:960; max-height:180px; overflow-y:auto;
+      box-shadow:0 -4px 16px rgba(0,0,0,0.12);
+    }
+    .addr-suggestion { padding:11px 14px; cursor:pointer; font-size:13px; color:#111; border-bottom:1px solid #f0f0f0; -webkit-tap-highlight-color:transparent; transition:background 0.08s; }
+    .addr-suggestion:last-child { border-bottom:none; }
+    .addr-suggestion:active { background:#f5f5f5; }
+
     /* ══ AUTH GATE ══ */
     #authGate { position:fixed; inset:0; z-index:9999; background:var(--bg); display:flex; align-items:center; justify-content:center; padding:max(20px,calc(var(--sat) + 16px)) 20px max(20px,calc(var(--sab) + 16px)); overflow-y:auto; }
     #authGate.hidden { display:none; }
@@ -569,7 +675,7 @@
       <div class="settings-section-label">App</div>
       <div class="settings-info-row">
         <span class="settings-info-label">Version</span>
-        <span class="settings-info-value">v4</span>
+        <span class="settings-info-value">v8</span>
       </div>
     </div>
   </div>
@@ -629,7 +735,7 @@
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v4</span>
+  <span id="badgeVersion">v8</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
@@ -682,6 +788,34 @@
     Tap map to place pin
   </span>
   <button class="pin-tb-btn danger" onclick="cancelPinMode()">Cancel</button>
+</div>
+
+<!-- OVERFLOW MENU -->
+<div id="overflowMenu">
+  <div class="overflow-item" id="ovfPinItem" onclick="overflowAction('pin')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    Pins
+  </div>
+  <div class="overflow-item" id="ovfDrawItem" onclick="overflowAction('draw')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+    Draw
+  </div>
+</div>
+
+<!-- CALENDAR SHEET -->
+<div id="calendarSheet">
+  <div id="calendarHeader">
+    <div id="calendarTitle">Callbacks</div>
+    <button id="calendarCloseBtn" onclick="closeCalendar()">×</button>
+  </div>
+  <div class="cal-filter-row">
+    <button class="cal-chip active" data-filter="all" onclick="setCalFilter(this)">All</button>
+    <button class="cal-chip" data-filter="overdue" onclick="setCalFilter(this)">Overdue</button>
+    <button class="cal-chip" data-filter="today" onclick="setCalFilter(this)">Today</button>
+    <button class="cal-chip" data-filter="week" onclick="setCalFilter(this)">This Week</button>
+    <button class="cal-chip" data-filter="upcoming" onclick="setCalFilter(this)">Upcoming</button>
+  </div>
+  <div id="calendarBody"></div>
 </div>
 
 <!-- SHEET BACKDROP -->
@@ -823,49 +957,48 @@
   </div>
   <div id="pinSidebarBody">
     <div>
-      <div class="section-label">Name / Label</div>
-      <input type="text" id="pinName" class="pin-text-input" placeholder="e.g. John Smith, 123 Main St…" autocomplete="off" />
-    </div>
-    <div>
       <div class="section-label">Pin Type</div>
-      <div class="pin-type-grid" id="pinTypeGrid">
-        <button class="pin-type-btn active" data-type="callback" onclick="selectPinType(this)">
-          <span class="pt-icon">📞</span>Call Back
-        </button>
-        <button class="pin-type-btn" data-type="lead" onclick="selectPinType(this)">
-          <span class="pt-icon">⭐</span>Lead
-        </button>
-        <button class="pin-type-btn" data-type="customer" onclick="selectPinType(this)">
-          <span class="pt-icon">✅</span>Customer
-        </button>
-        <button class="pin-type-btn" data-type="noanswer" onclick="selectPinType(this)">
-          <span class="pt-icon">🚪</span>No Answer
-        </button>
-        <button class="pin-type-btn" data-type="notinterested" onclick="selectPinType(this)">
-          <span class="pt-icon">🚫</span>Not Interested
-        </button>
-        <button class="pin-type-btn" data-type="competitor" onclick="selectPinType(this)">
-          <span class="pt-icon">⚡</span>Competitor
-        </button>
-        <button class="pin-type-btn" data-type="note" onclick="selectPinType(this)">
-          <span class="pt-icon">📝</span>Note
-        </button>
-        <button class="pin-type-btn" data-type="other" onclick="selectPinType(this)">
-          <span class="pt-icon">📍</span>Other
-        </button>
+      <select id="pinTypeSelect" class="pin-type-select" onchange="selectPinTypeFromDropdown(this)">
+        <option value="callback">Call Back</option>
+        <option value="lead">Lead</option>
+        <option value="customer">Customer</option>
+        <option value="noanswer">No Answer</option>
+        <option value="notinterested">Not Interested</option>
+        <option value="competitor">Competitor</option>
+        <option value="note">Note</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+
+    <!-- CALLBACK FIELDS — shown only when type=callback -->
+    <div id="callbackFields" class="visible">
+      <div class="cb-label">Call Back Details</div>
+      <input type="text" id="cbFullName" class="pin-text-input" placeholder="Full name" autocomplete="name" />
+      <div class="cb-contact-row">
+        <input type="tel" id="cbPhone" class="pin-text-input" placeholder="Phone" autocomplete="tel" inputmode="tel" />
+        <input type="email" id="cbEmail" class="pin-text-input" placeholder="Email" autocomplete="email" inputmode="email" />
       </div>
+      <div class="addr-wrap">
+        <input type="text" id="cbAddress" class="pin-text-input" placeholder="Address" autocomplete="off" />
+        <div id="addrSuggestions"></div>
+      </div>
+      <div>
+        <div class="cb-label" style="margin-bottom:8px;">Callback date &amp; time</div>
+        <input type="datetime-local" id="cbDatetime" class="pin-text-input" />
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Notes</div>
+      <textarea id="pinNoteTextarea" placeholder="Add notes…" rows="3" style="width:100%;min-height:80px;resize:vertical;border:1.5px solid #ddd;border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.5;color:#111;outline:none;transition:border-color 0.15s;background:#fff;"></textarea>
     </div>
     <div>
       <div class="section-label">Pin Color</div>
       <div id="pinColorSwatches" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
-        <input type="color" id="pinColorPicker" value="#8b5cf6" title="Custom color" style="width:40px;height:40px;border:2px solid #ddd;border-radius:8px;cursor:pointer;padding:2px;background:none;" />
-        <span id="pinColorLabel" style="font-size:12px;color:#666;font-family:'DM Mono',monospace;">#8b5cf6</span>
+        <input type="color" id="pinColorPicker" value="#3b82f6" title="Custom color" style="width:40px;height:40px;border:2px solid #ddd;border-radius:8px;cursor:pointer;padding:2px;background:none;" />
+        <span id="pinColorLabel" style="font-size:12px;color:#666;font-family:'DM Mono',monospace;">#3b82f6</span>
       </div>
-    </div>
-    <div>
-      <div class="section-label">Notes</div>
-      <textarea id="pinNoteTextarea" placeholder="Add notes about this location…" rows="3" style="width:100%;min-height:80px;resize:vertical;border:1.5px solid #ddd;border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.5;color:#111;outline:none;transition:border-color 0.15s;background:#fff;"></textarea>
     </div>
     <div id="pinSaveStatus" style="display:flex;align-items:center;gap:7px;">
       <span id="pinStatusDot" style="width:8px;height:8px;border-radius:50%;background:#ddd;flex-shrink:0;transition:background 0.3s;"></span>
@@ -907,17 +1040,17 @@
       </svg>
       Layers
     </button>
-    <button class="nav-btn" id="mobPinBtn" onclick="togglePinMode()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobPinIcon">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+    <button class="nav-btn" id="mobCalBtn" onclick="toggleCalendar()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobCalIcon">
+        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
       </svg>
-      Pins
+      Calendar
     </button>
-    <button class="nav-btn" id="mobDrawBtn" onclick="toggleDrawMode()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobDrawIcon">
-        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+    <button class="nav-btn" id="mobMoreBtn" onclick="toggleOverflowMenu()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobMoreIcon">
+        <circle cx="5" cy="12" r="1.5" fill="#999" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="#999" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="#999" stroke="none"/>
       </svg>
-      Draw
+      More
     </button>
     <button class="nav-btn" id="mobSignBtn" onclick="handleMobSignBtn()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobSignIcon">
@@ -938,6 +1071,8 @@
 <script>
 'use strict';
 const isMobile = () => window.innerWidth < 768;
+
+
 const escHtml  = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const escJs    = s => String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
 
@@ -1530,6 +1665,7 @@ function handleBackdropClick() {
   if(document.getElementById('pinSidebar').classList.contains('open'))closePinSidebar();
   else if(document.getElementById('shapeSidebar').classList.contains('open'))closeShapeSidebar();
   else if(document.getElementById('sidebar').classList.contains('open'))closeSidebar();
+  else if(calendarOpen)closeCalendar();
 }
 
 // ═══════════════════════════════════════
@@ -1613,6 +1749,7 @@ function setDrawActive(active) {
   document.getElementById('mobDrawBtn')&&document.getElementById('mobDrawBtn').classList.toggle('active',active);
   document.getElementById('mobDrawIcon')&&document.getElementById('mobDrawIcon').setAttribute('stroke',active?'#3b82f6':'#999');
   document.getElementById('drawBtnDesktop')&&document.getElementById('drawBtnDesktop').classList.toggle('active',active);
+  document.getElementById('ovfDrawItem')&&document.getElementById('ovfDrawItem').classList.toggle('active',active);
   document.getElementById('drawToolbar').classList.toggle('visible',active);
   if(active){
     map.dragging.disable(); map.doubleClickZoom.disable(); map.closePopup();
@@ -1813,14 +1950,20 @@ let pinsLayerGroup = L.layerGroup().addTo(map);
 let pinsVisible = true;
 
 const PIN_TYPE_META = {
-  callback:     { icon:'📞', label:'Call Back',      defaultColor:'#3b82f6' },
-  lead:         { icon:'⭐', label:'Lead',            defaultColor:'#f59e0b' },
-  customer:     { icon:'✅', label:'Customer',        defaultColor:'#10b981' },
-  noanswer:     { icon:'🚪', label:'No Answer',      defaultColor:'#6b7280' },
-  notinterested:{ icon:'🚫', label:'Not Interested', defaultColor:'#ef4444' },
-  competitor:   { icon:'⚡', label:'Competitor',     defaultColor:'#f97316' },
-  note:         { icon:'📝', label:'Note',           defaultColor:'#8b5cf6' },
-  other:        { icon:'📍', label:'Other',          defaultColor:'#ec4899' },
+  callback:     { icon:'', label:'Call Back',      defaultColor:'#3b82f6' },
+  lead:         { icon:'', label:'Lead',            defaultColor:'#f59e0b' },
+  customer:     { icon:'', label:'Customer',        defaultColor:'#10b981' },
+  noanswer:     { icon:'', label:'No Answer',      defaultColor:'#6b7280' },
+  notinterested:{ icon:'', label:'Not Interested', defaultColor:'#ef4444' },
+  competitor:   { icon:'', label:'Competitor',     defaultColor:'#f97316' },
+  note:         { icon:'', label:'Note',           defaultColor:'#8b5cf6' },
+  other:        { icon:'', label:'Other',          defaultColor:'#ec4899' },
+};
+
+// Type initials for map pin icons
+const PIN_TYPE_INITIALS = {
+  callback:'CB', lead:'LD', customer:'CX', noanswer:'NA',
+  notinterested:'NI', competitor:'CO', note:'NT', other:'—'
 };
 
 async function loadPinsFromSupabase() {
@@ -1829,13 +1972,20 @@ async function loadPinsFromSupabase() {
   if(error){console.error('Pins load error:',error);return;}
   pinsCache={};pinsLayerGroup.clearLayers();
   (data||[]).forEach(row=>{
-    pinsCache[row.id]={id:row.id,name:row.name,type:row.type||'other',color:row.color||'#8b5cf6',lat:row.lat,lng:row.lng,notes:row.notes||''};
+    pinsCache[row.id]={
+      id:row.id, name:row.name, type:row.type||'other',
+      color:row.color||'#3b82f6', lat:row.lat, lng:row.lng,
+      notes:row.notes||'', first_name:row.first_name||null,
+      last_name:row.last_name||null, address:row.address||null,
+      callback_at:row.callback_at||null, notify_before:row.notify_before||30,
+      phone:row.phone||null, email:row.email||null
+    };
     renderSavedPin(pinsCache[row.id]);
   });
 }
 async function upsertPinDB(pinData) {
   if(!currentUser)return;
-  const payload={user_id:currentUser.id,name:pinData.name,type:pinData.type,color:pinData.color,lat:pinData.lat,lng:pinData.lng,notes:pinData.notes,updated_at:new Date().toISOString()};
+  const payload={user_id:currentUser.id,name:pinData.name,type:pinData.type,color:pinData.color,lat:pinData.lat,lng:pinData.lng,notes:pinData.notes,first_name:pinData.first_name||null,last_name:pinData.last_name||null,address:pinData.address||null,callback_at:pinData.callback_at||null,notify_before:pinData.notify_before||30,phone:pinData.phone||null,email:pinData.email||null,updated_at:new Date().toISOString()};
   if(pinData.id)payload.id=pinData.id;
   const{data,error}=await sb.from('custom_pins').upsert(payload,{onConflict:'id'}).select().single();
   if(error){console.error('Pin save error:',error);throw error;}
@@ -1850,11 +2000,12 @@ async function deletePinFromDB(id) {
 function buildPinIcon(pin) {
   const meta=PIN_TYPE_META[pin.type]||PIN_TYPE_META.other;
   const color=pin.color||meta.defaultColor;
+  const initials=PIN_TYPE_INITIALS[pin.type]||'—';
   return L.divIcon({
     className:'',
     html:`<div class="map-pin-wrapper">
       <div class="map-pin-head" style="background:${color};">
-        <span class="map-pin-icon">${meta.icon}</span>
+        <span class="map-pin-icon" style="font-size:9px;font-weight:700;font-family:'DM Sans',sans-serif;color:#fff;letter-spacing:-0.5px;">${initials}</span>
       </div>
       <div class="map-pin-tail" style="background:${color};"></div>
     </div>`,
@@ -1867,12 +2018,25 @@ function buildPinIcon(pin) {
 function buildPinPopup(pin) {
   const meta=PIN_TYPE_META[pin.type]||PIN_TYPE_META.other;
   const noteText=pin.notes?pin.notes.substring(0,100)+(pin.notes.length>100?'…':''):null;
+  const fullName=[pin.first_name,pin.last_name].filter(Boolean).join(' ');
+  let callbackRow='';
+  if(pin.callback_at){
+    const d=new Date(pin.callback_at);
+    const isOverdue=d<new Date();
+    const dateStr=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    const timeStr=d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    callbackRow=`<tr><td>Callback</td><td style="color:${isOverdue?'#dc2626':'#111'}">${dateStr} ${timeStr}${isOverdue?' <span style="font-size:10px;background:#fee2e2;color:#dc2626;padding:1px 5px;border-radius:4px;">Overdue</span>':''}</td></tr>`;
+  }
   return `<div class="popup-inner">
     <div class="popup-header" style="background:${pin.color||meta.defaultColor};">
-      <div class="popup-name">${meta.icon} ${escHtml(pin.name||'Untitled Pin')}</div>
+      <div class="popup-name">${escHtml(fullName||pin.name||'Untitled Pin')}</div>
     </div>
     <table class="popup-table">
       <tr><td>Type</td><td>${meta.label}</td></tr>
+      ${pin.address?`<tr><td>Address</td><td>${escHtml(pin.address)}</td></tr>`:''}
+      ${pin.phone?`<tr><td>Phone</td><td><a href="tel:${escHtml(pin.phone)}" style="color:#3b82f6;font-weight:600;text-decoration:none;">${escHtml(pin.phone)}</a></td></tr>`:''}
+      ${pin.email?`<tr><td>Email</td><td><a href="mailto:${escHtml(pin.email)}" style="color:#3b82f6;font-weight:600;text-decoration:none;">${escHtml(pin.email)}</a></td></tr>`:''}
+      ${callbackRow}
       ${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}
     </table>
     <div class="popup-footer">
@@ -1920,43 +2084,42 @@ function startPinMode(){
   pinMode=true;
   document.body.classList.add('pin-mode');
   document.getElementById('pinToolbar').classList.add('visible');
-  document.getElementById('mobPinBtn').classList.add('pin-active');
-  document.getElementById('mobPinIcon').setAttribute('stroke','#8b5cf6');
+  document.getElementById('mobPinBtn')&&document.getElementById('mobPinBtn').classList.add('pin-active');
+  document.getElementById('mobPinIcon')&&document.getElementById('mobPinIcon').setAttribute('stroke','#8b5cf6');
   document.getElementById('pinBtnDesktop')&&document.getElementById('pinBtnDesktop').classList.add('active');
-  // disable map dragging and geoLayer interaction — same as draw mode
+  // sync overflow menu state
+  document.getElementById('ovfPinItem')&&document.getElementById('ovfPinItem').classList.add('pin-active');
   map.dragging.disable();
   map.doubleClickZoom.disable();
   map.closePopup();
   if(geoLayer)geoLayer.eachLayer(l=>{if(l.options)l.options.interactive=false;});
-  // close panels
   closeLayersPanel();
-  if(legendVisible){legendVisible=false;document.getElementById('legend').classList.add('hidden');document.getElementById('mobLegendBtn').classList.remove('active');}
+  if(legendVisible){legendVisible=false;document.getElementById('legend').classList.add('hidden');document.getElementById('mobLegendBtn')&&document.getElementById('mobLegendBtn').classList.remove('active');}
 }
 
 function cancelPinMode(){
   pinMode=false;
   document.body.classList.remove('pin-mode');
   document.getElementById('pinToolbar').classList.remove('visible');
-  document.getElementById('mobPinBtn').classList.remove('pin-active');
-  document.getElementById('mobPinIcon').setAttribute('stroke','#999');
+  document.getElementById('mobPinBtn')&&document.getElementById('mobPinBtn').classList.remove('pin-active');
+  document.getElementById('mobPinIcon')&&document.getElementById('mobPinIcon').setAttribute('stroke','#999');
   document.getElementById('pinBtnDesktop')&&document.getElementById('pinBtnDesktop').classList.remove('active');
-  // restore map interaction
+  document.getElementById('ovfPinItem')&&document.getElementById('ovfPinItem').classList.remove('pin-active');
   map.dragging.enable();
   map.doubleClickZoom.enable();
   if(geoLayer)geoLayer.eachLayer(l=>{if(l.options)l.options.interactive=true;});
-  // remove pending preview marker
   if(pendingPinMarker){map.removeLayer(pendingPinMarker);pendingPinMarker=null;}
   pendingPinLatLng=null;
 }
 
 function placePinAtLatLng(latlng){
-  // restore interaction before opening sidebar
   pinMode=false;
   document.body.classList.remove('pin-mode');
   document.getElementById('pinToolbar').classList.remove('visible');
-  document.getElementById('mobPinBtn').classList.remove('pin-active');
-  document.getElementById('mobPinIcon').setAttribute('stroke','#999');
+  document.getElementById('mobPinBtn')&&document.getElementById('mobPinBtn').classList.remove('pin-active');
+  document.getElementById('mobPinIcon')&&document.getElementById('mobPinIcon').setAttribute('stroke','#999');
   document.getElementById('pinBtnDesktop')&&document.getElementById('pinBtnDesktop').classList.remove('active');
+  document.getElementById('ovfPinItem')&&document.getElementById('ovfPinItem').classList.remove('pin-active');
   map.dragging.enable();
   map.doubleClickZoom.enable();
   if(geoLayer)geoLayer.eachLayer(l=>{if(l.options)l.options.interactive=true;});
@@ -1964,7 +2127,7 @@ function placePinAtLatLng(latlng){
   // show a temporary ghost marker
   if(pendingPinMarker)map.removeLayer(pendingPinMarker);
   pendingPinMarker=L.marker([latlng.lat,latlng.lng],{
-    icon:L.divIcon({className:'',html:`<div class="map-pin-wrapper" style="opacity:0.7;"><div class="map-pin-head" style="background:#8b5cf6;"><span class="map-pin-icon">📍</span></div><div class="map-pin-tail" style="background:#8b5cf6;"></div></div>`,iconSize:[28,40],iconAnchor:[14,40]})
+    icon:L.divIcon({className:'',html:`<div class="map-pin-wrapper" style="opacity:0.7;"><div class="map-pin-head" style="background:#3b82f6;"><span class="map-pin-icon" style="font-size:9px;font-weight:700;font-family:'DM Sans',sans-serif;color:#fff;">CB</span></div><div class="map-pin-tail" style="background:#3b82f6;"></div></div>`,iconSize:[28,40],iconAnchor:[14,40]})
   }).addTo(map);
   openPinSidebarFor(null);
 }
@@ -1995,60 +2158,37 @@ function selectPinColor(hex){
   renderPinColorSwatches(hex);
   // update ghost pin if present
   if(pendingPinMarker&&pendingPinLatLng){
-    const meta=PIN_TYPE_META[currentPinType]||PIN_TYPE_META.other;
-    pendingPinMarker.setIcon(L.divIcon({className:'',html:`<div class="map-pin-wrapper" style="opacity:0.8;"><div class="map-pin-head" style="background:${hex};"><span class="map-pin-icon">${meta.icon}</span></div><div class="map-pin-tail" style="background:${hex};"></div></div>`,iconSize:[28,40],iconAnchor:[14,40]}));
+    const ini=PIN_TYPE_INITIALS[currentPinType]||'—';
+    pendingPinMarker.setIcon(L.divIcon({className:'',html:`<div class="map-pin-wrapper" style="opacity:0.8;"><div class="map-pin-head" style="background:${hex};"><span class="map-pin-icon" style="font-size:9px;font-weight:700;font-family:'DM Sans',sans-serif;color:#fff;">${ini}</span></div><div class="map-pin-tail" style="background:${hex};"></div></div>`,iconSize:[28,40],iconAnchor:[14,40]}));
   }
 }
 document.getElementById('pinColorPicker').addEventListener('input',function(){selectPinColor(this.value);});
 
-function selectPinType(btn){
-  document.querySelectorAll('.pin-type-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  currentPinType=btn.dataset.type;
-  const meta=PIN_TYPE_META[currentPinType]||PIN_TYPE_META.other;
-  // auto-set color to type default if user hasn't customized
-  selectPinColor(meta.defaultColor);
-  // update ghost marker icon
-  if(pendingPinMarker&&pendingPinLatLng){
-    pendingPinMarker.setIcon(L.divIcon({className:'',html:`<div class="map-pin-wrapper" style="opacity:0.8;"><div class="map-pin-head" style="background:${currentPinColor};"><span class="map-pin-icon">${meta.icon}</span></div><div class="map-pin-tail" style="background:${currentPinColor};"></div></div>`,iconSize:[28,40],iconAnchor:[14,40]}));
-  }
-}
+// selectPinType moved to selectPinTypeFromDropdown
 
 function openPinSidebarFor(id){
-  // close other sidebars
   if(document.getElementById('sidebar').classList.contains('open'))closeSidebar();
   if(document.getElementById('shapeSidebar').classList.contains('open'))closeShapeSidebar();
 
   if(id&&pinsCache[id]){
+    currentPinId=id;
     const pin=pinsCache[id];
-    currentPinId=id;currentPinType=pin.type||'other';currentPinColor=pin.color||'#8b5cf6';
-    document.getElementById('pinName').value=pin.name||'';
-    document.getElementById('pinNoteTextarea').value=pin.notes||'';
-    // set type button
-    document.querySelectorAll('.pin-type-btn').forEach(b=>{b.classList.toggle('active',b.dataset.type===pin.type);});
-    renderPinColorSwatches(currentPinColor);
-    document.getElementById('pinColorPicker').value=currentPinColor;
-    document.getElementById('pinColorLabel').textContent=currentPinColor;
+    _populatePinSidebar(pin);
     document.getElementById('pinSidebarTitle').textContent=pin.name||'Edit Pin';
     document.getElementById('pinSidebarSub').textContent=(PIN_TYPE_META[pin.type]||PIN_TYPE_META.other).label;
     pinMarkStatus('saved','Saved');
   } else {
-    currentPinId=null;currentPinType='callback';currentPinColor='#3b82f6';
-    document.getElementById('pinName').value='';
-    document.getElementById('pinNoteTextarea').value='';
-    document.querySelectorAll('.pin-type-btn').forEach(b=>{b.classList.toggle('active',b.dataset.type==='callback');});
-    renderPinColorSwatches('#3b82f6');
-    document.getElementById('pinColorPicker').value='#3b82f6';
-    document.getElementById('pinColorLabel').textContent='#3b82f6';
+    currentPinId=null;
+    _populatePinSidebar(null);
     document.getElementById('pinSidebarTitle').textContent='New Pin';
-    document.getElementById('pinSidebarSub').textContent='Tap a type below';
+    document.getElementById('pinSidebarSub').textContent='';
     pinMarkStatus('','Unsaved');
   }
 
   const sidebar=document.getElementById('pinSidebar'),backdrop=document.getElementById('sheetBackdrop');
   sidebar.classList.add('open');backdrop.classList.add('visible');requestAnimationFrame(()=>backdrop.classList.add('show'));
   if(!isMobile()){document.getElementById('legend').classList.add('shifted');document.getElementById('layersPanel').classList.add('shifted');}
-  setTimeout(()=>document.getElementById('pinName').focus(),400);
+  setTimeout(()=>document.getElementById('cbFullName').focus(),400);
 }
 
 function closePinSidebar(){
@@ -2061,29 +2201,7 @@ function closePinSidebar(){
   currentPinId=null;pendingPinLatLng=null;
 }
 
-async function savePin(){
-  const name=document.getElementById('pinName').value.trim()||'Untitled Pin';
-  const notes=document.getElementById('pinNoteTextarea').value.trim();
-  if(!currentPinId&&!pendingPinLatLng){alert('No location set for pin.');return;}
-  pinMarkStatus('saving','Saving…');
-  let lat,lng;
-  if(currentPinId){
-    lat=pinsCache[currentPinId].lat; lng=pinsCache[currentPinId].lng;
-  } else {
-    lat=pendingPinLatLng.lat; lng=pendingPinLatLng.lng;
-  }
-  const pinData={id:currentPinId,name,type:currentPinType,color:currentPinColor,lat,lng,notes};
-  try{
-    const saved=await upsertPinDB(pinData);
-    pinData.id=saved.id;
-    pinsCache[saved.id]=pinData;
-    if(pendingPinMarker){map.removeLayer(pendingPinMarker);pendingPinMarker=null;}
-    reRenderAllPins();
-    currentPinId=saved.id;
-    pendingPinLatLng=null;
-    closePinSidebar();
-  }catch(e){pinMarkStatus('','Save failed');alert('Save failed — check connection.');}
-}
+async function savePin(){ await _savePinNew(); }
 
 async function deletePin(){
   if(!currentPinId){closePinSidebar();return;}
@@ -2108,6 +2226,304 @@ function pinMarkStatus(dotClass,text){
   sidebar.addEventListener('touchmove',e=>{if(!dragging)return;const dy=e.touches[0].clientY-startY;if(dy<0)return;sidebar.style.transform=`translateY(${dy}px)`;},{passive:true});
   sidebar.addEventListener('touchend',e=>{if(!dragging)return;dragging=false;sidebar.style.transition='';const dy=e.changedTouches[0].clientY-startY;if(dy>100){closePinSidebar();sidebar.style.transform='';}else{sidebar.style.transform='';}});
 })();
+
+// ═══════════════════════════════════════
+//  OVERFLOW MENU
+// ═══════════════════════════════════════
+let overflowOpen = false;
+function toggleOverflowMenu() {
+  overflowOpen = !overflowOpen;
+  document.getElementById('overflowMenu').classList.toggle('open', overflowOpen);
+  document.getElementById('mobMoreBtn').classList.toggle('active', overflowOpen);
+  if(overflowOpen){
+    closeLayersPanel();
+    if(legendVisible){legendVisible=false;document.getElementById('legend').classList.add('hidden');document.getElementById('mobLegendBtn').classList.remove('active');}
+  }
+  // sync active states
+  syncOverflowActiveStates();
+}
+function closeOverflowMenu(){
+  overflowOpen=false;
+  document.getElementById('overflowMenu').classList.remove('open');
+  document.getElementById('mobMoreBtn').classList.remove('active');
+}
+function syncOverflowActiveStates(){
+  document.getElementById('ovfDrawItem').classList.toggle('active', drawMode);
+  document.getElementById('ovfPinItem').classList.toggle('pin-active', pinMode);
+}
+function overflowAction(action){
+  closeOverflowMenu();
+  if(action==='draw') toggleDrawMode();
+  if(action==='pin') togglePinMode();
+}
+// close overflow when clicking outside
+document.addEventListener('click', e=>{
+  if(overflowOpen && !e.target.closest('#overflowMenu') && !e.target.closest('#mobMoreBtn'))
+    closeOverflowMenu();
+});
+
+// ═══════════════════════════════════════
+//  CALENDAR
+// ═══════════════════════════════════════
+let calendarOpen = false;
+let calFilter = 'all';
+
+function toggleCalendar(){
+  calendarOpen = !calendarOpen;
+  if(calendarOpen){
+    closeLayersPanel(); closeOverflowMenu();
+    if(legendVisible){legendVisible=false;document.getElementById('legend').classList.add('hidden');document.getElementById('mobLegendBtn').classList.remove('active');}
+    renderCalendar();
+    document.getElementById('calendarSheet').classList.add('open');
+    const bd=document.getElementById('sheetBackdrop');
+    bd.classList.add('visible');
+    requestAnimationFrame(()=>bd.classList.add('show'));
+  } else {
+    closeCalendar();
+  }
+  document.getElementById('mobCalBtn').classList.toggle('active', calendarOpen);
+}
+
+function closeCalendar(){
+  calendarOpen=false;
+  document.getElementById('calendarSheet').classList.remove('open');
+  document.getElementById('mobCalBtn').classList.remove('active');
+  // only remove backdrop if no sidebar is open
+  const anySidebarOpen=[
+    document.getElementById('sidebar'),
+    document.getElementById('shapeSidebar'),
+    document.getElementById('pinSidebar')
+  ].some(s=>s.classList.contains('open'));
+  if(!anySidebarOpen){
+    document.getElementById('sheetBackdrop').classList.remove('show');
+    setTimeout(()=>document.getElementById('sheetBackdrop').classList.remove('visible'),300);
+  }
+}
+
+function setCalFilter(btn){
+  document.querySelectorAll('.cal-chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  calFilter=btn.dataset.filter;
+  renderCalendar();
+}
+
+function renderCalendar(){
+  const body=document.getElementById('calendarBody');
+  body.innerHTML='';
+  const now=new Date();
+  const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const todayEnd=new Date(todayStart.getTime()+86400000);
+  const weekEnd=new Date(todayStart.getTime()+7*86400000);
+
+  // gather all callback pins with a datetime
+  let pins=Object.values(pinsCache).filter(p=>p.type==='callback'&&p.callback_at);
+
+  // sort by callback_at ascending
+  pins.sort((a,b)=>new Date(a.callback_at)-new Date(b.callback_at));
+
+  // apply filter
+  pins=pins.filter(p=>{
+    const t=new Date(p.callback_at);
+    if(calFilter==='overdue') return t<now;
+    if(calFilter==='today') return t>=todayStart&&t<todayEnd;
+    if(calFilter==='week') return t>=todayStart&&t<weekEnd;
+    if(calFilter==='upcoming') return t>=now;
+    return true; // 'all'
+  });
+
+  if(pins.length===0){
+    body.innerHTML=`<div class="cal-empty">No callbacks${calFilter!=='all'?' for this filter':''}.<br>Place a Call Back pin to get started.</div>`;
+    return;
+  }
+
+  pins.forEach(pin=>{
+    const t=new Date(pin.callback_at);
+    const isOverdue=t<now;
+    const isToday=t>=todayStart&&t<todayEnd;
+    const isSoon=!isOverdue&&!isToday&&t<new Date(now.getTime()+2*86400000);
+
+    const dateStr=t.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    const timeStr=t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    const fullName=[pin.first_name,pin.last_name].filter(Boolean).join(' ')||pin.name||'Unnamed';
+
+    let badge='';
+    if(isOverdue) badge=`<span class="cal-badge overdue">Overdue</span>`;
+    else if(isToday) badge=`<span class="cal-badge today">Today</span>`;
+    else if(isSoon) badge=`<span class="cal-badge soon">Soon</span>`;
+
+    const card=document.createElement('div');
+    card.className='cal-card'+(isOverdue?' overdue':isToday?' today':'');
+    card.innerHTML=`
+      <div class="cal-dot" style="background:${pin.color||'#3b82f6'};"></div>
+      <div class="cal-card-main">
+        <div class="cal-card-name">${escHtml(fullName)}</div>
+        ${pin.address?`<div class="cal-card-addr">${escHtml(pin.address)}</div>`:''}
+        <div class="cal-card-time">
+          ${dateStr} · ${timeStr}
+          ${badge}
+        </div>
+        ${pin.phone?`<div style="font-size:11px;color:#888;margin-top:3px;font-family:'DM Mono',monospace;">${escHtml(pin.phone)}</div>`:''}
+        ${pin.notes?`<div style="font-size:11px;color:#aaa;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(pin.notes)}</div>`:''}
+      </div>`;
+    card.onclick=()=>{
+      closeCalendar();
+      // fly to pin
+      map.flyTo([pin.lat,pin.lng],16,{duration:0.8});
+      setTimeout(()=>{
+        pinsLayerGroup.eachLayer(l=>{if(l._pinId===pin.id)l.openPopup();});
+      },900);
+    };
+    body.appendChild(card);
+  });
+}
+
+// swipe-to-dismiss calendar
+(function(){
+  const sheet=document.getElementById('calendarSheet');let startY=0,dragging=false;
+  sheet.addEventListener('touchstart',e=>{if(e.target.closest('#calendarBody')&&sheet.querySelector('#calendarBody').scrollTop>0)return;startY=e.touches[0].clientY;dragging=true;sheet.style.transition='none';},{passive:true});
+  sheet.addEventListener('touchmove',e=>{if(!dragging)return;const dy=e.touches[0].clientY-startY;if(dy<0)return;sheet.style.transform=`translateY(${dy}px)`;},{passive:true});
+  sheet.addEventListener('touchend',e=>{if(!dragging)return;dragging=false;sheet.style.transition='';const dy=e.changedTouches[0].clientY-startY;if(dy>80){closeCalendar();sheet.style.transform='';}else{sheet.style.transform='';}});
+})();
+
+// ═══════════════════════════════════════
+//  PIN TYPE DROPDOWN (replaces grid)
+// ═══════════════════════════════════════
+function selectPinTypeFromDropdown(sel){
+  currentPinType=sel.value;
+  const meta=PIN_TYPE_META[currentPinType]||PIN_TYPE_META.other;
+  document.getElementById('callbackFields').classList.toggle('visible', currentPinType==='callback');
+  selectPinColor(meta.defaultColor);
+  if(pendingPinMarker&&pendingPinLatLng){
+    const ini=PIN_TYPE_INITIALS[currentPinType]||'—';
+    pendingPinMarker.setIcon(L.divIcon({className:'',html:`<div class="map-pin-wrapper" style="opacity:0.8;"><div class="map-pin-head" style="background:${currentPinColor};"><span class="map-pin-icon" style="font-size:9px;font-weight:700;font-family:'DM Sans',sans-serif;color:#fff;">${ini}</span></div><div class="map-pin-tail" style="background:${currentPinColor};"></div></div>`,iconSize:[28,40],iconAnchor:[14,40]}));
+  }
+}
+
+// ═══════════════════════════════════════
+//  ADDRESS AUTOCOMPLETE
+// ═══════════════════════════════════════
+let _addrTimer=null;
+(function(){
+  const input=document.getElementById('cbAddress');
+  const suggestions=document.getElementById('addrSuggestions');
+  if(!input||!suggestions)return;
+  input.addEventListener('input',()=>{
+    clearTimeout(_addrTimer);
+    const q=input.value.trim();
+    if(q.length<3){suggestions.style.display='none';suggestions.innerHTML='';return;}
+    _addrTimer=setTimeout(()=>fetchAddrSuggestions(q),280);
+  });
+  input.addEventListener('blur',()=>setTimeout(()=>{suggestions.style.display='none';},200));
+  input.addEventListener('focus',()=>{if(suggestions.children.length)suggestions.style.display='block';});
+})();
+
+function fetchAddrSuggestions(q){
+  const hasPA=/(,?\s*(pa|pennsylvania))\s*$/i.test(q);
+  const searchQ=hasPA?q:q+', Pennsylvania';
+  const url=`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQ)}&limit=5&countrycodes=us&addressdetails=1`;
+  fetch(url,{headers:{'Accept-Language':'en'}}).then(r=>r.json()).then(data=>{
+    const suggestions=document.getElementById('addrSuggestions');
+    suggestions.innerHTML='';
+    if(!data||data.length===0){suggestions.style.display='none';return;}
+    data.forEach(r=>{
+      const a=r.address||{};
+      let line1='';
+      if(a.house_number&&a.road) line1=a.house_number+' '+a.road;
+      else if(a.road) line1=a.road;
+      else line1=r.display_name.split(',')[0];
+      const city=a.city||a.town||a.village||a.hamlet||'';
+      const state=a.state||'';
+      const line2=[city,state].filter(Boolean).join(', ');
+      const full=line2?line1+', '+line2:line1;
+      const item=document.createElement('div');
+      item.className='addr-suggestion';
+      item.innerHTML=`<div style="font-weight:600;font-size:13px;">${escHtml(line1)}</div>${line2?`<div style="font-size:11px;color:#888;">${escHtml(line2)}</div>`:''}`;
+      item.addEventListener('mousedown',e=>{e.preventDefault();document.getElementById('cbAddress').value=full;suggestions.style.display='none';suggestions.innerHTML='';});
+      suggestions.appendChild(item);
+    });
+    suggestions.style.display='block';
+  }).catch(()=>{});
+}
+
+// ═══════════════════════════════════════
+//  UPDATED openPinSidebarFor (uses dropdown)
+// ═══════════════════════════════════════
+function _populatePinSidebar(pin){
+  // type dropdown
+  const sel=document.getElementById('pinTypeSelect');
+  if(sel) sel.value=pin?pin.type||'callback':'callback';
+  currentPinType=pin?pin.type||'callback':'callback';
+  // callback fields visibility
+  document.getElementById('callbackFields').classList.toggle('visible', currentPinType==='callback');
+  // callback field values
+  document.getElementById('cbFullName').value=pin?[pin.first_name,pin.last_name].filter(Boolean).join(' '):'';
+  document.getElementById('cbAddress').value=pin?pin.address||'':'';
+  document.getElementById('cbPhone').value=pin?pin.phone||'':'';
+  document.getElementById('cbEmail').value=pin?pin.email||'':'';
+  if(pin&&pin.callback_at){
+    const dt=new Date(pin.callback_at);
+    const yyyy=dt.getFullYear();
+    const mm=String(dt.getMonth()+1).padStart(2,'0');
+    const dd=String(dt.getDate()).padStart(2,'0');
+    const hh=String(dt.getHours()).padStart(2,'0');
+    const mi=String(dt.getMinutes()).padStart(2,'0');
+    document.getElementById('cbDatetime').value=`${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+  } else {
+    document.getElementById('cbDatetime').value='';
+  }
+  // notes
+  document.getElementById('pinNoteTextarea').value=pin?pin.notes||'':'';
+  // color
+  const meta=PIN_TYPE_META[currentPinType]||PIN_TYPE_META.other;
+  const color=pin?pin.color||meta.defaultColor:meta.defaultColor;
+  currentPinColor=color;
+  renderPinColorSwatches(color);
+  document.getElementById('pinColorPicker').value=color;
+  document.getElementById('pinColorLabel').textContent=color;
+}
+
+// ═══════════════════════════════════════
+//  UPDATED savePin (uses new fields)
+// ═══════════════════════════════════════
+async function _savePinNew(){
+  const notes=document.getElementById('pinNoteTextarea').value.trim();
+  if(!currentPinId&&!pendingPinLatLng){alert('No location set for pin.');return;}
+  pinMarkStatus('saving','Saving…');
+  let lat,lng;
+  if(currentPinId){lat=pinsCache[currentPinId].lat;lng=pinsCache[currentPinId].lng;}
+  else{lat=pendingPinLatLng.lat;lng=pendingPinLatLng.lng;}
+
+  const fullName=document.getElementById('cbFullName').value.trim();
+  const nameParts=fullName.split(/\s+/);
+  const firstName=nameParts[0]||null;
+  const lastName=nameParts.slice(1).join(' ')||null;
+  const address=document.getElementById('cbAddress').value.trim();
+  const phone=document.getElementById('cbPhone').value.trim();
+  const email=document.getElementById('cbEmail').value.trim();
+  const cbDatetimeVal=document.getElementById('cbDatetime').value;
+  const callbackAt=cbDatetimeVal?new Date(cbDatetimeVal).toISOString():null;
+
+  // display name: use full name for callback, or a label
+  const pinName=fullName||(address?address.split(',')[0]:'Untitled Pin');
+
+  const pinData={
+    id:currentPinId, name:pinName, type:currentPinType,
+    color:currentPinColor, lat, lng, notes,
+    first_name:firstName, last_name:lastName,
+    address:address||null, callback_at:callbackAt, notify_before:30,
+    phone:phone||null, email:email||null
+  };
+  try{
+    const saved=await upsertPinDB(pinData);
+    pinData.id=saved.id;
+    pinsCache[saved.id]=pinData;
+    if(pendingPinMarker){map.removeLayer(pendingPinMarker);pendingPinMarker=null;}
+    reRenderAllPins();
+    currentPinId=saved.id;
+    pendingPinLatLng=null;
+    closePinSidebar();
+  }catch(e){pinMarkStatus('','Save failed');alert('Save failed — check connection.');}
+}
 
 // ═══════════════════════════════════════
 //  LOAD ALL DATA
