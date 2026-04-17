@@ -98,12 +98,12 @@
     .opacity-presets { display:flex; gap:5px; }
     .opacity-btn { flex:1; padding:6px 4px; border:1.5px solid #ddd; border-radius:7px; background:#fff; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600; color:#666; cursor:pointer; text-align:center; -webkit-tap-highlight-color:transparent; transition:all 0.12s; }
     .opacity-btn:active { transform:scale(0.95); }
-    .opacity-btn.active { background:#222; color:#fff; border-color:#222; }
+    .opacity-btn.active { background:#1e3a5f; color:#fff; border-color:#1e3a5f; }
 
     .basemap-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
     .basemap-btn { border:1.5px solid #ddd; border-radius:8px; padding:8px 6px; background:#fff; cursor:pointer; text-align:center; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600; color:#555; -webkit-tap-highlight-color:transparent; transition:all 0.12s; line-height:1.3; }
     .basemap-btn:active { transform:scale(0.95); }
-    .basemap-btn.active { background:#222; color:#fff; border-color:#222; }
+    .basemap-btn.active { background:#1e3a5f; color:#fff; border-color:#1e3a5f; }
     .basemap-btn .bm-icon { font-size:16px; display:block; margin-bottom:3px; }
 
     .toggle-row { display:flex; align-items:center; justify-content:space-between; padding:5px 0; }
@@ -113,7 +113,7 @@
     .toggle-switch input { opacity:0; width:0; height:0; position:absolute; }
     .toggle-track { position:absolute; inset:0; background:#ddd; border-radius:11px; cursor:pointer; transition:background 0.2s; }
     .toggle-track::after { content:''; position:absolute; left:3px; top:3px; width:16px; height:16px; background:#fff; border-radius:50%; transition:transform 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.2); }
-    .toggle-switch input:checked + .toggle-track { background:#222; }
+    .toggle-switch input:checked + .toggle-track { background:#1e3a5f; }
     .toggle-switch input:checked + .toggle-track::after { transform:translateX(18px); }
 
     @media (min-width:768px) {
@@ -130,12 +130,12 @@
     #bottomChrome { position:fixed; bottom:0; left:0; right:0; z-index:500; background:rgba(255,255,255,0.97); backdrop-filter:blur(20px) saturate(180%); -webkit-backdrop-filter:blur(20px) saturate(180%); border-top:1.5px solid #e2e2e2; box-shadow:0 -4px 24px rgba(0,0,0,0.10); padding-bottom:var(--sab); }
     #searchRow { display:flex; align-items:center; padding:10px 12px 6px; gap:8px; }
     #searchWrap { flex:1; display:flex; align-items:center; background:#f4f4f6; border:1.5px solid #e0e0e6; border-radius:12px; overflow:visible; position:relative; transition:border-color 0.15s,box-shadow 0.15s; }
-    #searchWrap:focus-within { border-color:#222; background:#fff; box-shadow:0 2px 12px rgba(0,0,0,0.08); }
+    #searchWrap:focus-within { border-color:#1e3a5f; background:#fff; box-shadow:0 2px 12px rgba(30,58,95,0.12); }
     #searchIcon { padding:0 8px 0 12px; color:#888; font-size:17px; line-height:1; user-select:none; flex-shrink:0; }
     #search { flex:1; border:none; outline:none; padding:11px 4px; font-family:'DM Sans',sans-serif; font-size:16px; color:#111; background:transparent; min-width:0; }
     #search::placeholder { color:#aaa; }
     #clearBtn { display:none; background:none; border:none; cursor:pointer; padding:0 12px; color:#bbb; font-size:20px; line-height:1; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
-    #suggestions { display:none; position:fixed; bottom:calc(var(--total-chrome) + 4px); left:12px; right:12px; background:#fff; border:1.5px solid #222; border-radius:14px; z-index:600; max-height:55vh; overflow-y:auto; -webkit-overflow-scrolling:touch; box-shadow:0 -8px 32px rgba(0,0,0,0.18); }
+    #suggestions { display:none; position:fixed; bottom:calc(var(--total-chrome) + 4px); left:12px; right:12px; background:#fff; border:1.5px solid #1e3a5f; border-radius:14px; z-index:600; max-height:55vh; overflow-y:auto; -webkit-overflow-scrolling:touch; box-shadow:0 -8px 32px rgba(0,0,0,0.18); }
     .suggestion-item { padding:13px 16px; cursor:pointer; border-bottom:1px solid #f0f0f0; display:flex; flex-direction:column; gap:3px; -webkit-tap-highlight-color:transparent; transition:background 0.08s; }
     .suggestion-item:last-child { border-bottom:none; }
     .suggestion-item:active { background:#f5f5f5; }
@@ -147,7 +147,7 @@
     .nav-btn svg { flex-shrink:0; }
     .nav-btn.active { color:var(--blue); }
     .nav-btn.active svg { stroke:var(--blue) !important; }
-    .nav-btn.danger { color:var(--red); }
+    .nav-btn.danger { color:#fca5a5; }
     .nav-btn.danger svg { stroke:var(--red) !important; }
     .nav-btn.pin-active { color:#8b5cf6; }
     .nav-btn.pin-active svg { stroke:#8b5cf6 !important; }
@@ -158,31 +158,31 @@
       #gearBtn { display:none !important; }
       #settingsBackdrop { display:none !important; }
       #settingsSheet { display:none !important; }
-      #suggestions { position:absolute; bottom:auto; left:auto; right:auto; top:100%; width:100%; max-height:300px; border-top:none; border-radius:0 0 10px 10px; box-shadow:3px 4px 0 #222; }
+      #suggestions { position:absolute; bottom:auto; left:auto; right:auto; top:100%; width:100%; max-height:300px; border-top:none; border-radius:0 0 10px 10px; box-shadow:0 4px 12px rgba(0,0,0,0.12); }
       #desktopSearch { display:block; position:absolute; top:14px; left:54px; z-index:500; width:300px; }
-      #desktopSearch #searchWrap { background:#fff; border:2px solid #222; border-radius:8px; box-shadow:3px 3px 0 #222; }
+      #desktopSearch #searchWrap { background:#fff; border:2px solid #1e3a5f; border-radius:8px; box-shadow:3px 3px 0 rgba(30,58,95,0.25); }
       #desktopSearch #search { font-size:13px; }
       #desktopSearch .suggestions-wrap { position:relative; }
-      #locBtnDesktop { display:flex; position:absolute; top:14px; left:14px; z-index:500; width:36px; height:36px; background:#fff; border:2px solid #222; border-radius:8px; box-shadow:3px 3px 0 #222; align-items:center; justify-content:center; cursor:pointer; color:#555; transition:background 0.15s,color 0.15s; }
+      #locBtnDesktop { display:flex; position:absolute; top:14px; left:14px; z-index:500; width:36px; height:36px; background:#fff; border:2px solid #1e3a5f; border-radius:8px; box-shadow:3px 3px 0 rgba(30,58,95,0.25); align-items:center; justify-content:center; cursor:pointer; color:#555; transition:background 0.15s,color 0.15s; }
       #locBtnDesktop:hover { background:#f5f5f5; }
       #locBtnDesktop.active { background:var(--blue); border-color:var(--blue); color:#fff; box-shadow:3px 3px 0 #1d4ed8; }
-      #sessionBadge { position:absolute; top:14px; right:14px; z-index:500; background:#1a1a24; border:1.5px solid #2e2e40; border-radius:8px; padding:7px 12px; display:flex; align-items:center; gap:10px; box-shadow:2px 2px 0 rgba(0,0,0,0.3); }
+      #sessionBadge { position:absolute; top:14px; right:14px; z-index:500; background:#1e3a5f; border:1.5px solid #152b47; border-radius:8px; padding:7px 12px; display:flex; align-items:center; gap:10px; box-shadow:2px 2px 0 rgba(0,0,0,0.3); }
       #sessionBadge.hidden { display:none !important; }
-      #badgeEmail { font-family:'DM Mono',monospace; font-size:11px; color:var(--accent); letter-spacing:0.04em; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-      #badgeLogout { background:none; border:none; cursor:pointer; font-size:11px; color:#4a4a6a; font-family:'DM Mono',monospace; transition:color 0.15s; }
-      #badgeLogout:hover { color:var(--red); }
-      #badgeVersion { font-family:'DM Mono',monospace; font-size:10px; color:#3a3a55; background:#12121a; border:1px solid #2e2e40; border-radius:4px; padding:2px 6px; letter-spacing:0.06em; user-select:none; flex-shrink:0; }
-      #legend { position:absolute; bottom:30px; right:116px; z-index:500; background:#fff; border:2px solid #222; border-radius:8px; padding:12px 16px; box-shadow:3px 3px 0 #222; font-size:12px; transition:right 0.25s cubic-bezier(0.4,0,0.2,1); }
+      #badgeEmail { font-family:'DM Mono',monospace; font-size:11px; color:#fff; letter-spacing:0.04em; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      #badgeLogout { background:none; border:none; cursor:pointer; font-size:11px; color:rgba(255,255,255,0.6); font-family:'DM Mono',monospace; transition:color 0.15s; }
+      #badgeLogout:hover { color:#fca5a5; }
+      #badgeVersion { font-family:'DM Mono',monospace; font-size:10px; color:rgba(255,255,255,0.5); background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); border-radius:4px; padding:2px 6px; letter-spacing:0.06em; user-select:none; flex-shrink:0; }
+      #legend { position:absolute; bottom:30px; right:116px; z-index:500; background:#fff; border:1.5px solid #ddd; border-radius:10px; padding:12px 16px; box-shadow:0 4px 16px rgba(0,0,0,0.1); font-size:12px; transition:right 0.25s cubic-bezier(0.4,0,0.2,1); }
       #legend.shifted { right:436px; }
       #layersPanel { right:14px; bottom:30px; }
       #layersPanel.shifted { right:334px; }
-      #drawBtnDesktop { display:flex; position:absolute; bottom:30px; right:56px; z-index:500; width:36px; height:36px; background:#fff; border:2px solid #222; border-radius:8px; box-shadow:3px 3px 0 #222; align-items:center; justify-content:center; cursor:pointer; color:#555; transition:background 0.15s,color 0.15s; }
+      #drawBtnDesktop { display:flex; position:absolute; bottom:30px; right:56px; z-index:500; width:36px; height:36px; background:#fff; border:2px solid #1e3a5f; border-radius:8px; box-shadow:3px 3px 0 rgba(30,58,95,0.25); align-items:center; justify-content:center; cursor:pointer; color:#555; transition:background 0.15s,color 0.15s; }
       #drawBtnDesktop:hover { background:#f5f5f5; }
       #drawBtnDesktop.active { background:#3b82f6; border-color:#3b82f6; color:#fff; box-shadow:3px 3px 0 #1d4ed8; }
-      #pinBtnDesktop { display:flex; position:absolute; bottom:30px; right:100px; z-index:500; width:36px; height:36px; background:#fff; border:2px solid #222; border-radius:8px; box-shadow:3px 3px 0 #222; align-items:center; justify-content:center; cursor:pointer; color:#555; transition:background 0.15s,color 0.15s; }
+      #pinBtnDesktop { display:flex; position:absolute; bottom:30px; right:100px; z-index:500; width:36px; height:36px; background:#fff; border:2px solid #1e3a5f; border-radius:8px; box-shadow:3px 3px 0 rgba(30,58,95,0.25); align-items:center; justify-content:center; cursor:pointer; color:#555; transition:background 0.15s,color 0.15s; }
       #pinBtnDesktop:hover { background:#f5f5f5; }
       #pinBtnDesktop.active { background:#8b5cf6; border-color:#8b5cf6; color:#fff; box-shadow:3px 3px 0 #6d28d9; }
-      #sidebar { width:320px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:2px solid #222; transform:translateX(100%); transition:transform 0.25s cubic-bezier(0.4,0,0.2,1); box-shadow:-4px 0 16px rgba(0,0,0,0.12); }
+      #sidebar { width:320px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(100%); transition:transform 0.25s cubic-bezier(0.4,0,0.2,1); box-shadow:-8px 0 24px rgba(0,0,0,0.1); }
       #sidebar.open { transform:translateX(0); }
       #sidebar::before { display:none; }
     }
@@ -220,7 +220,7 @@
     #shapeSidebarBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:18px 20px; display:flex; flex-direction:column; gap:22px; }
     #shapeSidebarFooter { padding:14px 20px; border-top:1.5px solid #eee; display:flex; gap:10px; align-items:center; flex-shrink:0; background:#fff; }
     @media (min-width:768px) {
-      #shapeSidebar { width:320px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:2px solid #222; transform:translateX(100%); transition:transform 0.25s cubic-bezier(0.4,0,0.2,1); box-shadow:-4px 0 16px rgba(0,0,0,0.12); }
+      #shapeSidebar { width:320px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(100%); transition:transform 0.25s cubic-bezier(0.4,0,0.2,1); box-shadow:-8px 0 24px rgba(0,0,0,0.1); }
       #shapeSidebar.open { transform:translateX(0); }
       #shapeSidebar::before { display:none; }
     }
@@ -236,7 +236,7 @@
     #pinSidebarBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:18px 20px; display:flex; flex-direction:column; gap:20px; }
     #pinSidebarFooter { padding:14px 20px; border-top:1.5px solid #eee; display:flex; gap:10px; align-items:center; flex-shrink:0; background:#fff; }
     @media (min-width:768px) {
-      #pinSidebar { width:320px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:2px solid #222; transform:translateX(100%); transition:transform 0.25s cubic-bezier(0.4,0,0.2,1); box-shadow:-4px 0 16px rgba(0,0,0,0.12); }
+      #pinSidebar { width:320px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(100%); transition:transform 0.25s cubic-bezier(0.4,0,0.2,1); box-shadow:-8px 0 24px rgba(0,0,0,0.1); }
       #pinSidebar.open { transform:translateX(0); }
       #pinSidebar::before { display:none; }
     }
@@ -253,8 +253,8 @@
       position: fixed;
       left: 50%; transform: translateX(-50%);
       z-index: 600;
-      background: #1a1a24;
-      border: 1.5px solid #2e2e40;
+      background: #fff;
+      border: 1.5px solid #ddd;
       border-radius: 12px;
       padding: 8px 16px;
       gap: 10px;
@@ -267,40 +267,40 @@
     @media (min-width:768px) { #pinToolbar { bottom: 30px; } }
     #pinToolbarLabel {
       font-family: 'DM Mono', monospace; font-size: 12px;
-      color: #a78bfa; display:flex; align-items:center; gap:6px;
+      color: #1e3a5f; display:flex; align-items:center; gap:6px;
     }
     .pin-tb-btn {
       padding: 6px 14px; border-radius: 8px; border: 1.5px solid #3a3a55;
-      background: #12121a; font-family: 'DM Sans', sans-serif;
-      font-size: 12px; font-weight: 600; color: #e8e8ee;
+      background: #e8eef5; font-family: 'DM Sans', sans-serif;
+      font-size: 12px; font-weight: 600; color: #1e3a5f;
       cursor: pointer; -webkit-tap-highlight-color: transparent;
       transition: background 0.12s;
     }
     .pin-tb-btn.danger { border-color:#ef4444; color:#ef4444; }
-    .pin-tb-btn.danger:hover { background:#1a0a0a; }
+    .pin-tb-btn.danger:hover { background:#fff0f1; }
 
     .section-label { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:10px; }
     #colorSwatches { display:flex; gap:8px; flex-wrap:wrap; }
     .swatch { width:36px; height:36px; border-radius:8px; cursor:pointer; border:2.5px solid transparent; transition:transform 0.1s,border-color 0.1s; -webkit-tap-highlight-color:transparent; }
     .swatch:active { transform:scale(0.9); }
-    .swatch.active { border-color:#222; transform:scale(1.1); }
+    .swatch.active { border-color:#1e3a5f; transform:scale(1.1); }
     #customColorRow { display:flex; align-items:center; gap:10px; margin-top:10px; }
     #customColorPicker { width:40px; height:40px; border:2px solid #ddd; border-radius:8px; cursor:pointer; padding:2px; background:none; }
     #customColorLabel { font-size:12px; color:#666; font-family:'DM Mono',monospace; }
     .permit-row { display:flex; gap:8px; flex-wrap:wrap; }
     .check-radio-label { display:flex; align-items:center; gap:6px; cursor:pointer; font-size:13px; color:#111; padding:10px 14px; border:1.5px solid #ddd; border-radius:10px; transition:border-color 0.15s,background 0.15s; -webkit-tap-highlight-color:transparent; flex:1; min-width:0; justify-content:center; font-weight:500; }
-    .check-radio-label:has(input:checked) { border-color:#222; background:#f5f5f5; font-weight:600; }
-    .check-radio-label input { accent-color:#222; }
+    .check-radio-label:has(input:checked) { border-color:#1e3a5f; background:#e8eef5; font-weight:600; }
+    .check-radio-label input { accent-color:#1e3a5f; }
     .util-dropdown { position:relative; width:100%; }
     .util-trigger { width:100%; min-height:48px; padding:8px 36px 8px 12px; border:1.5px solid #ddd; border-radius:10px; background:#fff; cursor:pointer; display:flex; align-items:center; flex-wrap:wrap; gap:4px; text-align:left; transition:border-color 0.15s; position:relative; -webkit-tap-highlight-color:transparent; }
     .util-trigger:active { border-color:#aaa; }
-    .util-trigger.open { border-color:#222; border-radius:10px 10px 0 0; }
+    .util-trigger.open { border-color:#1e3a5f; border-radius:10px 10px 0 0; }
     .util-trigger-arrow { position:absolute; right:12px; top:50%; transform:translateY(-50%); color:#999; font-size:10px; pointer-events:none; transition:transform 0.15s; }
     .util-trigger.open .util-trigger-arrow { transform:translateY(-50%) rotate(180deg); }
     .util-placeholder { font-size:13px; color:#aaa; font-family:'DM Mono',monospace; }
     .util-pill { display:inline-flex; align-items:center; gap:4px; background:#eef2ff; border:1px solid #c7d2fe; border-radius:6px; padding:3px 7px; font-size:11px; font-family:'DM Mono',monospace; color:#3730a3; }
     .util-pill-remove { background:none; border:none; cursor:pointer; color:#818cf8; font-size:14px; line-height:1; padding:0; flex-shrink:0; }
-    .util-panel { display:none; position:absolute; top:100%; left:0; right:0; z-index:950; background:#fff; border:1.5px solid #222; border-top:none; border-radius:0 0 10px 10px; max-height:220px; overflow-y:auto; -webkit-overflow-scrolling:touch; box-shadow:0 8px 24px rgba(0,0,0,0.15); }
+    .util-panel { display:none; position:absolute; top:100%; left:0; right:0; z-index:950; background:#fff; border:1.5px solid #1e3a5f; border-top:none; border-radius:0 0 10px 10px; max-height:220px; overflow-y:auto; -webkit-overflow-scrolling:touch; box-shadow:0 8px 24px rgba(0,0,0,0.15); }
     .util-panel.open { display:block; }
     .util-group-label { font-size:10px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:0.08em; padding:8px 14px 5px; background:#fafafa; border-top:1px solid #eee; border-bottom:1px solid #eee; position:sticky; top:0; }
     .util-group-label:first-child { border-top:none; }
@@ -312,21 +312,21 @@
     #starRating { display:flex; gap:6px; }
     .star { font-size:34px; color:#ddd; cursor:pointer; transition:color 0.1s,transform 0.1s; user-select:none; -webkit-tap-highlight-color:transparent; line-height:1; }
     .star:active { transform:scale(0.9); }
-    .star.on { color:var(--accent); }
+    .star.on { color:#f59e0b; }
     #noteTextarea { width:100%; min-height:90px; resize:vertical; border:1.5px solid #ddd; border-radius:10px; padding:12px 14px; font-family:'DM Sans',sans-serif; font-size:16px; line-height:1.5; color:#111; outline:none; transition:border-color 0.15s; background:#fff; }
-    #noteTextarea:focus { border-color:#222; }
+    #noteTextarea:focus { border-color:#1e3a5f; }
     #saveStatus { display:flex; align-items:center; gap:7px; margin-top:8px; }
     #statusDot { width:8px; height:8px; border-radius:50%; background:#ddd; flex-shrink:0; transition:background 0.3s; }
     #statusDot.saved { background:#22c55e; }
     #statusDot.saving { background:var(--accent); }
     #statusText { font-size:12px; color:#999; font-family:'DM Mono',monospace; }
-    .btn { flex:1; padding:13px 16px; border-radius:10px; border:1.5px solid #222; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:background 0.15s,transform 0.1s; -webkit-tap-highlight-color:transparent; min-height:48px; }
+    .btn { flex:1; padding:13px 16px; border-radius:10px; border:1.5px solid #1e3a5f; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:background 0.15s,transform 0.1s; -webkit-tap-highlight-color:transparent; min-height:48px; }
     .btn:active { transform:scale(0.97); }
-    .btn-primary { background:#222; color:#fff; border-color:#222; }
-    .btn-primary:hover { background:#000; }
-    .btn-ghost { background:#fff; color:#222; }
+    .btn-primary { background:#1e3a5f; color:#fff; border-color:#1e3a5f; }
+    .btn-primary:hover { background:#152b47; }
+    .btn-ghost { background:#fff; color:#1e3a5f; }
     .btn-ghost:hover { background:#f5f5f5; }
-    .btn-danger { background:#fff; color:var(--red); border-color:var(--red); }
+    .btn-danger { background:#fff; color:#fca5a5; border-color:#fca5a5; }
     .btn-danger:hover { background:#fff0f1; }
 
     /* ══ LEGEND ══ */
@@ -383,8 +383,8 @@
       position: fixed;
       left: 50%; transform: translateX(-50%);
       z-index: 600;
-      background: #1a1a24;
-      border: 1.5px solid #2e2e40;
+      background: #fff;
+      border: 1.5px solid #ddd;
       border-radius: 12px;
       padding: 8px 12px;
       gap: 10px;
@@ -397,20 +397,20 @@
     @media (min-width: 768px) { #drawToolbar { bottom: 30px; } }
     #drawVertexCount {
       font-family: 'DM Mono', monospace; font-size: 11px;
-      color: #6b6b8a; min-width: 60px;
+      color: #666; min-width: 60px;
     }
     .draw-tb-btn {
       padding: 6px 14px; border-radius: 8px; border: 1.5px solid #3a3a55;
-      background: #12121a; font-family: 'DM Sans', sans-serif;
-      font-size: 12px; font-weight: 600; color: #e8e8ee;
+      background: #e8eef5; font-family: 'DM Sans', sans-serif;
+      font-size: 12px; font-weight: 600; color: #1e3a5f;
       cursor: pointer; -webkit-tap-highlight-color: transparent;
       transition: background 0.12s, border-color 0.12s;
     }
-    .draw-tb-btn:hover { background: #22222e; }
-    .draw-tb-btn.primary { background: #3b82f6; border-color: #3b82f6; color: #fff; }
-    .draw-tb-btn.primary:hover { background: #2563eb; }
+    .draw-tb-btn:hover { background: #e8eef5; }
+    .draw-tb-btn.primary { background: #1e3a5f; border-color: #1e3a5f; color: #fff; }
+    .draw-tb-btn.primary:hover { background: #152b47; }
     .draw-tb-btn.danger { border-color: #ef4444; color: #ef4444; }
-    .draw-tb-btn.danger:hover { background: #1a0a0a; }
+    .draw-tb-btn.danger:hover { background: #fff0f1; }
 
     #shapeName {
       width: 100%; border: 1.5px solid #ddd; border-radius: 10px;
@@ -418,7 +418,7 @@
       font-size: 16px; color: #111; outline: none;
       transition: border-color 0.15s; background: #fff;
     }
-    #shapeName:focus { border-color: #222; }
+    #shapeName:focus { border-color: #1e3a5f; }
 
     /* shared text inputs in pin sidebar */
     .pin-text-input {
@@ -427,7 +427,7 @@
       font-size: 16px; color: #111; outline: none;
       transition: border-color 0.15s; background: #fff;
     }
-    .pin-text-input:focus { border-color: #8b5cf6; }
+    .pin-text-input:focus { border-color: #1e3a5f; }
 
 
 
@@ -459,7 +459,7 @@
     #calendarSheet.open { transform:translateY(0); }
     #calendarSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
     @media (min-width:768px) {
-      #calendarSheet { width:360px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:2px solid #222; transform:translateX(110%); }
+      #calendarSheet { width:360px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(110%); }
       #calendarSheet.open { transform:translateX(0); }
       #calendarSheet::before { display:none; }
     }
@@ -469,7 +469,7 @@
     .cal-filter-row { display:flex; gap:6px; padding:12px 20px; overflow-x:auto; flex-shrink:0; border-bottom:1px solid #f0f0f0; -webkit-overflow-scrolling:touch; }
     .cal-filter-row::-webkit-scrollbar { display:none; }
     .cal-chip { padding:6px 14px; border:1.5px solid #ddd; border-radius:20px; background:#fff; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; color:#666; cursor:pointer; white-space:nowrap; -webkit-tap-highlight-color:transparent; transition:all 0.12s; flex-shrink:0; }
-    .cal-chip.active { background:#222; color:#fff; border-color:#222; }
+    .cal-chip.active { background:#1e3a5f; color:#fff; border-color:#1e3a5f; }
     #calendarBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:16px 20px; display:flex; flex-direction:column; gap:10px; }
     .cal-empty { text-align:center; padding:40px 20px; color:#aaa; font-size:13px; font-family:'DM Mono',monospace; }
     .cal-card {
@@ -501,7 +501,7 @@
       background-repeat:no-repeat; background-position:right 14px center;
       transition:border-color 0.15s;
     }
-    .pin-type-select:focus { border-color:#8b5cf6; }
+    .pin-type-select:focus { border-color:#1e3a5f; }
 
     /* ══ CALLBACK FIELDS ══ */
     #callbackFields {
@@ -532,7 +532,7 @@
     .addr-wrap { position:relative; }
     #addrSuggestions {
       display:none; position:absolute; bottom:100%; left:0; right:0; margin-bottom:4px;
-      background:#fff; border:1.5px solid #222; border-radius:10px;
+      background:#fff; border:1.5px solid #1e3a5f; border-radius:10px;
       z-index:960; max-height:180px; overflow-y:auto;
       box-shadow:0 -4px 16px rgba(0,0,0,0.12);
     }
@@ -540,14 +540,83 @@
     .addr-suggestion:last-child { border-bottom:none; }
     .addr-suggestion:active { background:#f5f5f5; }
 
+    /* ══ CHANGELOG MODAL ══ */
+    #changelogBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9000; opacity:0; transition:opacity 0.25s; }
+    #changelogBackdrop.show { opacity:1; }
+    #changelogModal {
+      position:fixed; bottom:0; left:0; right:0; z-index:9001;
+      background:#fff; border-radius:20px 20px 0 0;
+      border-top:1.5px solid #ddd;
+      box-shadow:0 -8px 40px rgba(0,0,0,0.2);
+      max-height:80dvh; display:flex; flex-direction:column;
+      transform:translateY(110%);
+      transition:transform 0.32s cubic-bezier(0.32,0.72,0,1);
+      padding-bottom:env(safe-area-inset-bottom,0px);
+    }
+    #changelogModal.open { transform:translateY(0); }
+    #changelogModal::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #changelogModalHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #changelogModalTitle { font-size:17px; font-weight:700; color:#111; }
+    #changelogCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; }
+    #changelogBody { overflow-y:auto; -webkit-overflow-scrolling:touch; padding:20px; display:flex; flex-direction:column; gap:24px; }
+    .cl-version { display:flex; flex-direction:column; gap:8px; }
+    .cl-version-header { display:flex; align-items:center; gap:10px; }
+    .cl-version-badge { font-family:'DM Mono',monospace; font-size:12px; font-weight:700; background:#1e3a5f; color:#fff; padding:3px 9px; border-radius:6px; flex-shrink:0; }
+    .cl-version-badge.current { background:#8b5cf6; }
+    .cl-version-label { font-size:13px; font-weight:700; color:#111; }
+    .cl-items { display:flex; flex-direction:column; gap:5px; padding-left:4px; }
+    .cl-item { font-size:13px; color:#444; line-height:1.5; padding-left:14px; position:relative; }
+    .cl-item::before { content:'·'; position:absolute; left:0; color:#aaa; font-size:16px; line-height:1.3; }
+
+    /* ══ ADD CALLBACK FORM ══ */
+    #addCallbackSheet {
+      position:fixed; bottom:0; left:0; right:0; z-index:950;
+      max-height:calc(94dvh - var(--sab)); background:#fff;
+      border-top:1.5px solid #ddd; border-radius:20px 20px 0 0;
+      box-shadow:0 -8px 40px rgba(0,0,0,0.2);
+      display:flex; flex-direction:column;
+      transform:translateY(110%);
+      transition:transform 0.32s cubic-bezier(0.32,0.72,0,1);
+      padding-bottom:var(--sab); will-change:transform;
+    }
+    #addCallbackSheet.open { transform:translateY(0); }
+    #addCallbackSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    @media (min-width:768px) {
+      #addCallbackSheet { width:380px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(110%); }
+      #addCallbackSheet.open { transform:translateX(0); }
+      #addCallbackSheet::before { display:none; }
+    }
+    #addCallbackHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #addCallbackTitle { font-size:17px; font-weight:700; color:#111; }
+    #addCallbackCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; }
+    #addCallbackBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+    #addCallbackFooter { padding:14px 20px; border-top:1.5px solid #eee; display:flex; gap:10px; flex-shrink:0; background:#fff; }
+    .acb-contact-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .acb-contact-row .pin-text-input { min-width:0; width:100%; }
+    .acb-field-label { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; }
+
+    /* Add button in calendar header */
+    #calAddBtn {
+      background:#1e3a5f; border:none; border-radius:8px;
+      padding:7px 14px; font-family:'DM Sans',sans-serif;
+      font-size:13px; font-weight:600; color:#fff;
+      cursor:pointer; -webkit-tap-highlight-color:transparent;
+      display:flex; align-items:center; gap:5px;
+      transition:background 0.12s;
+    }
+    #calAddBtn:active { background:#152b47; }
+
+    /* Standalone callback card indicator */
+    .cal-card.standalone { border-left:3px solid #8b5cf6; }
+
     /* ══ AUTH GATE ══ */
     #authGate { position:fixed; inset:0; z-index:9999; background:var(--bg); display:flex; align-items:center; justify-content:center; padding:max(20px,calc(var(--sat) + 16px)) 20px max(20px,calc(var(--sab) + 16px)); overflow-y:auto; }
     #authGate.hidden { display:none; }
     .auth-box { background:var(--surface); border:1.5px solid var(--border); border-radius:16px; padding:32px 28px; width:100%; max-width:380px; }
-    .auth-logo { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.15em; color:#4a4a6a; text-transform:uppercase; margin-bottom:24px; }
-    .auth-logo span { color:var(--accent); }
+    .auth-logo { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.15em; color:rgba(255,255,255,0.6); text-transform:uppercase; margin-bottom:24px; }
+    .auth-logo span { color:#fff; }
     .auth-tabs { display:flex; margin-bottom:24px; border:1.5px solid var(--border); border-radius:10px; overflow:hidden; }
-    .auth-tab { flex:1; padding:11px; background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; color:#4a4a6a; transition:background 0.15s,color 0.15s; -webkit-tap-highlight-color:transparent; }
+    .auth-tab { flex:1; padding:11px; background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; color:rgba(255,255,255,0.6); transition:background 0.15s,color 0.15s; -webkit-tap-highlight-color:transparent; }
     .auth-tab.active { background:var(--accent); color:#12121a; }
     .auth-tab:not(.active):hover { background:#22222e; color:var(--text); }
     .auth-panel { display:none; }
@@ -555,31 +624,31 @@
     .auth-heading { font-size:18px; font-weight:700; color:var(--text); margin-bottom:20px; }
     .auth-label { font-size:11px; font-weight:600; color:#6b6b8a; text-transform:uppercase; letter-spacing:0.08em; display:block; margin-bottom:8px; }
     .auth-input { width:100%; background:#12121a; border:1.5px solid var(--border); border-radius:10px; padding:13px 14px; font-family:'DM Mono',monospace; font-size:16px; color:var(--text); outline:none; letter-spacing:0.04em; transition:border-color 0.15s; margin-bottom:14px; }
-    .auth-input:focus { border-color:var(--accent); }
+    .auth-input:focus { border-color:#fff; }
     .auth-input::placeholder { color:#3a3a55; }
     .auth-btn { width:100%; padding:15px; background:var(--accent); border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:700; color:#12121a; cursor:pointer; transition:background 0.15s; -webkit-tap-highlight-color:transparent; }
     .auth-btn:hover { background:#fbbf24; }
     .auth-btn:disabled { background:#7a5c10; color:#4a3a0a; cursor:not-allowed; }
     .auth-btn-ghost { width:100%; padding:13px; background:transparent; border:1.5px solid var(--border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; color:#6b6b8a; cursor:pointer; transition:border-color 0.15s,color 0.15s; margin-top:10px; -webkit-tap-highlight-color:transparent; }
-    .auth-btn-ghost:hover { border-color:var(--accent); color:var(--text); }
-    .auth-error { font-size:12px; color:var(--red); font-family:'DM Mono',monospace; margin-bottom:14px; display:none; line-height:1.5; }
+    .auth-btn-ghost:hover { border-color:#fff; color:var(--text); }
+    .auth-error { font-size:12px; color:#fca5a5; font-family:'DM Mono',monospace; margin-bottom:14px; display:none; line-height:1.5; }
     .auth-divider { display:flex; align-items:center; gap:10px; margin:18px 0; }
     .auth-divider-line { flex:1; height:1px; background:var(--border); }
-    .auth-divider-text { font-size:11px; color:#4a4a6a; font-family:'DM Mono',monospace; white-space:nowrap; }
-    .auth-forgot { font-size:12px; color:#4a4a6a; font-family:'DM Mono',monospace; text-align:right; display:block; margin-top:-8px; margin-bottom:14px; cursor:pointer; background:none; border:none; width:100%; transition:color 0.15s; -webkit-tap-highlight-color:transparent; }
-    .auth-forgot:hover { color:var(--accent); }
+    .auth-divider-text { font-size:11px; color:rgba(255,255,255,0.6); font-family:'DM Mono',monospace; white-space:nowrap; }
+    .auth-forgot { font-size:12px; color:rgba(255,255,255,0.6); font-family:'DM Mono',monospace; text-align:right; display:block; margin-top:-8px; margin-bottom:14px; cursor:pointer; background:none; border:none; width:100%; transition:color 0.15s; -webkit-tap-highlight-color:transparent; }
+    .auth-forgot:hover { color:#fff; }
     .auth-success-box { background:#0d2d1a; border:1.5px solid #1a5c35; border-radius:10px; padding:16px 18px; margin-top:16px; display:none; }
     .auth-success-icon { font-size:22px; margin-bottom:8px; }
     .auth-success-title { font-size:14px; font-weight:600; color:var(--green); margin-bottom:4px; }
     .auth-success-sub { font-size:12px; color:#6b8a7a; font-family:'DM Mono',monospace; line-height:1.6; }
-    .auth-note { font-size:11px; color:#4a4a6a; font-family:'DM Mono',monospace; line-height:1.6; margin-top:18px; }
+    .auth-note { font-size:11px; color:rgba(255,255,255,0.6); font-family:'DM Mono',monospace; line-height:1.6; margin-top:18px; }
 
     /* ══ POPUP ══ */
-    .leaflet-popup-content-wrapper { border-radius:12px !important; border:1.5px solid #222 !important; box-shadow:4px 4px 0 #222 !important; padding:0 !important; overflow:hidden; font-family:'DM Sans',sans-serif !important; }
+    .leaflet-popup-content-wrapper { border-radius:12px !important; border:1px solid #e0e0e0 !important; box-shadow:0 8px 32px rgba(0,0,0,0.15) !important; padding:0 !important; overflow:hidden; font-family:'DM Sans',sans-serif !important; }
     .leaflet-popup-content { margin:0 !important; width:auto !important; }
     .leaflet-popup-tip-container { display:none; }
     .popup-inner { width:260px; }
-    .popup-header { background:#111; padding:12px 16px; }
+    .popup-header { background:#1e3a5f; padding:12px 16px; }
     .popup-name { font-size:15px; font-weight:700; color:#fff; line-height:1.2; }
     .popup-table { width:100%; border-collapse:collapse; }
     .popup-table tr { border-bottom:1px solid #f0f0f0; }
@@ -587,7 +656,7 @@
     .popup-table td { padding:8px 16px; font-size:12px; vertical-align:middle; line-height:1.3; }
     .popup-table td:first-child { color:#999; font-family:'DM Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.06em; width:42%; white-space:nowrap; }
     .popup-table td:last-child { font-weight:600; color:#111; }
-    .popup-stars-sm { color:var(--accent); font-size:13px; letter-spacing:1px; }
+    .popup-stars-sm { color:#f59e0b; font-size:13px; letter-spacing:1px; }
     .popup-stars-sm .empty { color:#ddd; }
     .popup-permit { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; font-family:'DM Mono',monospace; }
     .popup-permit.none { background:#f3f4f6; color:#9ca3af; }
@@ -673,11 +742,134 @@
     </div>
     <div>
       <div class="settings-section-label">App</div>
-      <div class="settings-info-row">
+      <div class="settings-info-row" style="cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="openChangelog()">
         <span class="settings-info-label">Version</span>
-        <span class="settings-info-value">v8</span>
+        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v13 · What's new ›</span>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- CHANGELOG MODAL -->
+<div id="changelogBackdrop" onclick="closeChangelog()"></div>
+<div id="changelogModal">
+  <div id="changelogModalHeader">
+    <div id="changelogModalTitle">What's New</div>
+    <button id="changelogCloseBtn" onclick="closeChangelog()">×</button>
+  </div>
+  <div id="changelogBody">
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge current">v13</span>
+        <span class="cl-version-label">Changelog &amp; contact fields</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Added this changelog — tap the version in Settings to view</div>
+        <div class="cl-item">Phone and email fields on Call Back pins</div>
+        <div class="cl-item">Native iOS wheel picker for callback date &amp; time</div>
+        <div class="cl-item">Phone &amp; email show as tappable links in pin popup</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v8</span>
+        <span class="cl-version-label">Date picker &amp; contact fields</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Native iOS wheel picker for callback date &amp; time</div>
+        <div class="cl-item">Phone and email fields added to Call Back pins</div>
+        <div class="cl-item">Phone &amp; email show as tappable links in pin popup</div>
+        <div class="cl-item">Phone number visible on calendar callback cards</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v7</span>
+        <span class="cl-version-label">Separate date &amp; time inputs</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Split date and time into two separate fields</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v6</span>
+        <span class="cl-version-label">Bug fixes</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Fixed crash when using pin mode from overflow menu on desktop</div>
+        <div class="cl-item">Removed leftover service worker code causing 404 errors</div>
+        <div class="cl-item">Draw and pin mode active states now sync with the ··· menu</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v5</span>
+        <span class="cl-version-label">Overflow menu, Calendar &amp; new pin UI</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">··· More button replaces Draw/Pins in nav bar</div>
+        <div class="cl-item">Calendar view for all Call Back pins with filter chips</div>
+        <div class="cl-item">Pin type selector changed from emoji grid to clean dropdown</div>
+        <div class="cl-item">Callback fields: name, address with autocomplete, date &amp; time</div>
+        <div class="cl-item">Map pins now show 2-letter initials instead of emojis</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v4</span>
+        <span class="cl-version-label">Auto-close on save</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Saving a note, shape, or pin now closes the panel automatically</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v3</span>
+        <span class="cl-version-label">Pin mode fixes &amp; exclusivity</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Fixed pin placement — municipality layer no longer intercepts taps</div>
+        <div class="cl-item">Legend, Layers, Draw, and Pins are now mutually exclusive</div>
+        <div class="cl-item">Improved mobile touch handling across all panels</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v2</span>
+        <span class="cl-version-label">Pin placement system</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Drop custom pins anywhere on the map</div>
+        <div class="cl-item">8 pin types: Call Back, Lead, Customer, No Answer, Not Interested, Competitor, Note, Other</div>
+        <div class="cl-item">Color picker, notes, and Supabase sync per pin</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v1</span>
+        <span class="cl-version-label">Initial release</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">PA municipality map with full GeoJSON coverage</div>
+        <div class="cl-item">Supabase auth — email/password and magic link</div>
+        <div class="cl-item">Municipality notes: color, permit status, utility providers, rating, notes</div>
+        <div class="cl-item">Address search with Photon + Nominatim autocomplete</div>
+        <div class="cl-item">Legend, Layers panel, live GPS location tracking</div>
+        <div class="cl-item">Custom shape drawing — polygons and lines</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -735,7 +927,7 @@
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v8</span>
+  <span id="badgeVersion">v13</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
@@ -776,7 +968,7 @@
 <!-- DRAW TOOLBAR -->
 <div id="drawToolbar">
   <span id="drawVertexCount">0 pts</span>
-  <button class="draw-tb-btn primary" onclick="finishDrawing(false)">Line ↵</button>
+  <button class="draw-tb-btn primary" onclick="finishDrawing(false)">Save</button>
   <button class="draw-tb-btn" onclick="undoLastVertex()">Undo</button>
   <button class="draw-tb-btn danger" onclick="cancelDrawing()">Cancel</button>
 </div>
@@ -784,7 +976,7 @@
 <!-- PIN TOOLBAR -->
 <div id="pinToolbar">
   <span id="pinToolbarLabel">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1e3a5f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
     Tap map to place pin
   </span>
   <button class="pin-tb-btn danger" onclick="cancelPinMode()">Cancel</button>
@@ -806,7 +998,13 @@
 <div id="calendarSheet">
   <div id="calendarHeader">
     <div id="calendarTitle">Callbacks</div>
-    <button id="calendarCloseBtn" onclick="closeCalendar()">×</button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button id="calAddBtn" onclick="openAddCallback()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add
+      </button>
+      <button id="calendarCloseBtn" onclick="closeCalendar()">×</button>
+    </div>
   </div>
   <div class="cal-filter-row">
     <button class="cal-chip active" data-filter="all" onclick="setCalFilter(this)">All</button>
@@ -816,6 +1014,41 @@
     <button class="cal-chip" data-filter="upcoming" onclick="setCalFilter(this)">Upcoming</button>
   </div>
   <div id="calendarBody"></div>
+</div>
+
+<!-- ADD CALLBACK FORM SHEET -->
+<div id="addCallbackSheet">
+  <div id="addCallbackHeader">
+    <div id="addCallbackTitle">New Callback</div>
+    <button id="addCallbackCloseBtn" onclick="closeAddCallback()">×</button>
+  </div>
+  <div id="addCallbackBody">
+    <div>
+      <div class="acb-field-label">Full name</div>
+      <input type="text" id="acbName" class="pin-text-input" placeholder="e.g. John Smith" autocomplete="name" />
+    </div>
+    <div>
+      <div class="acb-field-label">Contact</div>
+      <div class="acb-contact-row">
+        <input type="tel" id="acbPhone" class="pin-text-input" placeholder="Phone" inputmode="tel" />
+        <input type="email" id="acbEmail" class="pin-text-input" placeholder="Email" inputmode="email" />
+      </div>
+    </div>
+    <div>
+      <div class="acb-field-label">Callback date &amp; time</div>
+      <input type="datetime-local" id="acbDatetime" class="pin-text-input" style="font-family:'DM Mono',monospace;font-size:15px;" />
+    </div>
+    <div>
+      <div class="acb-field-label">Notes</div>
+      <textarea id="acbNotes" placeholder="Where you met, what they said…" rows="3" style="width:100%;min-height:80px;resize:vertical;border:1.5px solid #ddd;border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.5;color:#111;outline:none;transition:border-color 0.15s;background:#fff;"></textarea>
+    </div>
+    <div id="acbStatus" style="font-size:12px;color:#999;font-family:'DM Mono',monospace;min-height:16px;"></div>
+  </div>
+  <div id="addCallbackFooter">
+    <button class="btn btn-primary" onclick="saveStandaloneCallback()">Save</button>
+    <button class="btn btn-ghost" onclick="closeAddCallback()">Cancel</button>
+    <button class="btn btn-danger" id="acbDeleteBtn" onclick="deleteStandaloneCallback(currentAcbId)" style="display:none;">Delete</button>
+  </div>
 </div>
 
 <!-- SHEET BACKDROP -->
@@ -1062,7 +1295,7 @@
 </div>
 
 <!-- Mobile suggestions -->
-<div id="suggestionsMobile" style="display:none;position:fixed;left:12px;right:12px;background:#fff;border:1.5px solid #222;border-radius:14px;z-index:600;max-height:50vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 -8px 32px rgba(0,0,0,0.18);">
+<div id="suggestionsMobile" style="display:none;position:fixed;left:12px;right:12px;background:#fff;border:1.5px solid #1e3a5f;border-radius:14px;z-index:600;max-height:50vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 -8px 32px rgba(0,0,0,0.18);">
   <div id="statusMsgMobile" style="display:none;padding:14px 16px;font-size:13px;color:#888;font-family:'DM Mono',monospace;text-align:center;"></div>
 </div>
 
@@ -1164,6 +1397,7 @@ async function logout() {
   cancelDrawing(); cancelPinMode();
   shapesLayerGroup.clearLayers(); shapesCache={};
   pinsLayerGroup.clearLayers(); pinsCache={};
+  standaloneCache={};
   if(geoLayer)geoLayer.eachLayer(l=>{if(l.feature)l.setStyle(styleForLayer(l.feature));});
   document.getElementById('sessionBadge').classList.add('hidden');
   document.getElementById('sessionBadge').style.display='none';
@@ -1416,9 +1650,9 @@ document.getElementById('customColorPicker').addEventListener('input',function()
 //  STARS
 // ═══════════════════════════════════════
 let currentRating=0;
-function setStars(val){currentRating=val;document.querySelectorAll('.star').forEach(s=>{const v=parseInt(s.dataset.val);s.textContent=v<=val?'★':'☆';s.classList.toggle('on',v<=val);});markUnsaved();}
+function setStars(val){currentRating=val;document.querySelectorAll('#starRating .star').forEach(s=>{const v=parseInt(s.dataset.val);s.textContent=v<=val?'★':'☆';s.classList.toggle('on',v<=val);});markUnsaved();}
 document.getElementById('starRating').addEventListener('click',e=>{const star=e.target.closest('.star');if(star)setStars(parseInt(star.dataset.val));});
-document.getElementById('starRating').addEventListener('mouseover',e=>{const star=e.target.closest('.star');if(!star)return;const h=parseInt(star.dataset.val);document.querySelectorAll('.star').forEach(s=>{s.textContent=parseInt(s.dataset.val)<=h?'★':'☆';});});
+document.getElementById('starRating').addEventListener('mouseover',e=>{const star=e.target.closest('.star');if(!star)return;const h=parseInt(star.dataset.val);document.querySelectorAll('#starRating .star').forEach(s=>{s.textContent=parseInt(s.dataset.val)<=h?'★':'☆';});});
 document.getElementById('starRating').addEventListener('mouseleave',()=>setStars(currentRating));
 document.querySelectorAll('input[name="checkedIn"]').forEach(r=>r.addEventListener('change',markUnsaved));
 
@@ -1446,7 +1680,7 @@ function openSidebarFor(name,cls,county) {
   const radio=document.querySelector(`input[name="checkedIn"][value="${ciRaw}"]`);
   if(radio)radio.checked=true;else document.getElementById('checkedNone').checked=true;
   currentRating=rating;
-  document.querySelectorAll('.star').forEach(s=>{const v=parseInt(s.dataset.val);s.textContent=v<=rating?'★':'☆';s.classList.toggle('on',v<=rating);});
+  document.querySelectorAll('#starRating .star').forEach(s=>{const v=parseInt(s.dataset.val);s.textContent=v<=rating?'★':'☆';s.classList.toggle('on',v<=rating);});
   markSaved(!!saved);
   const sidebar=document.getElementById('sidebar'), backdrop=document.getElementById('sheetBackdrop');
   sidebar.classList.add('open'); backdrop.classList.add('visible');
@@ -1537,7 +1771,7 @@ let debounceTimer=null;
 (function(){
   const input=document.getElementById('searchMobile'),clearBtn=document.getElementById('clearBtnMobile');
   if(!input)return;
-  input.addEventListener('focus',()=>{document.getElementById('searchWrapMobile').style.borderColor='#222';document.getElementById('searchWrapMobile').style.background='#fff';});
+  input.addEventListener('focus',()=>{document.getElementById('searchWrapMobile').style.borderColor='#1e3a5f';document.getElementById('searchWrapMobile').style.background='#fff';});
   input.addEventListener('blur',()=>{document.getElementById('searchWrapMobile').style.borderColor='';document.getElementById('searchWrapMobile').style.background='';});
   input.addEventListener('input',()=>{clearBtn.style.display=input.value?'block':'none';clearTimeout(debounceTimer);const q=input.value.trim();if(q.length<2){clearSuggestionsMobile();return;}debounceTimer=setTimeout(()=>fetchSuggestions(q,'mobile'),280);});
   clearBtn.addEventListener('click',()=>{input.value='';clearBtn.style.display='none';clearSuggestionsMobile();if(pinMarker){map.removeLayer(pinMarker);pinMarker=null;}});
@@ -1780,7 +2014,7 @@ function undoLastVertex() {
   updateDrawPreview();updateDrawToolbar();
 }
 function updateDrawToolbar() {
-  const n=drawVertices.length;const hint=n>=3?' · tap ● to close':'';
+  const n=drawVertices.length;const hint='';
   document.getElementById('drawVertexCount').textContent=`${n} pt${n!==1?'s':''}${hint}`;
 }
 map.on('click',function(e){
@@ -1854,9 +2088,9 @@ function renderShapeSwatches(selected) {
 }
 function selectShapeColor(hex){currentShapeColor=hex;document.getElementById('shapeColorPicker').value=hex;document.getElementById('shapeColorLabel').textContent=hex;renderShapeSwatches(hex);}
 document.getElementById('shapeColorPicker').addEventListener('input',function(){selectShapeColor(this.value);});
-function setShapeStars(val){currentShapeRating=val;document.querySelectorAll('.shape-star').forEach(s=>{const v=parseInt(s.dataset.val);s.textContent=v<=val?'★':'☆';s.classList.toggle('on',v<=val);});}
+function setShapeStars(val){currentShapeRating=val;document.querySelectorAll('#shapeStarRating .shape-star').forEach(s=>{const v=parseInt(s.dataset.val);s.textContent=v<=val?'★':'☆';s.classList.toggle('on',v<=val);});}
 document.getElementById('shapeStarRating').addEventListener('click',e=>{const s=e.target.closest('.shape-star');if(s)setShapeStars(parseInt(s.dataset.val));});
-document.getElementById('shapeStarRating').addEventListener('mouseover',e=>{const s=e.target.closest('.shape-star');if(!s)return;const h=parseInt(s.dataset.val);document.querySelectorAll('.shape-star').forEach(st=>{st.textContent=parseInt(st.dataset.val)<=h?'★':'☆';});});
+document.getElementById('shapeStarRating').addEventListener('mouseover',e=>{const s=e.target.closest('.shape-star');if(!s)return;const h=parseInt(s.dataset.val);document.querySelectorAll('#shapeStarRating .shape-star').forEach(st=>{st.textContent=parseInt(st.dataset.val)<=h?'★':'☆';});});
 document.getElementById('shapeStarRating').addEventListener('mouseleave',()=>setShapeStars(currentShapeRating));
 
 function openShapeSidebarFor(id, verts, isPolygon) {
@@ -2315,36 +2549,37 @@ function renderCalendar(){
   const todayEnd=new Date(todayStart.getTime()+86400000);
   const weekEnd=new Date(todayStart.getTime()+7*86400000);
 
-  // gather all callback pins with a datetime
-  let pins=Object.values(pinsCache).filter(p=>p.type==='callback'&&p.callback_at);
+  // gather map pins + standalone callbacks
+  const mapPins=Object.values(pinsCache).filter(p=>p.type==='callback'&&p.callback_at&&p.lat!=null);
+  const standalone=Object.values(standaloneCache).filter(p=>p.callback_at);
+  let all=[...mapPins,...standalone];
 
-  // sort by callback_at ascending
-  pins.sort((a,b)=>new Date(a.callback_at)-new Date(b.callback_at));
+  all.sort((a,b)=>new Date(a.callback_at)-new Date(b.callback_at));
 
-  // apply filter
-  pins=pins.filter(p=>{
+  all=all.filter(p=>{
     const t=new Date(p.callback_at);
     if(calFilter==='overdue') return t<now;
     if(calFilter==='today') return t>=todayStart&&t<todayEnd;
     if(calFilter==='week') return t>=todayStart&&t<weekEnd;
     if(calFilter==='upcoming') return t>=now;
-    return true; // 'all'
+    return true;
   });
 
-  if(pins.length===0){
-    body.innerHTML=`<div class="cal-empty">No callbacks${calFilter!=='all'?' for this filter':''}.<br>Place a Call Back pin to get started.</div>`;
+  if(all.length===0){
+    body.innerHTML=`<div class="cal-empty">No callbacks${calFilter!=='all'?' for this filter':''}.<br>Tap <strong>+ Add</strong> or place a Call Back pin.</div>`;
     return;
   }
 
-  pins.forEach(pin=>{
-    const t=new Date(pin.callback_at);
+  all.forEach(entry=>{
+    const isStandalone=!!entry._standalone;
+    const t=new Date(entry.callback_at);
     const isOverdue=t<now;
     const isToday=t>=todayStart&&t<todayEnd;
     const isSoon=!isOverdue&&!isToday&&t<new Date(now.getTime()+2*86400000);
 
     const dateStr=t.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
     const timeStr=t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-    const fullName=[pin.first_name,pin.last_name].filter(Boolean).join(' ')||pin.name||'Unnamed';
+    const fullName=[entry.first_name,entry.last_name].filter(Boolean).join(' ')||entry.name||'Unnamed';
 
     let badge='';
     if(isOverdue) badge=`<span class="cal-badge overdue">Overdue</span>`;
@@ -2352,29 +2587,117 @@ function renderCalendar(){
     else if(isSoon) badge=`<span class="cal-badge soon">Soon</span>`;
 
     const card=document.createElement('div');
-    card.className='cal-card'+(isOverdue?' overdue':isToday?' today':'');
+    card.className='cal-card'+(isOverdue?' overdue':isToday?' today':'')+(isStandalone?' standalone':'');
     card.innerHTML=`
-      <div class="cal-dot" style="background:${pin.color||'#3b82f6'};"></div>
+      <div class="cal-dot" style="background:${isStandalone?'#8b5cf6':entry.color||'#1e3a5f'};"></div>
       <div class="cal-card-main">
         <div class="cal-card-name">${escHtml(fullName)}</div>
-        ${pin.address?`<div class="cal-card-addr">${escHtml(pin.address)}</div>`:''}
-        <div class="cal-card-time">
-          ${dateStr} · ${timeStr}
-          ${badge}
-        </div>
-        ${pin.phone?`<div style="font-size:11px;color:#888;margin-top:3px;font-family:'DM Mono',monospace;">${escHtml(pin.phone)}</div>`:''}
-        ${pin.notes?`<div style="font-size:11px;color:#aaa;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(pin.notes)}</div>`:''}
-      </div>`;
-    card.onclick=()=>{
-      closeCalendar();
-      // fly to pin
-      map.flyTo([pin.lat,pin.lng],16,{duration:0.8});
-      setTimeout(()=>{
-        pinsLayerGroup.eachLayer(l=>{if(l._pinId===pin.id)l.openPopup();});
-      },900);
-    };
+        ${entry.address?`<div class="cal-card-addr">${escHtml(entry.address)}</div>`:''}
+        <div class="cal-card-time">${dateStr} · ${timeStr} ${badge}</div>
+        ${entry.phone?`<div style="font-size:11px;color:#888;margin-top:3px;font-family:'DM Mono',monospace;">${escHtml(entry.phone)}</div>`:''}
+        ${entry.notes?`<div style="font-size:11px;color:#aaa;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(entry.notes)}</div>`:''}
+        ${isStandalone?`<div style="font-size:10px;color:#8b5cf6;margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">No location</div>`:''}
+      </div>
+`;
+
+    if(!isStandalone){
+      card.onclick=()=>{
+        closeCalendar();
+        map.flyTo([entry.lat,entry.lng],16,{duration:0.8});
+        setTimeout(()=>pinsLayerGroup.eachLayer(l=>{if(l._pinId===entry.id)l.openPopup();}),900);
+      };
+    } else {
+      card.style.cursor='default';
+      card.onclick=()=>openEditStandaloneCallback(entry.id);
+    }
     body.appendChild(card);
   });
+}
+
+// ═══════════════════════════════════════
+//  STANDALONE CALLBACKS
+// ═══════════════════════════════════════
+let standaloneCache = {};
+let currentAcbId = null;
+
+async function loadStandaloneCallbacks(){
+  if(!currentUser)return;
+  const{data,error}=await sb.from('standalone_callbacks').select('*').eq('user_id',currentUser.id);
+  if(error){console.error('Standalone load error:',error);return;}
+  standaloneCache={};
+  (data||[]).forEach(row=>{
+    standaloneCache[row.id]={
+      id:row.id, _standalone:true,
+      name:row.name, first_name:row.first_name||null, last_name:row.last_name||null,
+      phone:row.phone||null, email:row.email||null,
+      callback_at:row.callback_at||null, notes:row.notes||''
+    };
+  });
+}
+
+function openAddCallback(editId){
+  currentAcbId=editId||null;
+  const entry=editId?standaloneCache[editId]:null;
+  document.getElementById('addCallbackTitle').textContent=entry?'Edit Callback':'New Callback';
+  document.getElementById('acbName').value=entry?[entry.first_name,entry.last_name].filter(Boolean).join(' ')||entry.name||'':'';
+  document.getElementById('acbPhone').value=entry?entry.phone||'':'';
+  document.getElementById('acbEmail').value=entry?entry.email||'':'';
+  if(entry&&entry.callback_at){
+    const dt=new Date(entry.callback_at);
+    const pad=n=>String(n).padStart(2,'0');
+    document.getElementById('acbDatetime').value=`${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+  } else { document.getElementById('acbDatetime').value=''; }
+  document.getElementById('acbNotes').value=entry?entry.notes||'':'';
+  document.getElementById('acbStatus').textContent='';
+  // Show delete button only when editing existing entry
+  document.getElementById('acbDeleteBtn').style.display=editId?'':'none';
+  document.getElementById('addCallbackSheet').classList.add('open');
+  setTimeout(()=>document.getElementById('acbName').focus(),400);
+}
+
+function openEditStandaloneCallback(id){ openAddCallback(id); }
+
+function closeAddCallback(){
+  document.getElementById('addCallbackSheet').classList.remove('open');
+  currentAcbId=null;
+}
+
+async function saveStandaloneCallback(){
+  const fullName=document.getElementById('acbName').value.trim();
+  const phone=document.getElementById('acbPhone').value.trim();
+  const email=document.getElementById('acbEmail').value.trim();
+  const dtVal=document.getElementById('acbDatetime').value;
+  const notes=document.getElementById('acbNotes').value.trim();
+  if(!fullName){document.getElementById('acbStatus').textContent='Name is required.';return;}
+  const nameParts=fullName.split(/\s+/);
+  const firstName=nameParts[0]||null;
+  const lastName=nameParts.slice(1).join(' ')||null;
+  const callbackAt=dtVal?new Date(dtVal).toISOString():null;
+  document.getElementById('acbStatus').textContent='Saving…';
+  const payload={
+    user_id:currentUser.id, name:fullName,
+    first_name:firstName, last_name:lastName,
+    phone:phone||null, email:email||null,
+    callback_at:callbackAt, notes,
+    updated_at:new Date().toISOString()
+  };
+  if(currentAcbId) payload.id=currentAcbId;
+  const{data,error}=await sb.from('standalone_callbacks').upsert(payload,{onConflict:'id'}).select().single();
+  if(error){document.getElementById('acbStatus').textContent='Save failed.';console.error(error);return;}
+  const saved={...payload,id:data.id,_standalone:true};
+  standaloneCache[data.id]=saved;
+  closeAddCallback();
+  renderCalendar();
+}
+
+async function deleteStandaloneCallback(id){
+  if(!id)return;
+  if(!confirm('Delete this callback?'))return;
+  const{error}=await sb.from('standalone_callbacks').delete().eq('user_id',currentUser.id).eq('id',id);
+  if(error){alert('Delete failed.');return;}
+  delete standaloneCache[id];
+  closeAddCallback();
+  renderCalendar();
 }
 
 // swipe-to-dismiss calendar
@@ -2526,6 +2849,50 @@ async function _savePinNew(){
 }
 
 // ═══════════════════════════════════════
+//  CHANGELOG
+// ═══════════════════════════════════════
+function openChangelog() {
+  closeSettings();
+  const backdrop = document.getElementById('changelogBackdrop');
+  const modal = document.getElementById('changelogModal');
+  backdrop.style.display = 'block';
+  requestAnimationFrame(() => {
+    backdrop.classList.add('show');
+    modal.classList.add('open');
+  });
+}
+function closeChangelog() {
+  const backdrop = document.getElementById('changelogBackdrop');
+  const modal = document.getElementById('changelogModal');
+  backdrop.classList.remove('show');
+  modal.classList.remove('open');
+  setTimeout(() => { backdrop.style.display = 'none'; }, 320);
+}
+
+// swipe-to-dismiss changelog
+(function(){
+  const modal = document.getElementById('changelogModal');
+  let startY = 0, dragging = false;
+  modal.addEventListener('touchstart', e => {
+    if(e.target.closest('#changelogBody') && modal.querySelector('#changelogBody').scrollTop > 0) return;
+    startY = e.touches[0].clientY; dragging = true; modal.style.transition = 'none';
+  }, {passive:true});
+  modal.addEventListener('touchmove', e => {
+    if(!dragging) return;
+    const dy = e.touches[0].clientY - startY;
+    if(dy < 0) return;
+    modal.style.transform = `translateY(${dy}px)`;
+  }, {passive:true});
+  modal.addEventListener('touchend', e => {
+    if(!dragging) return;
+    dragging = false; modal.style.transition = '';
+    const dy = e.changedTouches[0].clientY - startY;
+    if(dy > 80) { closeChangelog(); modal.style.transform = ''; }
+    else { modal.style.transform = ''; }
+  });
+})();
+
+// ═══════════════════════════════════════
 //  LOAD ALL DATA
 // ═══════════════════════════════════════
 async function loadAllNotesFromSupabase(){
@@ -2537,6 +2904,7 @@ async function loadAllNotesFromSupabase(){
   if(geoLayer)geoLayer.eachLayer(l=>{if(l.feature)l.setStyle(styleForLayer(l.feature));});
   await loadShapesFromSupabase();
   await loadPinsFromSupabase();
+  await loadStandaloneCallbacks();
 }
 
 </script>
