@@ -369,13 +369,11 @@
     .edit-handle.dragging { cursor: grabbing; }
 
     .shape-label {
-      font-size: 11px; font-weight: 700; font-family: 'DM Sans', sans-serif;
-      color: #1d4ed8;
-      background: rgba(255,255,255,0.88);
-      padding: 2px 6px; border-radius: 5px;
-      border: 1px solid #bfdbfe;
+      font-size: 11px; font-weight: 800; font-family: 'DM Sans', sans-serif;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.7), 0 0 6px rgba(0,0,0,0.5);
       white-space: nowrap; pointer-events: none;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+      background: none; border: none; box-shadow: none; padding: 0;
     }
 
     #drawToolbar {
@@ -644,7 +642,7 @@
     .auth-note { font-size:11px; color:rgba(255,255,255,0.6); font-family:'DM Mono',monospace; line-height:1.6; margin-top:18px; }
 
     /* ══ POPUP ══ */
-    .leaflet-popup-content-wrapper { border-radius:12px !important; border:1px solid #e0e0e0 !important; box-shadow:0 8px 32px rgba(0,0,0,0.15) !important; padding:0 !important; overflow:hidden; font-family:'DM Sans',sans-serif !important; }
+    .leaflet-popup-content-wrapper { border-radius:12px !important; border:none !important; box-shadow:0 8px 32px rgba(0,0,0,0.18) !important; padding:0 !important; overflow:hidden; font-family:'DM Sans',sans-serif !important; }
     .leaflet-popup-content { margin:0 !important; width:auto !important; }
     .leaflet-popup-tip-container { display:none; }
     .popup-inner { width:260px; }
@@ -663,7 +661,7 @@
     .popup-permit.no-permit { background:#dcfce7; color:#15803d; }
     .popup-permit.required { background:#fee2e2; color:#dc2626; }
     .popup-note-row td { color:#666 !important; font-weight:400 !important; font-size:11px !important; }
-    .popup-footer { padding:10px 16px; border-top:1.5px solid #eee; background:#fafafa; }
+    .popup-footer { padding:0; border-top:none; background:none; }
     .popup-edit-link { font-size:13px; color:var(--blue); font-weight:600; text-decoration:none; display:flex; align-items:center; gap:5px; }
     .popup-edit-link:hover { color:#1d4ed8; }
   </style>
@@ -744,7 +742,7 @@
       <div class="settings-section-label">App</div>
       <div class="settings-info-row" style="cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="openChangelog()">
         <span class="settings-info-label">Version</span>
-        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v16 · What's new ›</span>
+        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v25 · What's new ›</span>
       </div>
     </div>
   </div>
@@ -761,7 +759,7 @@
 
     <div class="cl-version">
       <div class="cl-version-header">
-        <span class="cl-version-badge current">v16</span>
+        <span class="cl-version-badge current">v25</span>
         <span class="cl-version-label">Changelog &amp; contact fields</span>
       </div>
       <div class="cl-items">
@@ -928,7 +926,7 @@
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v16</span>
+  <span id="badgeVersion">v25</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
@@ -1163,6 +1161,10 @@
         <span class="star shape-star" data-val="4">☆</span>
         <span class="star shape-star" data-val="5">☆</span>
       </div>
+    </div>
+    <div>
+      <div class="section-label">Last Knocked</div>
+      <input type="datetime-local" id="shapeLastKnocked" class="pin-text-input" style="font-family:'DM Mono',monospace;font-size:15px;" />
     </div>
     <div>
       <div class="section-label">Notes</div>
@@ -1474,6 +1476,11 @@ const TILE_ATTRIBS = {
 };
 
 const map = L.map('map',{zoomControl:true,preferCanvas:true}).setView([40.9,-77.8],7);
+// Custom panes for z-ordering: shapes above municipalities, pins above shapes
+map.createPane('shapesPane'); map.getPane('shapesPane').style.zIndex = 450;
+map.createPane('pinsPane');   map.getPane('pinsPane').style.zIndex   = 460;
+map.getPane('shapesPane').style.pointerEvents  = 'auto';
+map.getPane('pinsPane').style.pointerEvents    = 'auto';
 let currentTileLayer = L.tileLayer(TILE_URLS.light,{attribution:TILE_ATTRIBS.light,maxZoom:19,maxNativeZoom:19}).addTo(map);
 let geoLayer, pinMarker=null;
 let currentFillOpacity = 0.45;
@@ -1535,7 +1542,7 @@ function buildPopup(p) {
   const rating=(d&&d.rating)?d.rating:0;
   const starsHtml=[1,2,3,4,5].map(i=>i<=rating?'<span>★</span>':'<span class="empty">★</span>').join('');
   const noteText=d&&d.note?d.note.substring(0,70)+(d.note.length>70?'…':''):null;
-  return `<div class="popup-inner"><div class="popup-header"><div class="popup-name">${escHtml(p.MUNICIPAL1)}</div></div><table class="popup-table"><tr><td>Type</td><td>${formatClass(p.CLASS_OF_M)}</td></tr><tr><td>County</td><td>${titleCase(p.COUNTY_NAM)}</td></tr><tr><td>Permit</td><td>${permitHtml}</td></tr><tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}</table><div class="popup-footer"><a class="popup-edit-link" href="#" onclick="openSidebarFor('${escJs(p.MUNICIPAL1)}','${escJs(p.CLASS_OF_M)}','${escJs(p.COUNTY_NAM)}');return false;">✎ Edit notes / color</a></div></div>`;
+  return `<div class="popup-inner"><div class="popup-header"><div class="popup-name">${escHtml(p.MUNICIPAL1)}</div></div><table class="popup-table"><tr><td>Type</td><td>${formatClass(p.CLASS_OF_M)}</td></tr><tr><td>County</td><td>${titleCase(p.COUNTY_NAM)}</td></tr><tr><td>Permit</td><td>${permitHtml}</td></tr><tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}</table><div class="popup-footer" style="padding:10px 12px;display:flex;gap:8px;"><button onclick="this.closest('.leaflet-popup') && L.DomEvent && map.closePopup();" style="flex:1;padding:10px;border:1.5px solid #e5e7eb;border-radius:8px;background:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#555;cursor:pointer;-webkit-tap-highlight-color:transparent;">View</button><button onclick="openSidebarFor('${escJs(p.MUNICIPAL1)}','${escJs(p.CLASS_OF_M)}','${escJs(p.COUNTY_NAM)}');map.closePopup();return false;" style="flex:1;padding:10px;border:none;border-radius:8px;background:#1e3a5f;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;">Edit</button></div></div>`;
 }
 
 function updateLabels() {
@@ -1624,7 +1631,6 @@ function setBasemap(btn) {
   const zoomCaps={satellite:19,street:19,light:19,dark:19,topo:17};
   const maxZ=zoomCaps[key]||19;
   currentTileLayer=L.tileLayer(TILE_URLS[key],{attribution:TILE_ATTRIBS[key],maxZoom:maxZ,maxNativeZoom:maxZ}).addTo(map);
-  if(geoLayer)geoLayer.bringToFront();
   scheduleAddressLabels();
 }
 
@@ -2006,13 +2012,13 @@ async function loadShapesFromSupabase() {
   shapesCache={};
   shapesLayerGroup.clearLayers();
   (data||[]).forEach(row=>{
-    shapesCache[row.id]={id:row.id,name:row.name,color:row.color||'#3b82f6',vertices:row.vertices||[],is_polygon:row.is_polygon,rating:row.rating||0,notes:row.notes||''};
+    shapesCache[row.id]={id:row.id,name:row.name,color:row.color||'#3b82f6',vertices:row.vertices||[],is_polygon:row.is_polygon,rating:row.rating||0,notes:row.notes||'',last_knocked:row.last_knocked||null};
     renderSavedShape(shapesCache[row.id]);
   });
 }
 async function upsertShape(shapeData) {
   if(!currentUser)return;
-  const payload={user_id:currentUser.id,name:shapeData.name,color:shapeData.color,vertices:shapeData.vertices,is_polygon:shapeData.is_polygon,rating:shapeData.rating,notes:shapeData.notes,updated_at:new Date().toISOString()};
+  const payload={user_id:currentUser.id,name:shapeData.name,color:shapeData.color,vertices:shapeData.vertices,is_polygon:shapeData.is_polygon,rating:shapeData.rating,notes:shapeData.notes,last_knocked:shapeData.last_knocked||null,updated_at:new Date().toISOString()};
   if(shapeData.id)payload.id=shapeData.id;
   const{data,error}=await sb.from('custom_shapes').upsert(payload,{onConflict:'id'}).select().single();
   if(error){console.error('Shape save error:',error);throw error;}
@@ -2026,9 +2032,29 @@ async function deleteShapeFromDB(id) {
 function buildShapePopup(shape) {
   const rating=shape.rating||0;
   const starsHtml=[1,2,3,4,5].map(i=>i<=rating?'<span>★</span>':'<span class="empty">★</span>').join('');
-  const noteText=shape.notes?shape.notes.substring(0,70)+(shape.notes.length>70?'…':''):null;
-  const typeLabel=shape.is_polygon?'Polygon':'Line';
-  return `<div class="popup-inner"><div class="popup-header" style="background:${shape.color||'#3b82f6'}"><div class="popup-name">${escHtml(shape.name||'Untitled')}</div></div><table class="popup-table"><tr><td>Type</td><td>${typeLabel}</td></tr><tr><td>Points</td><td>${shape.vertices.length}</td></tr><tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}</table><div class="popup-footer"><a class="popup-edit-link" href="#" onclick="openShapeSidebarFor('${escJs(shape.id)}');return false;">✎ Edit shape</a></div></div>`;
+  let lastKnockedStr='—';
+  if(shape.last_knocked){const lk=new Date(shape.last_knocked);lastKnockedStr=lk.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}
+  const noteText=shape.notes?shape.notes.substring(0,80)+(shape.notes.length>80?'…':''):'—';
+  return `<div class="popup-inner">
+    <div class="popup-header" style="background:${shape.color||'#3b82f6'};">
+      <div class="popup-name">${escHtml(shape.name||'Untitled')}</div>
+    </div>
+    <table class="popup-table">
+      <tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>
+      <tr><td>Last knocked</td><td style="font-weight:600;color:#111;">${lastKnockedStr}</td></tr>
+      <tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>
+    </table>
+    <div style="display:flex;border-top:1.5px solid #eee;">
+      <button onclick="openShapeSidebarFor('${escJs(shape.id)}');map.closePopup();"
+        style="flex:1;padding:13px 8px;background:#fff;border:none;border-right:1px solid #eee;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#1e3a5f;cursor:pointer;border-radius:0 0 0 11px;-webkit-tap-highlight-color:transparent;">
+        View info
+      </button>
+      <button onclick="enterShapeEditMode('${escJs(shape.id)}');map.closePopup();"
+        style="flex:1;padding:13px 8px;background:#fff;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#f59e0b;cursor:pointer;border-radius:0 0 11px 0;-webkit-tap-highlight-color:transparent;">
+        Edit shape
+      </button>
+    </div>
+  </div>`;
 }
 function renderSavedShape(shape) {
   if(!shapesVisible)return;
@@ -2036,15 +2062,17 @@ function renderSavedShape(shape) {
   if(verts.length<2)return;
   const latlngs=verts.map(v=>L.latLng(v[0],v[1]));
   let layer;
-  if(shape.is_polygon&&verts.length>=3){layer=L.polygon(latlngs,{color:shape.color,weight:2.5,fillColor:shape.color,fillOpacity:0.18,interactive:true});}
-  else{layer=L.polyline(latlngs,{color:shape.color,weight:3,interactive:true});}
+  if(shape.is_polygon&&verts.length>=3){layer=L.polygon(latlngs,{color:shape.color,weight:2.5,fillColor:shape.color,fillOpacity:0.18,interactive:true,pane:'shapesPane'});}
+  else{layer=L.polyline(latlngs,{color:shape.color,weight:3,interactive:true,pane:'shapesPane'});}
   layer._shapeId=shape.id;
-  layer.bindPopup(()=>buildShapePopup(shape),{maxWidth:280});
+  layer.bindPopup(()=>buildShapePopup(shape),{maxWidth:260,className:'shape-popup'});
   shapesLayerGroup.addLayer(layer);
   const labelPt=shape.is_polygon&&verts.length>=3?layer.getBounds().getCenter():latlngs[Math.floor(latlngs.length/2)];
-  const labelMarker=L.marker(labelPt,{icon:L.divIcon({className:'shape-label',html:escHtml(shape.name),iconAnchor:[0,0]}),interactive:false,zIndexOffset:200});
+  const labelName=(shape.name||'').trim();
+  const showLabel=labelName&&labelName.toLowerCase()!=='untitled';
+  const labelMarker=showLabel?L.marker(labelPt,{icon:L.divIcon({className:'shape-label',html:escHtml(labelName),iconAnchor:[0,0]}),interactive:false,zIndexOffset:200}):null;
   layer._labelMarker=labelMarker;
-  layer._labelPt=labelPt;
+  layer._labelPt=showLabel?labelPt:null;
   shapesLayerGroup.addLayer(layer);
   scheduleUpdateLabels();
 }
@@ -2148,7 +2176,7 @@ function updateDrawPreview() {
   if(drawPolyline)map.removeLayer(drawPolyline);
   if(drawVertices.length<2){drawPolyline=null;return;}
   const latlngs=drawVertices.map(v=>[v.lat,v.lng]);
-  drawPolyline=L.polyline(latlngs,{color:'#3b82f6',weight:2.5,dashArray:'6 4',opacity:0.8}).addTo(map);
+  drawPolyline=L.polyline(latlngs,{color:'#3b82f6',weight:2.5,dashArray:'6 4',opacity:0.8,pane:'shapesPane'}).addTo(map);
 }
 function finishAsPolygon(){finishDrawing(true);}
 function finishDrawing(isPolygon=false) {
@@ -2189,12 +2217,14 @@ function openShapeSidebarFor(id, verts, isPolygon) {
   if(id&&shapesCache[id]){
     const shape=shapesCache[id];currentShapeId=id;currentShapeVertices=shape.vertices.map(v=>[...v]);currentShapeIsPolygon=shape.is_polygon;currentShapeColor=shape.color||'#3b82f6';
     document.getElementById('shapeName').value=shape.name||'';document.getElementById('shapeNoteTextarea').value=shape.notes||'';
+    if(shape.last_knocked){const dt=new Date(shape.last_knocked);const pad=n=>String(n).padStart(2,'0');document.getElementById('shapeLastKnocked').value=`${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;}else{document.getElementById('shapeLastKnocked').value='';}
     setShapeStars(shape.rating||0);renderShapeSwatches(currentShapeColor);selectShapeColor(currentShapeColor);
     document.getElementById('shapeSidebarTitle').textContent=shape.name||'Shape';document.getElementById('shapeSidebarSub').textContent=shape.is_polygon?'Polygon':'Line';
     startEditHandles(id);
   } else {
     currentShapeId=null;currentShapeVertices=verts||[];currentShapeIsPolygon=isPolygon||false;currentShapeColor='#3b82f6';
     document.getElementById('shapeName').value='';document.getElementById('shapeNoteTextarea').value='';
+    document.getElementById('shapeLastKnocked').value='';
     setShapeStars(0);renderShapeSwatches('#3b82f6');selectShapeColor('#3b82f6');
     document.getElementById('shapeSidebarTitle').textContent='New Shape';document.getElementById('shapeSidebarSub').textContent=isPolygon?'Polygon':'Line';
     showNewShapePreview(verts,isPolygon);
@@ -2210,8 +2240,8 @@ function showNewShapePreview(verts,isPolygon){
   if(newShapePreviewLayer){map.removeLayer(newShapePreviewLayer);newShapePreviewLayer=null;}
   if(!verts||verts.length<2)return;
   const latlngs=verts.map(v=>L.latLng(v[0],v[1]));
-  if(isPolygon&&verts.length>=3){newShapePreviewLayer=L.polygon(latlngs,{color:'#3b82f6',weight:2.5,fillColor:'#3b82f6',fillOpacity:0.18,dashArray:'6 4'}).addTo(map);}
-  else{newShapePreviewLayer=L.polyline(latlngs,{color:'#3b82f6',weight:3,dashArray:'6 4'}).addTo(map);}
+  if(isPolygon&&verts.length>=3){newShapePreviewLayer=L.polygon(latlngs,{color:'#3b82f6',weight:2.5,fillColor:'#3b82f6',fillOpacity:0.18,dashArray:'6 4',pane:'shapesPane'}).addTo(map);}
+  else{newShapePreviewLayer=L.polyline(latlngs,{color:'#3b82f6',weight:3,dashArray:'6 4',pane:'shapesPane'}).addTo(map);}
 }
 function startEditHandles(shapeId){
   clearEditHandles();const shape=shapesCache[shapeId];if(!shape)return;
@@ -2230,6 +2260,67 @@ function makeEditHandleDraggable(marker,shapeId,idx){
   document.addEventListener('mousemove',onMove);document.addEventListener('touchmove',onMove,{passive:false});
   document.addEventListener('mouseup',onEnd);document.addEventListener('touchend',onEnd);
 }
+function enterShapeEditMode(id){
+  // Activate vertex edit handles on the map WITHOUT opening the info sidebar
+  // User can drag vertices freely, then tap "Done" to save or "Cancel" to discard
+  if(!shapesCache[id])return;
+  map.closePopup();
+  startEditHandles(id);
+  currentShapeId=id;
+  currentShapeVertices=shapesCache[id].vertices.map(v=>[...v]);
+  currentShapeIsPolygon=shapesCache[id].is_polygon;
+  currentShapeColor=shapesCache[id].color||'#3b82f6';
+  // Show a minimal floating toolbar instead of the full sidebar
+  showShapeEditToolbar(id);
+}
+
+function showShapeEditToolbar(id){
+  let bar=document.getElementById('shapeEditBar');
+  if(!bar){
+    bar=document.createElement('div');
+    bar.id='shapeEditBar';
+    bar.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--total-chrome,116px) + 10px);z-index:600;background:#fff;border:1.5px solid #ddd;border-radius:12px;padding:8px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,0.25);white-space:nowrap;font-family:DM Sans,sans-serif;font-size:12px;';
+    bar.innerHTML=`<span style="color:#f59e0b;font-weight:700;">Drag vertices to reshape</span>
+      <button onclick="saveShapeVertexEdit()" style="padding:6px 14px;border-radius:8px;border:none;background:#1e3a5f;color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">Done</button>
+      <button onclick="cancelShapeVertexEdit()" style="padding:6px 14px;border-radius:8px;border:1.5px solid #ef4444;background:#fff;color:#ef4444;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">Cancel</button>`;
+    document.body.appendChild(bar);
+  }
+  bar.style.display='flex';
+}
+
+function hideShapeEditToolbar(){
+  const bar=document.getElementById('shapeEditBar');
+  if(bar)bar.style.display='none';
+}
+
+async function saveShapeVertexEdit(){
+  if(!currentShapeId)return;
+  hideShapeEditToolbar();
+  clearEditHandles();
+  const shape=shapesCache[currentShapeId];
+  shape.vertices=currentShapeVertices.map(v=>[...v]);
+  try{
+    await upsertShape(shape);
+    reRenderAllShapes();
+  }catch(e){alert('Save failed — check connection.');}
+  currentShapeId=null;
+}
+
+function cancelShapeVertexEdit(){
+  hideShapeEditToolbar();
+  clearEditHandles();
+  // restore original vertices
+  if(currentShapeId&&shapesCache[currentShapeId]){
+    // rerender without changes
+    reRenderAllShapes();
+  }
+  currentShapeId=null;
+}
+
+function startEditShapeVertices(id){
+  enterShapeEditMode(id);
+}
+
 function closeShapeSidebar(){
   clearEditHandles();
   if(newShapePreviewLayer){map.removeLayer(newShapePreviewLayer);newShapePreviewLayer=null;}
@@ -2241,8 +2332,10 @@ function closeShapeSidebar(){
 async function saveShape(){
   const name=document.getElementById('shapeName').value.trim()||'Untitled';
   const notes=document.getElementById('shapeNoteTextarea').value.trim();
+  const lkVal=document.getElementById('shapeLastKnocked').value;
+  const lastKnocked=lkVal?new Date(lkVal).toISOString():null;
   shapeMarkStatus('saving','Saving…');
-  const shapeData={id:currentShapeId,name,color:currentShapeColor,vertices:currentShapeVertices,is_polygon:currentShapeIsPolygon,rating:currentShapeRating,notes};
+  const shapeData={id:currentShapeId,name,color:currentShapeColor,vertices:currentShapeVertices,is_polygon:currentShapeIsPolygon,rating:currentShapeRating,notes,last_knocked:lastKnocked};
   try{
     const saved=await upsertShape(shapeData);shapeData.id=saved.id;shapesCache[saved.id]=shapeData;reRenderAllShapes();
     if(newShapePreviewLayer){map.removeLayer(newShapePreviewLayer);newShapePreviewLayer=null;}
@@ -2363,15 +2456,16 @@ function buildPinPopup(pin) {
       ${callbackRow}
       ${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}
     </table>
-    <div class="popup-footer">
-      <a class="popup-edit-link" href="#" onclick="openPinSidebarFor('${escJs(pin.id)}');return false;">✎ Edit pin</a>
+    <div class="popup-footer" style="padding:10px 12px;display:flex;gap:8px;">
+      <button onclick="map.closePopup();" style="flex:1;padding:10px;border:1.5px solid #e5e7eb;border-radius:8px;background:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#555;cursor:pointer;-webkit-tap-highlight-color:transparent;">View</button>
+      <button onclick="openPinSidebarFor('${escJs(pin.id)}');map.closePopup();return false;" style="flex:1;padding:10px;border:none;border-radius:8px;background:#1e3a5f;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;">Edit</button>
     </div>
   </div>`;
 }
 
 function renderSavedPin(pin) {
   if(!pinsVisible)return;
-  const marker=L.marker([pin.lat,pin.lng],{icon:buildPinIcon(pin),zIndexOffset:600});
+  const marker=L.marker([pin.lat,pin.lng],{icon:buildPinIcon(pin),zIndexOffset:600,pane:'pinsPane'});
   marker._pinId=pin.id;
   marker.bindPopup(()=>buildPinPopup(pin),{maxWidth:280});
   pinsLayerGroup.addLayer(marker);
