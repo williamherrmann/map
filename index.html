@@ -649,6 +649,60 @@
     /* Standalone callback card indicator */
     .cal-card.standalone { border-left:3px solid #8b5cf6; }
 
+    /* ══ PIN FILTER PANEL ══ */
+    #pinFilterPanel {
+      position:fixed; z-index:400;
+      background:rgba(255,255,255,0.97);
+      backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+      border:1.5px solid #ddd; border-radius:12px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.13);
+      width:200px; padding:14px;
+      opacity:0; pointer-events:none; transform:scale(0.96) translateY(6px);
+      transition:opacity 0.18s, transform 0.18s;
+      bottom: calc(var(--total-chrome) + 10px);
+      right: 12px;
+    }
+    #pinFilterPanel.open { opacity:1; pointer-events:all; transform:scale(1) translateY(0); }
+    @media (min-width:768px) { #pinFilterPanel { bottom:74px; right:12px; } }
+    #pinFilterPanel h4 { font-size:10px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:10px; }
+    .pin-filter-row { display:flex; align-items:center; justify-content:space-between; padding:5px 0; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .pin-filter-dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; margin-right:8px; }
+    .pin-filter-label { font-size:13px; color:#222; font-weight:500; flex:1; }
+    .pin-filter-check { width:18px; height:18px; border-radius:4px; border:1.5px solid #ddd; display:flex; align-items:center; justify-content:center; font-size:11px; color:#fff; flex-shrink:0; transition:background 0.12s,border-color 0.12s; }
+    .pin-filter-row.active .pin-filter-check { background:#1e3a5f; border-color:#1e3a5f; }
+    #pinFilterAll { margin-top:10px; padding-top:10px; border-top:1px solid #f0f0f0; display:flex; gap:6px; }
+    .pf-btn { flex:1; padding:7px; border:1.5px solid #ddd; border-radius:7px; background:#fff; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600; color:#666; cursor:pointer; text-align:center; -webkit-tap-highlight-color:transparent; }
+    .pf-btn:active { background:#f5f5f5; }
+
+    /* ══ PIN LIST SHEET ══ */
+    #pinListSheet { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
+    #pinListSheet.open { transform:translateY(0); }
+    #pinListSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    @media (min-width:768px) {
+      #pinListSheet { width:380px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(110%); }
+      #pinListSheet.open { transform:translateX(0); }
+      #pinListSheet::before { display:none; }
+    }
+    #pinListHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #pinListTitle { font-size:17px; font-weight:700; color:#111; }
+    #pinListCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; }
+    #pinListSearch { margin:0; padding:10px 16px; border-bottom:1px solid #f0f0f0; flex-shrink:0; }
+    #pinListSearchInput { width:100%; padding:9px 14px; border:1.5px solid #e0e0e6; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:15px; color:#111; outline:none; background:#f4f4f6; transition:border-color 0.15s; }
+    #pinListSearchInput:focus { border-color:#1e3a5f; background:#fff; }
+    #pinListFilters { display:flex; gap:6px; padding:10px 16px; overflow-x:auto; flex-shrink:0; border-bottom:1px solid #f0f0f0; -webkit-overflow-scrolling:touch; }
+    #pinListFilters::-webkit-scrollbar { display:none; }
+    #pinListBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:12px 16px; display:flex; flex-direction:column; gap:8px; }
+    .pl-card { border:1.5px solid #eee; border-radius:12px; padding:13px 16px; cursor:pointer; transition:all 0.12s; background:#fff; display:flex; gap:12px; align-items:center; -webkit-tap-highlight-color:transparent; }
+    .pl-card:active { background:#f9f9f9; transform:scale(0.99); }
+    .pl-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+    .pl-card-main { flex:1; min-width:0; }
+    .pl-card-name { font-size:14px; font-weight:700; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; }
+    .pl-card-sub { font-size:11px; color:#888; font-family:'DM Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .pl-card-type { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:3px; }
+    .pl-card-arrow { color:#ccc; font-size:16px; flex-shrink:0; }
+    .pl-empty { text-align:center; padding:40px 20px; color:#aaa; font-size:13px; font-family:'DM Mono',monospace; }
+    #pinListCount { font-size:12px; color:#999; font-family:'DM Mono',monospace; padding:0 16px 8px; flex-shrink:0; }
+
     /* ══ LOG VISIT SHEET ══ */
     #logVisitSheet {
       position:fixed; bottom:0; left:0; right:0; z-index:950;
@@ -808,7 +862,7 @@
       <div class="settings-section-label">App</div>
       <div class="settings-info-row" style="cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="openChangelog()">
         <span class="settings-info-label">Version</span>
-        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v42 · What's new ›</span>
+        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v48 · What's new ›</span>
       </div>
     </div>
   </div>
@@ -825,7 +879,7 @@
 
     <div class="cl-version">
       <div class="cl-version-header">
-        <span class="cl-version-badge current">v42</span>
+        <span class="cl-version-badge current">v48</span>
         <span class="cl-version-label">Changelog &amp; contact fields</span>
       </div>
       <div class="cl-items">
@@ -987,12 +1041,26 @@
         <span class="toggle-track"></span>
       </label>
     </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Income heat map</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggleIncome" onchange="applyIncomeToggle()">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Homeownership</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggleOwnership" onchange="applyOwnershipToggle()">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
   </div>
 </div>
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v42</span>
+  <span id="badgeVersion">v48</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
@@ -1014,6 +1082,13 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     Calendar
   </button>
+  <button class="desk-nav-btn" id="deskPinListBtn" onclick="togglePinList()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+    Pin List
+  </button>
   <button class="desk-nav-btn" id="deskPinBtn" onclick="togglePinMode()">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
     Pins
@@ -1021,6 +1096,10 @@
   <button class="desk-nav-btn" id="deskDrawBtn" onclick="toggleDrawMode()">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
     Draw
+  </button>
+  <button class="desk-nav-btn" id="deskFilterBtn" onclick="togglePinFilter()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    Filter
   </button>
 </div>
 <!-- Keep hidden stubs for JS refs -->
@@ -1047,6 +1126,24 @@
   <div class="legend-row"><div class="legend-swatch" style="background:#cccccc"></div> Township</div>
   <div class="legend-row"><div class="legend-swatch" style="background:#a8c66c"></div> Borough</div>
   <div class="legend-row"><div class="legend-swatch" style="background:#c49a6c"></div> City / Other</div>
+  <div id="incomeLegend" style="display:none;margin-top:10px;border-top:1px solid #eee;padding-top:8px;">
+    <h4 style="margin-bottom:6px;">Median Income</h4>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+      <div style="width:80px;height:10px;border-radius:4px;background:linear-gradient(to right,rgb(220,60,30),rgb(220,160,30),rgb(90,220,30));flex-shrink:0;"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:#888;font-family:'DM Mono',monospace;">
+      <span>&lt;$35k</span><span>$65k</span><span>$95k+</span>
+    </div>
+  </div>
+  <div id="ownershipLegend" style="display:none;margin-top:10px;border-top:1px solid #eee;padding-top:8px;">
+    <h4 style="margin-bottom:6px;">Homeownership Rate</h4>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+      <div style="width:80px;height:10px;border-radius:4px;background:linear-gradient(to right,rgb(220,60,30),rgb(220,160,30),rgb(59,130,246));flex-shrink:0;"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:#888;font-family:'DM Mono',monospace;">
+      <span>&lt;30%</span><span>60%</span><span>90%+</span>
+    </div>
+  </div>
 </div>
 
 <!-- DRAW TOOLBAR -->
@@ -1071,6 +1168,10 @@
   <div class="overflow-item" id="ovfPinItem" onclick="overflowAction('pin')">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
     Pins
+  </div>
+  <div class="overflow-item" id="ovfFilterItem" onclick="overflowAction('filter')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    Filter
   </div>
   <div class="overflow-item" id="ovfDrawItem" onclick="overflowAction('draw')">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
@@ -1135,6 +1236,16 @@
   </div>
 </div>
 
+<!-- PIN FILTER PANEL -->
+<div id="pinFilterPanel">
+  <h4>Filter Pins</h4>
+  <div id="pinFilterTypes"></div>
+  <div id="pinFilterAll">
+    <button class="pf-btn" onclick="setPinFilterAll(true)">All</button>
+    <button class="pf-btn" onclick="setPinFilterAll(false)">None</button>
+  </div>
+</div>
+
 <!-- LOG VISIT SHEET -->
 <div id="logVisitSheet">
   <div id="logVisitHeader">
@@ -1150,6 +1261,7 @@
         <option value="callback">Callback</option>
         <option value="installed">Installed</option>
         <option value="notinterested">Not Interested</option>
+        <option value="newconstruction">New Construction</option>
       </select>
     </div>
     <div>
@@ -1166,6 +1278,26 @@
     <button class="btn btn-primary" onclick="saveLogVisit()" style="background:#00B8FD;border-color:#00B8FD;">Save Visit</button>
     <button class="btn btn-ghost" onclick="closeLogVisit()">Cancel</button>
   </div>
+</div>
+
+<!-- PIN LIST SHEET -->
+<div id="pinListSheet">
+  <div id="pinListHeader">
+    <div id="pinListTitle">Pin List</div>
+    <button id="pinListCloseBtn" onclick="closePinList()">×</button>
+  </div>
+  <div id="pinListSearch">
+    <input id="pinListSearchInput" type="search" placeholder="Search name, address, phone…" autocomplete="off" oninput="renderPinList()" />
+  </div>
+  <div id="pinListFilters">
+    <button class="cal-chip active" data-plfilter="all" onclick="setPinListFilter(this)">All</button>
+    <button class="cal-chip" data-plfilter="warmtransfer" onclick="setPinListFilter(this)">Warm Transfer</button>
+    <button class="cal-chip" data-plfilter="callback" onclick="setPinListFilter(this)">Callback</button>
+    <button class="cal-chip" data-plfilter="installed" onclick="setPinListFilter(this)">Installed</button>
+    <button class="cal-chip" data-plfilter="notinterested" onclick="setPinListFilter(this)">Not Interested</button>
+  </div>
+  <div id="pinListCount"></div>
+  <div id="pinListBody"></div>
 </div>
 
 <!-- SHEET BACKDROP -->
@@ -1317,6 +1449,7 @@
         <option value="callback">Callback</option>
         <option value="installed">Installed</option>
         <option value="notinterested">Not Interested</option>
+        <option value="newconstruction">New Construction</option>
       </select>
     </div>
 
@@ -1386,6 +1519,13 @@
         <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
       </svg>
       Calendar
+    </button>
+    <button class="nav-btn" id="mobPinListBtn" onclick="togglePinList()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobPinListIcon">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+        <line x1="23" y1="21" x2="23" y2="15"/><line x1="20" y1="18" x2="26" y2="18"/>
+      </svg>
+      Pin List
     </button>
     <button class="nav-btn" id="mobMoreBtn" onclick="toggleOverflowMenu()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobMoreIcon">
@@ -1605,6 +1745,10 @@ map.getPane('pinsPane').style.zIndex = 460;
 // pinsPane: let the pane pass through to shapes/munis below,
 // individual marker elements handle their own pointer events
 map.getPane('pinsPane').style.pointerEvents = 'none';
+// Demographics pane sits just above municipalities, below shapes
+map.createPane('demographicsPane');
+map.getPane('demographicsPane').style.zIndex = 420;
+map.getPane('demographicsPane').style.pointerEvents = 'none';
 let currentTileLayer = L.tileLayer(TILE_URLS.light,{attribution:TILE_ATTRIBS.light,maxZoom:19,maxNativeZoom:19}).addTo(map);
 let geoLayer, pinMarker=null;
 let currentFillOpacity = 0.45;
@@ -1622,7 +1766,7 @@ function defaultColor(feature) {
 }
 function styleForLayer(feature) {
   const saved=getNoteForMuni(feature.properties.MUNICIPAL1);
-  const fill=(saved&&saved.color)?saved.color:defaultColor(feature);
+  const fill=(!anyHeatMapOn()&&saved&&saved.color)?saved.color:defaultColor(feature);
   return {color:bordersVisible?'#555':'transparent',weight:bordersVisible?0.8:0,fillColor:fill,fillOpacity:currentFillOpacity};
 }
 function formatClass(cls){const c=(cls||'').toUpperCase();if(c==='CITY')return 'City';if(c.includes('BOR'))return 'Borough';if(c==='1TWP')return 'Township (1st)';if(c==='2TWP')return 'Township (2nd)';if(c.includes('TWP'))return 'Township';return cls;}
@@ -2129,7 +2273,8 @@ window.enterShapeEditMode=enterShapeEditMode;
 //  BACKDROP CLICK HANDLER
 // ═══════════════════════════════════════
 function handleBackdropClick() {
-  if(document.getElementById('logVisitSheet').classList.contains('open'))closeLogVisit();
+  if(document.getElementById('pinListSheet').classList.contains('open'))closePinList();
+  else if(document.getElementById('logVisitSheet').classList.contains('open'))closeLogVisit();
   else if(document.getElementById('pinSidebar').classList.contains('open'))closePinSidebar();
   else if(document.getElementById('shapeSidebar').classList.contains('open'))closeShapeSidebar();
   else if(document.getElementById('sidebar').classList.contains('open'))closeSidebar();
@@ -2520,15 +2665,16 @@ let pinsLayerGroup = L.layerGroup().addTo(map);
 let pinsVisible = true;
 
 const PIN_TYPE_META = {
-  warmtransfer:  { icon:'', label:'Warm Transfer',  defaultColor:'#95D360' },
-  callback:      { icon:'', label:'Callback',        defaultColor:'#00B8FD' },
-  installed:     { icon:'', label:'Installed',       defaultColor:'#5D39FF' },
-  notinterested: { icon:'', label:'Not Interested',  defaultColor:'#FFB031' },
+  warmtransfer:    { icon:'', label:'Warm Transfer',    defaultColor:'#95D360' },
+  callback:        { icon:'', label:'Callback',          defaultColor:'#00B8FD' },
+  installed:       { icon:'', label:'Installed',         defaultColor:'#5D39FF' },
+  notinterested:   { icon:'', label:'Not Interested',    defaultColor:'#FFB031' },
+  newconstruction: { icon:'', label:'New Construction',  defaultColor:'#FF31AD' },
 };
 
 // Type initials for map pin icons
 const PIN_TYPE_INITIALS = {
-  warmtransfer:'WT', callback:'CB', installed:'IN', notinterested:'NI'
+  warmtransfer:'WT', callback:'CB', installed:'IN', notinterested:'NI', newconstruction:'NC'
 };
 
 async function loadPinsFromSupabase() {
@@ -2630,6 +2776,7 @@ function buildPinPopup(pin) {
 
 function renderSavedPin(pin) {
   if(!pinsVisible)return;
+  if(!isPinVisible(pin))return;
   const marker=L.marker([pin.lat,pin.lng],{icon:buildPinIcon(pin),zIndexOffset:600,pane:'pinsPane'});
   marker._pinId=pin.id;
   marker.bindPopup(()=>buildPinPopup(pin),{maxWidth:280});
@@ -2852,6 +2999,7 @@ function overflowAction(action){
   closeOverflowMenu();
   if(action==='draw') toggleDrawMode();
   if(action==='pin') togglePinMode();
+  if(action==='filter') togglePinFilter();
 }
 // close overflow when clicking outside
 document.addEventListener('click', e=>{
@@ -3345,6 +3493,366 @@ async function saveLogVisit(){
   pin._visits.unshift({visited_at:visitedAt, type_before:pin.type, type_after:newType, notes:notes||null});
   reRenderAllPins();
   closeLogVisit();
+}
+
+// ═══════════════════════════════════════
+//  PIN FILTER
+// ═══════════════════════════════════════
+var pinFilterOpen = false;
+var pinFilterActive = {}; // type -> true/false, empty = all shown
+
+function buildPinFilterPanel() {
+  const container = document.getElementById('pinFilterTypes');
+  if(!container) return;
+  container.innerHTML = '';
+  Object.entries(PIN_TYPE_META).forEach(([type, meta]) => {
+    const isOn = pinFilterActive[type] !== false; // default all on
+    const row = document.createElement('div');
+    row.className = 'pin-filter-row' + (isOn ? ' active' : '');
+    row.dataset.type = type;
+    row.innerHTML = `<div class="pin-filter-dot" style="background:${meta.defaultColor};"></div>
+      <span class="pin-filter-label">${meta.label}</span>
+      <div class="pin-filter-check">${isOn ? '✓' : ''}</div>`;
+    row.onclick = () => togglePinFilterType(type);
+    container.appendChild(row);
+  });
+}
+
+function togglePinFilterType(type) {
+  const isOn = pinFilterActive[type] !== false;
+  pinFilterActive[type] = !isOn;
+  buildPinFilterPanel();
+  reRenderAllPins();
+  // Update filter button active state if any filter is off
+  const anyFiltered = Object.values(pinFilterActive).some(v => v === false);
+  document.getElementById('deskFilterBtn')&&document.getElementById('deskFilterBtn').classList.toggle('active', anyFiltered);
+  document.getElementById('ovfFilterItem')&&document.getElementById('ovfFilterItem').classList.toggle('active', anyFiltered);
+}
+
+function setPinFilterAll(show) {
+  Object.keys(PIN_TYPE_META).forEach(t => { pinFilterActive[t] = show; });
+  buildPinFilterPanel();
+  reRenderAllPins();
+  const anyFiltered = !show;
+  document.getElementById('deskFilterBtn')&&document.getElementById('deskFilterBtn').classList.toggle('active', anyFiltered);
+  document.getElementById('ovfFilterItem')&&document.getElementById('ovfFilterItem').classList.toggle('active', anyFiltered);
+}
+
+function isPinVisible(pin) {
+  return pinFilterActive[pin.type] !== false;
+}
+
+function togglePinFilter() {
+  pinFilterOpen = !pinFilterOpen;
+  if(pinFilterOpen) buildPinFilterPanel();
+  document.getElementById('pinFilterPanel').classList.toggle('open', pinFilterOpen);
+  document.getElementById('deskFilterBtn')&&document.getElementById('deskFilterBtn').classList.toggle('active', pinFilterOpen || Object.values(pinFilterActive).some(v=>v===false));
+}
+
+function closePinFilter() {
+  pinFilterOpen = false;
+  document.getElementById('pinFilterPanel').classList.remove('open');
+}
+
+// close on outside click
+document.addEventListener('click', e => {
+  if(pinFilterOpen
+    && !e.target.closest('#pinFilterPanel')
+    && !e.target.closest('#deskFilterBtn')
+    && !e.target.closest('#ovfFilterItem'))
+    closePinFilter();
+});
+
+// ═══════════════════════════════════════
+//  PIN LIST
+// ═══════════════════════════════════════
+let pinListOpen = false;
+let pinListFilter = 'all';
+
+function togglePinList() {
+  if(pinListOpen) { closePinList(); return; }
+  pinListOpen = true;
+  document.getElementById('pinListSearchInput').value = '';
+  renderPinList();
+  document.getElementById('pinListSheet').classList.add('open');
+  const bd = document.getElementById('sheetBackdrop');
+  bd.classList.add('visible');
+  requestAnimationFrame(() => bd.classList.add('show'));
+  document.getElementById('mobPinListBtn') && document.getElementById('mobPinListBtn').classList.add('active');
+  document.getElementById('deskPinListBtn') && document.getElementById('deskPinListBtn').classList.add('active');
+  setTimeout(() => document.getElementById('pinListSearchInput').focus(), 400);
+}
+
+function closePinList() {
+  pinListOpen = false;
+  document.getElementById('pinListSheet').classList.remove('open');
+  document.getElementById('sheetBackdrop').classList.remove('show');
+  setTimeout(() => document.getElementById('sheetBackdrop').classList.remove('visible'), 300);
+  document.getElementById('mobPinListBtn') && document.getElementById('mobPinListBtn').classList.remove('active');
+  document.getElementById('deskPinListBtn') && document.getElementById('deskPinListBtn').classList.remove('active');
+}
+
+function setPinListFilter(btn) {
+  document.querySelectorAll('#pinListFilters .cal-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  pinListFilter = btn.dataset.plfilter;
+  renderPinList();
+}
+
+function renderPinList() {
+  const body = document.getElementById('pinListBody');
+  const countEl = document.getElementById('pinListCount');
+  const q = (document.getElementById('pinListSearchInput').value || '').toLowerCase().trim();
+  body.innerHTML = '';
+
+  let pins = Object.values(pinsCache);
+
+  // Filter by type
+  if(pinListFilter !== 'all') {
+    pins = pins.filter(p => p.type === pinListFilter);
+  }
+
+  // Filter by search query
+  if(q) {
+    pins = pins.filter(p => {
+      const name = [p.first_name, p.last_name].filter(Boolean).join(' ').toLowerCase();
+      const addr = (p.address || '').toLowerCase();
+      const phone = (p.phone || '').toLowerCase();
+      const notes = (p.notes || '').toLowerCase();
+      return name.includes(q) || addr.includes(q) || phone.includes(q) || notes.includes(q);
+    });
+  }
+
+  // Sort: most recently visited first, then by name
+  pins.sort((a, b) => {
+    if(a.last_visited && b.last_visited) return new Date(b.last_visited) - new Date(a.last_visited);
+    if(a.last_visited) return -1;
+    if(b.last_visited) return 1;
+    const an = [a.first_name, a.last_name].filter(Boolean).join(' ') || a.name || '';
+    const bn = [b.first_name, b.last_name].filter(Boolean).join(' ') || b.name || '';
+    return an.localeCompare(bn);
+  });
+
+  countEl.textContent = `${pins.length} pin${pins.length !== 1 ? 's' : ''}`;
+
+  if(pins.length === 0) {
+    body.innerHTML = `<div class="pl-empty">No pins found${q ? ' for "' + escHtml(q) + '"' : ''}.</div>`;
+    return;
+  }
+
+  pins.forEach(pin => {
+    const meta = PIN_TYPE_META[pin.type] || PIN_TYPE_META.warmtransfer;
+    const name = [pin.first_name, pin.last_name].filter(Boolean).join(' ') || pin.name || 'Untitled';
+    const sub = pin.address || pin.phone || (pin.last_visited ? 'Last visited ' + new Date(pin.last_visited).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—');
+
+    const card = document.createElement('div');
+    card.className = 'pl-card';
+    card.innerHTML = `
+      <div class="pl-dot" style="background:${meta.defaultColor};"></div>
+      <div class="pl-card-main">
+        <div class="pl-card-type" style="color:${meta.defaultColor};">${escHtml(meta.label)}</div>
+        <div class="pl-card-name">${escHtml(name)}</div>
+        <div class="pl-card-sub">${escHtml(sub)}</div>
+      </div>
+      <div class="pl-card-arrow">›</div>`;
+
+    card.onclick = () => {
+      closePinList();
+      map.flyTo([pin.lat, pin.lng], 17, {duration: 0.8});
+      setTimeout(() => {
+        pinsLayerGroup.eachLayer(l => { if(l._pinId === pin.id) l.openPopup(); });
+      }, 900);
+    };
+    body.appendChild(card);
+  });
+}
+
+// swipe to dismiss
+(function(){
+  const sheet = document.getElementById('pinListSheet');
+  let startY = 0, dragging = false;
+  sheet.addEventListener('touchstart', e => {
+    if(e.target.closest('#pinListBody') && sheet.querySelector('#pinListBody').scrollTop > 0) return;
+    startY = e.touches[0].clientY; dragging = true; sheet.style.transition = 'none';
+  }, {passive:true});
+  sheet.addEventListener('touchmove', e => {
+    if(!dragging) return;
+    const dy = e.touches[0].clientY - startY;
+    if(dy < 0) return;
+    sheet.style.transform = `translateY(${dy}px)`;
+  }, {passive:true});
+  sheet.addEventListener('touchend', e => {
+    if(!dragging) return;
+    dragging = false; sheet.style.transition = '';
+    const dy = e.changedTouches[0].clientY - startY;
+    if(dy > 100) { closePinList(); sheet.style.transform = ''; }
+    else { sheet.style.transform = ''; }
+  });
+})();
+
+// ═══════════════════════════════════════
+//  INCOME HEAT MAP — Census ACS tract data
+// ═══════════════════════════════════════
+// Heat map visibility flags — declared early so styleForLayer can reference them
+var incomeVisible = false;
+var ownershipVisible = false;
+function anyHeatMapOn(){ return incomeVisible || ownershipVisible; }
+
+// ── Shared tract GeoJSON cache (used by both income & homeownership) ──
+let tractGeoCache = null;
+let tractGeoLoading = false;
+
+async function getTractGeo() {
+  if(tractGeoCache) return tractGeoCache;
+  if(tractGeoLoading) {
+    // Wait for in-flight fetch
+    await new Promise(res => { const t = setInterval(() => { if(!tractGeoLoading){clearInterval(t);res();}}, 200); });
+    return tractGeoCache;
+  }
+  tractGeoLoading = true;
+  const geoUrl = 'https://raw.githubusercontent.com/uscensusbureau/citysdk/master/v2/GeoJSON/500k/2022/42/tract.json';
+  const res = await fetch(geoUrl);
+  tractGeoCache = await res.json();
+  tractGeoLoading = false;
+  return tractGeoCache;
+}
+
+// ── Shared label loading helper ──
+function setLayerLabel(inputId, text) {
+  document.querySelectorAll('.toggle-row').forEach(row => {
+    if(row.querySelector('#' + inputId)) {
+      const lbl = row.querySelector('.toggle-label');
+      if(lbl) {
+        if(text) { lbl.dataset.orig = lbl.dataset.orig || lbl.textContent; lbl.textContent = text; }
+        else if(lbl.dataset.orig) { lbl.textContent = lbl.dataset.orig; delete lbl.dataset.orig; }
+      }
+    }
+  });
+}
+
+// ── Shared polygon draw helper ──
+function drawTractLayer(geoData, lookup, colorFn, layerGroup) {
+  layerGroup.clearLayers();
+  geoData.features.forEach(feature => {
+    const props = feature.properties;
+    const key = (props.COUNTYFP||'').padStart(3,'0') + (props.TRACTCE||'').padStart(6,'0');
+    const val = lookup[key];
+    const color = colorFn(val);
+    if(!color) return;
+    const layer = L.geoJSON(feature, {
+      style: { color:'transparent', weight:0, fillColor:color, fillOpacity:0.45, interactive:false, pane:'demographicsPane' },
+      pane: 'demographicsPane', interactive: false
+    });
+    layerGroup.addLayer(layer);
+  });
+}
+
+// ══ INCOME ══
+let incomeLayerGroup = L.layerGroup().addTo(map);
+let incomeLoaded = false;
+
+function incomeToColor(income) {
+  if(!income || income <= 0) return null;
+  const low = 35000, high = 95000;
+  const t = Math.max(0, Math.min(1, (income - low) / (high - low)));
+  let r, g, b;
+  if(t < 0.5) { const s=t*2; r=220; g=Math.round(60+s*100); b=30; }
+  else { const s=(t-0.5)*2; r=Math.round(220-s*130); g=Math.round(160+s*60); b=30; }
+  return `rgb(${r},${g},${b})`;
+}
+
+async function loadIncomeData() {
+  if(incomeLoaded) return;
+  setLayerLabel('toggleIncome', 'Loading…');
+  try {
+    // B19013_001E = median household income
+    const res = await fetch('https://api.census.gov/data/2022/acs/acs5?get=B19013_001E&for=tract:*&in=state:42');
+    const rows = await res.json();
+    const lookup = {};
+    for(let i = 1; i < rows.length; i++) {
+      const [inc,,county,tract] = rows[i];
+      lookup[county.padStart(3,'0') + tract.padStart(6,'0')] = parseInt(inc);
+    }
+    const geo = await getTractGeo();
+    drawTractLayer(geo, lookup, incomeToColor, incomeLayerGroup);
+    incomeLoaded = true;
+    console.log('Income layer loaded');
+  } catch(e) { console.error('Income load failed:', e); }
+  setLayerLabel('toggleIncome', null);
+}
+
+function anyHeatMapOn() {
+  return incomeVisible || ownershipVisible;
+}
+
+function refreshMuniColors() {
+  if(!geoLayer) return;
+  geoLayer.eachLayer(l => {
+    if(!l.feature) return;
+    const saved = getNoteForMuni(l._muniName);
+    // If heat map is on, ignore custom colors — use defaults only
+    const fill = (!anyHeatMapOn() && saved && saved.color)
+      ? saved.color
+      : defaultColor(l.feature);
+    l.setStyle({fillColor: fill, fillOpacity: currentFillOpacity});
+  });
+}
+
+function applyIncomeToggle() {
+  incomeVisible = document.getElementById('toggleIncome').checked;
+  document.getElementById('incomeLegend').style.display = incomeVisible ? 'block' : 'none';
+  if(incomeVisible) {
+    loadIncomeData().then(() => { if(incomeVisible) incomeLayerGroup.addTo(map); });
+  } else {
+    if(map.hasLayer(incomeLayerGroup)) map.removeLayer(incomeLayerGroup);
+  }
+  refreshMuniColors();
+}
+
+// ══ HOMEOWNERSHIP ══
+let ownershipLayerGroup = L.layerGroup().addTo(map);
+let ownershipLoaded = false;
+
+function ownershipToColor(rate) {
+  if(rate === null || rate === undefined || rate < 0) return null;
+  const t = Math.max(0, Math.min(1, (rate - 20) / 70)); // 20%–90% range
+  let r, g, b;
+  if(t < 0.5) { const s=t*2; r=220; g=Math.round(60+s*100); b=30; }
+  else { const s=(t-0.5)*2; r=Math.round(220-s*161); g=Math.round(160-s*30); b=Math.round(0+s*246); }
+  return `rgb(${r},${g},${b})`;
+}
+
+async function loadOwnershipData() {
+  if(ownershipLoaded) return;
+  setLayerLabel('toggleOwnership', 'Loading…');
+  try {
+    // B25003_001E = total occupied housing units, B25003_002E = owner-occupied
+    const res = await fetch('https://api.census.gov/data/2022/acs/acs5?get=B25003_001E,B25003_002E&for=tract:*&in=state:42');
+    const rows = await res.json();
+    const lookup = {};
+    for(let i = 1; i < rows.length; i++) {
+      const [total, owned,,county,tract] = rows[i];
+      const t = parseInt(total), o = parseInt(owned);
+      const rate = (t > 0) ? Math.round((o / t) * 100) : -1;
+      lookup[county.padStart(3,'0') + tract.padStart(6,'0')] = rate;
+    }
+    const geo = await getTractGeo();
+    drawTractLayer(geo, lookup, ownershipToColor, ownershipLayerGroup);
+    ownershipLoaded = true;
+    console.log('Homeownership layer loaded');
+  } catch(e) { console.error('Homeownership load failed:', e); }
+  setLayerLabel('toggleOwnership', null);
+}
+
+function applyOwnershipToggle() {
+  ownershipVisible = document.getElementById('toggleOwnership').checked;
+  document.getElementById('ownershipLegend').style.display = ownershipVisible ? 'block' : 'none';
+  if(ownershipVisible) {
+    loadOwnershipData().then(() => { if(ownershipVisible) ownershipLayerGroup.addTo(map); });
+  } else {
+    if(map.hasLayer(ownershipLayerGroup)) map.removeLayer(ownershipLayerGroup);
+  }
+  refreshMuniColors();
 }
 
 // ═══════════════════════════════════════
