@@ -808,7 +808,7 @@
       <div class="settings-section-label">App</div>
       <div class="settings-info-row" style="cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="openChangelog()">
         <span class="settings-info-label">Version</span>
-        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v41 · What's new ›</span>
+        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v42 · What's new ›</span>
       </div>
     </div>
   </div>
@@ -825,7 +825,7 @@
 
     <div class="cl-version">
       <div class="cl-version-header">
-        <span class="cl-version-badge current">v41</span>
+        <span class="cl-version-badge current">v42</span>
         <span class="cl-version-label">Changelog &amp; contact fields</span>
       </div>
       <div class="cl-items">
@@ -992,7 +992,7 @@
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v41</span>
+  <span id="badgeVersion">v42</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
@@ -2538,16 +2538,19 @@ async function loadPinsFromSupabase() {
   pinsCache={};pinsLayerGroup.clearLayers();
   (data||[]).forEach(row=>{
     pinsCache[row.id]={
-      id:row.id, name:row.name, type:row.type||'other',
-      color:row.color||'#3b82f6', lat:row.lat, lng:row.lng,
+      id:row.id, name:row.name, type:row.type||'warmtransfer',
+      color:row.color||'#95D360', lat:row.lat, lng:row.lng,
       notes:row.notes||'', first_name:row.first_name||null,
       last_name:row.last_name||null, address:row.address||null,
       callback_at:row.callback_at||null, notify_before:row.notify_before||30,
       phone:row.phone||null, email:row.email||null,
-      last_visited:row.last_visited||null
+      last_visited:row.last_visited||null, _visits:[]
     };
     renderSavedPin(pinsCache[row.id]);
   });
+  // Load visit history
+  const{data:visits}=await sb.from('pin_visits').select('*').eq('user_id',currentUser.id).order('visited_at',{ascending:false});
+  (visits||[]).forEach(v=>{if(pinsCache[v.pin_id])pinsCache[v.pin_id]._visits.push(v);});
 }
 async function upsertPinDB(pinData) {
   if(!currentUser)return;
@@ -2600,11 +2603,26 @@ function buildPinPopup(pin) {
       ${pin.phone?`<tr><td>Phone</td><td><a href="tel:${escHtml(pin.phone)}" style="color:#3b82f6;font-weight:600;text-decoration:none;">${escHtml(pin.phone)}</a></td></tr>`:''}
       ${pin.email?`<tr><td>Email</td><td><a href="mailto:${escHtml(pin.email)}" style="color:#3b82f6;font-weight:600;text-decoration:none;">${escHtml(pin.email)}</a></td></tr>`:''}
       ${callbackRow}
-      ${pin.last_visited?`<tr><td>Last visit</td><td style="font-weight:600;color:#111;">${new Date(pin.last_visited).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</td></tr>`:''}
       ${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}
     </table>
+    ${(pin._visits&&pin._visits.length)?`
+    <div style="border-top:1.5px solid #f0f0f0;padding:10px 16px 4px;">
+      <div style="font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">Visit History</div>
+      ${pin._visits.slice(0,3).map(v=>{
+        const d=new Date(v.visited_at);
+        const dateStr=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+        const typeBefore=PIN_TYPE_META[v.type_before]?PIN_TYPE_META[v.type_before].label:v.type_before||'—';
+        const typeAfter=PIN_TYPE_META[v.type_after]?PIN_TYPE_META[v.type_after].label:v.type_after||'—';
+        const changed=v.type_before!==v.type_after;
+        return `<div style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #f5f5f5;">
+          <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:3px;">${escHtml(dateStr)}</div>
+          ${changed?`<div style="font-size:11px;color:#888;">${escHtml(typeBefore)} → <strong style="color:#111;">${escHtml(typeAfter)}</strong></div>`:`<div style="font-size:11px;color:#888;">${escHtml(typeAfter)}</div>`}
+          ${v.notes?`<div style="font-size:11px;color:#666;margin-top:2px;">${escHtml(v.notes)}</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>`:''}
     <div class="popup-footer" style="padding:10px 12px;display:flex;gap:8px;">
-      <button onclick="openPinSidebarFor('${escJs(pin.id)}');map.closePopup();" style="flex:1;padding:10px;border:1.5px solid #e5e7eb;border-radius:8px;background:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#555;cursor:pointer;-webkit-tap-highlight-color:transparent;">Edit</button>
+      <button onclick="openPinSidebarFor('${escJs(pin.id)}');map.closePopup();" style="flex:1;padding:10px;border:1.5px solid #e5e7eb;border-radius:8px;background:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#555;cursor:pointer;-webkit-tap-highlight-color:transparent;">View</button>
       <button onclick="openLogVisit('${escJs(pin.id)}');map.closePopup();" style="flex:1;padding:10px;border:none;border-radius:8px;background:#00B8FD;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;">Log Visit</button>
     </div>
   </div>`;
@@ -3295,31 +3313,36 @@ async function saveLogVisit(){
   const visitedAt = dtVal ? new Date(dtVal).toISOString() : new Date().toISOString();
   document.getElementById('lvStatus').textContent = 'Saving…';
 
-  // Append visit to pin notes and update last_visited
-  const visitEntry = `[${new Date(visitedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}] ${notes||'Visited'}`;
-  const updatedNotes = pin.notes ? pin.notes + '' + visitEntry : visitEntry;
-
-  const payload = {
-    id: pin.id,
+  // 1. Log to pin_visits table
+  const {error: vErr} = await sb.from('pin_visits').insert({
     user_id: currentUser.id,
+    pin_id: pin.id,
+    visited_at: visitedAt,
+    type_before: pin.type,
+    type_after: newType,
+    notes: notes || null
+  });
+  if(vErr){ document.getElementById('lvStatus').textContent = 'Save failed.'; console.error(vErr); return; }
+
+  // 2. Update pin type/color/last_visited
+  const {error: pErr} = await sb.from('custom_pins').upsert({
+    id: pin.id, user_id: currentUser.id,
     name: pin.name, type: newType, color: newMeta.defaultColor,
     lat: pin.lat, lng: pin.lng,
     first_name: pin.first_name, last_name: pin.last_name,
     address: pin.address, callback_at: pin.callback_at,
     notify_before: pin.notify_before, phone: pin.phone, email: pin.email,
-    notes: updatedNotes,
-    last_visited: visitedAt,
+    notes: pin.notes, last_visited: visitedAt,
     updated_at: new Date().toISOString()
-  };
+  }, {onConflict:'id'});
+  if(pErr){ document.getElementById('lvStatus').textContent = 'Save failed.'; console.error(pErr); return; }
 
-  const {error} = await sb.from('custom_pins').upsert(payload, {onConflict:'id'});
-  if(error){ document.getElementById('lvStatus').textContent = 'Save failed.'; console.error(error); return; }
-
-  // Update local cache
-  pin.notes = updatedNotes;
+  // 3. Update local cache
   pin.last_visited = visitedAt;
   pin.type = newType;
   pin.color = newMeta.defaultColor;
+  if(!pin._visits) pin._visits = [];
+  pin._visits.unshift({visited_at:visitedAt, type_before:pin.type, type_after:newType, notes:notes||null});
   reRenderAllPins();
   closeLogVisit();
 }
