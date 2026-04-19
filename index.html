@@ -185,6 +185,44 @@
       #sidebar { width:320px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(100%); transition:transform 0.25s cubic-bezier(0.4,0,0.2,1); box-shadow:-8px 0 24px rgba(0,0,0,0.1); }
       #sidebar.open { transform:translateX(0); }
       #sidebar::before { display:none; }
+      /* Desktop toolbar buttons — bottom-right cluster */
+      /* Desktop nav toolbar — bottom center */
+      #desktopNav {
+        display:flex; position:fixed; bottom:0; left:0; right:0; z-index:500;
+        background:rgba(255,255,255,0.97); backdrop-filter:blur(20px) saturate(180%);
+        -webkit-backdrop-filter:blur(20px) saturate(180%);
+        border-top:1.5px solid #e2e2e2; box-shadow:0 -4px 24px rgba(0,0,0,0.10);
+        align-items:center; justify-content:center; gap:0; padding:0 20px;
+        height:64px;
+      }
+      .desk-nav-btn {
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        gap:4px; padding:8px 18px; background:none; border:none; cursor:pointer;
+        font-family:'DM Sans',sans-serif; font-size:10px; font-weight:600;
+        color:#888; letter-spacing:0.04em; text-transform:uppercase;
+        -webkit-tap-highlight-color:transparent; transition:color 0.12s;
+        min-width:72px; height:100%; border-bottom:2px solid transparent;
+        transition:color 0.12s, border-color 0.12s;
+      }
+      .desk-nav-btn:hover { color:#1e3a5f; }
+      .desk-nav-btn.active { color:var(--blue); border-bottom-color:var(--blue); }
+      .desk-nav-btn.active svg { stroke:var(--blue); }
+      .desk-nav-btn svg { flex-shrink:0; }
+      /* Layers panel and legend open above toolbar */
+      #layersPanel { bottom:74px; right:auto; left:14px; }
+      #layersPanel.shifted { right:auto; left:14px; }
+      #legend { bottom:74px; left:14px; right:auto; transform:none !important; }
+      #legend.hidden { opacity:0; pointer-events:none; transform:scale(0.95) !important; }
+      #legend.shifted { left:14px; right:auto; }
+      /* Draw/Pin mode toolbars above desktop nav */
+      #drawToolbar { bottom:80px; }
+      #pinToolbar { bottom:80px; }
+      /* Hide old individual buttons */
+      #drawBtnDesktop { display:none !important; }
+      #pinBtnDesktop { display:none !important; }
+      #locBtnDesktop { display:none !important; }
+      /* Hide zoom control — use scroll to zoom on desktop */
+      .leaflet-control-zoom { display:none !important; }
     }
 
     #desktopSearch { display:none; }
@@ -192,6 +230,10 @@
     #sessionBadge { display:none; }
     #drawBtnDesktop { display:none; }
     #pinBtnDesktop { display:none; }
+    #legendBtnDesktop { display:none; }
+    #layersBtnDesktop { display:none; }
+    #calBtnDesktop { display:none; }
+    #desktopNav { display:none; }
 
     /* ══ SHEET BACKDROP ══ */
     #sheetBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:800; opacity:0; transition:opacity 0.3s; -webkit-tap-highlight-color:transparent; }
@@ -607,6 +649,30 @@
     /* Standalone callback card indicator */
     .cal-card.standalone { border-left:3px solid #8b5cf6; }
 
+    /* ══ LOG VISIT SHEET ══ */
+    #logVisitSheet {
+      position:fixed; bottom:0; left:0; right:0; z-index:950;
+      max-height:calc(80dvh - var(--sab)); background:#fff;
+      border-top:1.5px solid #ddd; border-radius:20px 20px 0 0;
+      box-shadow:0 -8px 40px rgba(0,0,0,0.2);
+      display:flex; flex-direction:column;
+      transform:translateY(110%);
+      transition:transform 0.32s cubic-bezier(0.32,0.72,0,1);
+      padding-bottom:var(--sab); will-change:transform;
+    }
+    #logVisitSheet.open { transform:translateY(0); }
+    #logVisitSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    @media (min-width:768px) {
+      #logVisitSheet { width:420px; left:50%; right:auto; transform:translate(-50%, 110%); border-radius:20px 20px 0 0; }
+      #logVisitSheet.open { transform:translate(-50%, 0); }
+    }
+    #logVisitHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #logVisitTitle { font-size:17px; font-weight:700; color:#111; }
+    #logVisitCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; }
+    #logVisitBody { overflow-y:auto; padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+    #logVisitFooter { padding:14px 20px; border-top:1.5px solid #eee; display:flex; gap:10px; flex-shrink:0; background:#fff; }
+    .lv-field-label { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; }
+
     /* ══ AUTH GATE ══ */
     #authGate { position:fixed; inset:0; z-index:9999; background:var(--bg); display:flex; align-items:center; justify-content:center; padding:max(20px,calc(var(--sat) + 16px)) 20px max(20px,calc(var(--sab) + 16px)); overflow-y:auto; }
     #authGate.hidden { display:none; }
@@ -742,7 +808,7 @@
       <div class="settings-section-label">App</div>
       <div class="settings-info-row" style="cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="openChangelog()">
         <span class="settings-info-label">Version</span>
-        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v25 · What's new ›</span>
+        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v41 · What's new ›</span>
       </div>
     </div>
   </div>
@@ -759,7 +825,7 @@
 
     <div class="cl-version">
       <div class="cl-version-header">
-        <span class="cl-version-badge current">v25</span>
+        <span class="cl-version-badge current">v41</span>
         <span class="cl-version-label">Changelog &amp; contact fields</span>
       </div>
       <div class="cl-items">
@@ -926,25 +992,44 @@
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v25</span>
+  <span id="badgeVersion">v41</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
-<button id="locBtnDesktop" onclick="toggleLocation()" title="My location">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7" stroke-width="1.5"/>
-  </svg>
-</button>
-<button id="pinBtnDesktop" onclick="togglePinMode()" title="Place pin">
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-  </svg>
-</button>
-<button id="drawBtnDesktop" onclick="toggleDrawMode()" title="Draw shape">
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
-  </svg>
-</button>
+<!-- Desktop nav toolbar -->
+<div id="desktopNav">
+  <button class="desk-nav-btn" id="deskLocBtn" onclick="toggleLocation()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7" stroke-width="1.5"/></svg>
+    Locate
+  </button>
+  <button class="desk-nav-btn" id="deskLegendBtn" onclick="toggleLegend()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="3" y="10" width="5" height="5" rx="1"/><rect x="3" y="17" width="5" height="5" rx="1"/><line x1="12" y1="5.5" x2="21" y2="5.5"/><line x1="12" y1="12.5" x2="21" y2="12.5"/><line x1="12" y1="19.5" x2="21" y2="19.5"/></svg>
+    Legend
+  </button>
+  <button class="desk-nav-btn" id="deskLayersBtn" onclick="toggleLayersPanel()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+    Layers
+  </button>
+  <button class="desk-nav-btn" id="deskCalBtn" onclick="toggleCalendar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Calendar
+  </button>
+  <button class="desk-nav-btn" id="deskPinBtn" onclick="togglePinMode()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    Pins
+  </button>
+  <button class="desk-nav-btn" id="deskDrawBtn" onclick="toggleDrawMode()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+    Draw
+  </button>
+</div>
+<!-- Keep hidden stubs for JS refs -->
+<button id="locBtnDesktop" style="display:none!important"></button>
+<button id="pinBtnDesktop" style="display:none!important"></button>
+<button id="drawBtnDesktop" style="display:none!important"></button>
+<div id="legendBtnDesktop" style="display:none!important"></div>
+<div id="layersBtnDesktop" style="display:none!important"></div>
+<div id="calBtnDesktop" style="display:none!important"></div>
 <div id="desktopSearch">
   <div class="suggestions-wrap">
     <div id="searchWrap">
@@ -1047,6 +1132,39 @@
     <button class="btn btn-primary" onclick="saveStandaloneCallback()">Save</button>
     <button class="btn btn-ghost" onclick="closeAddCallback()">Cancel</button>
     <button class="btn btn-danger" id="acbDeleteBtn" onclick="deleteStandaloneCallback(currentAcbId)" style="display:none;">Delete</button>
+  </div>
+</div>
+
+<!-- LOG VISIT SHEET -->
+<div id="logVisitSheet">
+  <div id="logVisitHeader">
+    <div id="logVisitTitle">Log Visit</div>
+    <button id="logVisitCloseBtn" onclick="closeLogVisit()">×</button>
+  </div>
+  <div id="logVisitBody">
+    <div id="logVisitPinName" style="font-size:15px;font-weight:700;color:#111;padding:2px 0 6px;border-bottom:1px solid #f0f0f0;margin-bottom:4px;"></div>
+    <div>
+      <div class="lv-field-label">Update pin type</div>
+      <select id="lvPinType" class="pin-type-select">
+        <option value="warmtransfer">Warm Transfer</option>
+        <option value="callback">Callback</option>
+        <option value="installed">Installed</option>
+        <option value="notinterested">Not Interested</option>
+      </select>
+    </div>
+    <div>
+      <div class="lv-field-label">Visit date &amp; time</div>
+      <input type="datetime-local" id="lvDatetime" class="pin-text-input" style="font-family:'DM Mono',monospace;font-size:15px;" />
+    </div>
+    <div>
+      <div class="lv-field-label">Notes</div>
+      <textarea id="lvNotes" placeholder="What happened? Result of the visit…" rows="4" style="width:100%;min-height:90px;resize:vertical;border:1.5px solid #ddd;border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.5;color:#111;outline:none;transition:border-color 0.15s;background:#fff;"></textarea>
+    </div>
+    <div id="lvStatus" style="font-size:12px;color:#999;font-family:'DM Mono',monospace;min-height:16px;"></div>
+  </div>
+  <div id="logVisitFooter">
+    <button class="btn btn-primary" onclick="saveLogVisit()" style="background:#00B8FD;border-color:#00B8FD;">Save Visit</button>
+    <button class="btn btn-ghost" onclick="closeLogVisit()">Cancel</button>
   </div>
 </div>
 
@@ -1195,20 +1313,15 @@
     <div>
       <div class="section-label">Pin Type</div>
       <select id="pinTypeSelect" class="pin-type-select" onchange="selectPinTypeFromDropdown(this)">
-        <option value="callback">Call Back</option>
-        <option value="lead">Lead</option>
-        <option value="customer">Customer</option>
-        <option value="noanswer">No Answer</option>
+        <option value="warmtransfer">Warm Transfer</option>
+        <option value="callback">Callback</option>
+        <option value="installed">Installed</option>
         <option value="notinterested">Not Interested</option>
-        <option value="competitor">Competitor</option>
-        <option value="note">Note</option>
-        <option value="other">Other</option>
       </select>
     </div>
 
-    <!-- CALLBACK FIELDS — shown only when type=callback -->
+    <!-- PIN DETAILS — same fields for all 3 types -->
     <div id="callbackFields" class="visible">
-      <div class="cb-label">Call Back Details</div>
       <input type="text" id="cbFullName" class="pin-text-input" placeholder="Full name" autocomplete="name" />
       <div class="cb-contact-row">
         <input type="tel" id="cbPhone" class="pin-text-input" placeholder="Phone" autocomplete="tel" inputmode="tel" />
@@ -1219,7 +1332,7 @@
         <div id="addrSuggestions"></div>
       </div>
       <div>
-        <div class="cb-label" style="margin-bottom:8px;">Callback date &amp; time</div>
+        <div class="cb-label" style="margin-bottom:8px;" id="cbDateLabel">Appointment / Callback time</div>
         <input type="datetime-local" id="cbDatetime" class="pin-text-input" />
       </div>
     </div>
@@ -1227,14 +1340,6 @@
     <div>
       <div class="section-label">Notes</div>
       <textarea id="pinNoteTextarea" placeholder="Add notes…" rows="3" style="width:100%;min-height:80px;resize:vertical;border:1.5px solid #ddd;border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.5;color:#111;outline:none;transition:border-color 0.15s;background:#fff;"></textarea>
-    </div>
-    <div>
-      <div class="section-label">Pin Color</div>
-      <div id="pinColorSwatches" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
-      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
-        <input type="color" id="pinColorPicker" value="#3b82f6" title="Custom color" style="width:40px;height:40px;border:2px solid #ddd;border-radius:8px;cursor:pointer;padding:2px;background:none;" />
-        <span id="pinColorLabel" style="font-size:12px;color:#666;font-family:'DM Mono',monospace;">#3b82f6</span>
-      </div>
     </div>
     <div id="pinSaveStatus" style="display:flex;align-items:center;gap:7px;">
       <span id="pinStatusDot" style="width:8px;height:8px;border-radius:50%;background:#ddd;flex-shrink:0;transition:background 0.3s;"></span>
@@ -1379,7 +1484,12 @@ function startSession(user) {
   currentUser=user;
   document.getElementById('authGate').classList.add('hidden');
   document.getElementById('badgeEmail').textContent=user.email;
-  if(!isMobile()){document.getElementById('sessionBadge').style.display='flex';document.getElementById('sessionBadge').classList.remove('hidden');document.getElementById('drawBtnDesktop').style.display='flex';document.getElementById('pinBtnDesktop').style.display='flex';}
+  if(!isMobile()){
+    document.getElementById('sessionBadge').style.display='flex';
+    document.getElementById('sessionBadge').classList.remove('hidden');
+    document.getElementById('desktopSearch').style.display='block';
+    document.getElementById('desktopNav').style.display='flex';
+  }
   if(isMobile()){document.getElementById('gearBtn').style.display='flex';document.getElementById('mobSignBtn').style.display='none';}
   loadAllNotesFromSupabase();
 }
@@ -1406,6 +1516,7 @@ async function logout() {
   document.getElementById('sessionBadge').style.display='none';
   document.getElementById('drawBtnDesktop').style.display='none';
   document.getElementById('pinBtnDesktop').style.display='none';
+  // keep locBtnDesktop and desktopSearch visible on desktop even when logged out
   document.getElementById('gearBtn').style.display='none';
   document.getElementById('mobSignBtn').style.display='';
   document.getElementById('mobSignLabel').textContent='Sign In';
@@ -1416,6 +1527,14 @@ async function logout() {
 }
 function handleMobSignBtn(){if(currentUser)logout();else document.getElementById('authGate').classList.remove('hidden');}
 sb.auth.onAuthStateChange(async(event,session)=>{if(session&&session.user)startSession(session.user);});
+
+// Show desktop UI elements that don't require auth
+(function initDesktopUI(){
+  if(window.innerWidth >= 768){
+    document.getElementById('desktopSearch').style.display='block';
+    document.getElementById('desktopNav').style.display='flex';
+  }
+})();
 
 // ═══════════════════════════════════════
 //  SETTINGS SHEET
@@ -1475,12 +1594,17 @@ const TILE_ATTRIBS = {
   topo:      '© OpenStreetMap © OpenTopoMap'
 };
 
-const map = L.map('map',{zoomControl:true,preferCanvas:true}).setView([40.9,-77.8],7);
+const map = L.map('map',{zoomControl:true,preferCanvas:false}).setView([40.9,-77.8],7);
 // Custom panes for z-ordering: shapes above municipalities, pins above shapes
-map.createPane('shapesPane'); map.getPane('shapesPane').style.zIndex = 450;
-map.createPane('pinsPane');   map.getPane('pinsPane').style.zIndex   = 460;
-map.getPane('shapesPane').style.pointerEvents  = 'auto';
-map.getPane('pinsPane').style.pointerEvents    = 'auto';
+map.createPane('shapesPane'); 
+map.getPane('shapesPane').style.zIndex = 450;
+// Let Leaflet manage pointer-events on shapesPane SVG elements per-layer
+map.getPane('shapesPane').style.pointerEvents = 'none';
+map.createPane('pinsPane');   
+map.getPane('pinsPane').style.zIndex = 460;
+// pinsPane: let the pane pass through to shapes/munis below,
+// individual marker elements handle their own pointer events
+map.getPane('pinsPane').style.pointerEvents = 'none';
 let currentTileLayer = L.tileLayer(TILE_URLS.light,{attribution:TILE_ATTRIBS.light,maxZoom:19,maxNativeZoom:19}).addTo(map);
 let geoLayer, pinMarker=null;
 let currentFillOpacity = 0.45;
@@ -1542,7 +1666,7 @@ function buildPopup(p) {
   const rating=(d&&d.rating)?d.rating:0;
   const starsHtml=[1,2,3,4,5].map(i=>i<=rating?'<span>★</span>':'<span class="empty">★</span>').join('');
   const noteText=d&&d.note?d.note.substring(0,70)+(d.note.length>70?'…':''):null;
-  return `<div class="popup-inner"><div class="popup-header"><div class="popup-name">${escHtml(p.MUNICIPAL1)}</div></div><table class="popup-table"><tr><td>Type</td><td>${formatClass(p.CLASS_OF_M)}</td></tr><tr><td>County</td><td>${titleCase(p.COUNTY_NAM)}</td></tr><tr><td>Permit</td><td>${permitHtml}</td></tr><tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}</table><div class="popup-footer" style="padding:10px 12px;display:flex;gap:8px;"><button onclick="this.closest('.leaflet-popup') && L.DomEvent && map.closePopup();" style="flex:1;padding:10px;border:1.5px solid #e5e7eb;border-radius:8px;background:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#555;cursor:pointer;-webkit-tap-highlight-color:transparent;">View</button><button onclick="openSidebarFor('${escJs(p.MUNICIPAL1)}','${escJs(p.CLASS_OF_M)}','${escJs(p.COUNTY_NAM)}');map.closePopup();return false;" style="flex:1;padding:10px;border:none;border-radius:8px;background:#1e3a5f;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;">Edit</button></div></div>`;
+  return `<div class="popup-inner"><div class="popup-header"><div class="popup-name">${escHtml(p.MUNICIPAL1)}</div></div><table class="popup-table"><tr><td>Type</td><td>${formatClass(p.CLASS_OF_M)}</td></tr><tr><td>County</td><td>${titleCase(p.COUNTY_NAM)}</td></tr><tr><td>Permit</td><td>${permitHtml}</td></tr><tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}</table><div class="popup-footer" style="padding:10px 16px;"><button onclick="openSidebarFor('${escJs(p.MUNICIPAL1)}','${escJs(p.CLASS_OF_M)}','${escJs(p.COUNTY_NAM)}');map.closePopup();return false;" style="width:100%;padding:11px;border:none;border-radius:8px;background:#1e3a5f;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;">Edit notes</button></div></div>`;
 }
 
 function updateLabels() {
@@ -1599,17 +1723,22 @@ function toggleLayersPanel() {
   layersPanelOpen=opening;
   document.getElementById('layersPanel').classList.toggle('open',layersPanelOpen);
   document.getElementById('mobLayersBtn').classList.toggle('active',layersPanelOpen);
+  document.getElementById('layersBtnDesktop')&&document.getElementById('layersBtnDesktop').classList.toggle('active',layersPanelOpen);
+  document.getElementById('deskLayersBtn')&&document.getElementById('deskLayersBtn').classList.toggle('active',layersPanelOpen);
   if(!layersPanelOpen) document.getElementById('legend').classList.toggle('hidden',!legendVisible);
 }
 function closeLayersPanel() {
   layersPanelOpen=false;
   document.getElementById('layersPanel').classList.remove('open');
   document.getElementById('mobLayersBtn')&&document.getElementById('mobLayersBtn').classList.remove('active');
+  document.getElementById('layersBtnDesktop')&&document.getElementById('layersBtnDesktop').classList.remove('active');
+  document.getElementById('deskLayersBtn')&&document.getElementById('deskLayersBtn').classList.remove('active');
 }
 document.addEventListener('click',e=>{
   if(layersPanelOpen
     &&!e.target.closest('#layersPanel')
     &&!e.target.closest('#mobLayersBtn')
+    &&!e.target.closest('#deskLayersBtn')
     &&!e.target.closest('#sidebar')
     &&!e.target.closest('#shapeSidebar')
     &&!e.target.closest('#pinSidebar')){
@@ -1832,6 +1961,8 @@ function toggleLegend(){
   }
   document.getElementById('legend').classList.toggle('hidden',!legendVisible);
   document.getElementById('mobLegendBtn').classList.toggle('active',legendVisible);
+  document.getElementById('legendBtnDesktop')&&document.getElementById('legendBtnDesktop').classList.toggle('active',legendVisible);
+  document.getElementById('deskLegendBtn')&&document.getElementById('deskLegendBtn').classList.toggle('active',legendVisible);
 }
 
 // ═══════════════════════════════════════
@@ -1849,7 +1980,11 @@ function startLocationTracking() {
   );
 }
 function stopLocationTracking(){if(locationWatchId!==null){navigator.geolocation.clearWatch(locationWatchId);locationWatchId=null;}if(locationMarker){map.removeLayer(locationMarker);locationMarker=null;}if(locationCircle){map.removeLayer(locationCircle);locationCircle=null;}}
-function setLocActive(active){const mob=document.getElementById('mobLocBtn'),desk=document.getElementById('locBtnDesktop');if(mob){mob.classList.toggle('active',active);const svg=mob.querySelector('svg');if(svg)svg.setAttribute('stroke',active?'#3b82f6':'#999');}if(desk)desk.classList.toggle('active',active);}
+function setLocActive(active){
+  const mob=document.getElementById('mobLocBtn');
+  if(mob){mob.classList.toggle('active',active);const svg=mob.querySelector('svg');if(svg)svg.setAttribute('stroke',active?'#3b82f6':'#999');}
+  document.getElementById('deskLocBtn')&&document.getElementById('deskLocBtn').classList.toggle('active',active);
+}
 function toggleLocation(){if(locationWatchId!==null){stopLocationTracking();setLocActive(false);}else{setLocActive(true);startLocationTracking();}}
 
 // ═══════════════════════════════════════
@@ -1987,12 +2122,15 @@ document.addEventListener('click',e=>{if(utilOpen&&!e.target.closest('#utilDropd
 window.openSidebarFor=openSidebarFor;
 window.openShapeSidebarFor=openShapeSidebarFor;
 window.openPinSidebarFor=openPinSidebarFor;
+window.openLogVisit=openLogVisit;
+window.enterShapeEditMode=enterShapeEditMode;
 
 // ═══════════════════════════════════════
 //  BACKDROP CLICK HANDLER
 // ═══════════════════════════════════════
 function handleBackdropClick() {
-  if(document.getElementById('pinSidebar').classList.contains('open'))closePinSidebar();
+  if(document.getElementById('logVisitSheet').classList.contains('open'))closeLogVisit();
+  else if(document.getElementById('pinSidebar').classList.contains('open'))closePinSidebar();
   else if(document.getElementById('shapeSidebar').classList.contains('open'))closeShapeSidebar();
   else if(document.getElementById('sidebar').classList.contains('open'))closeSidebar();
   else if(calendarOpen)closeCalendar();
@@ -2065,6 +2203,12 @@ function renderSavedShape(shape) {
   if(shape.is_polygon&&verts.length>=3){layer=L.polygon(latlngs,{color:shape.color,weight:2.5,fillColor:shape.color,fillOpacity:0.18,interactive:true,pane:'shapesPane'});}
   else{layer=L.polyline(latlngs,{color:shape.color,weight:3,interactive:true,pane:'shapesPane'});}
   layer._shapeId=shape.id;
+  layer.on('click', function(e){
+    if(drawMode||pinMode)return;
+    L.DomEvent.stopPropagation(e);
+    e.originalEvent && e.originalEvent.stopPropagation();
+    this.openPopup();
+  });
   layer.bindPopup(()=>buildShapePopup(shape),{maxWidth:260,className:'shape-popup'});
   shapesLayerGroup.addLayer(layer);
   const labelPt=shape.is_polygon&&verts.length>=3?layer.getBounds().getCenter():latlngs[Math.floor(latlngs.length/2)];
@@ -2102,13 +2246,22 @@ function setDrawActive(active) {
   document.getElementById('mobDrawIcon')&&document.getElementById('mobDrawIcon').setAttribute('stroke',active?'#3b82f6':'#999');
   document.getElementById('drawBtnDesktop')&&document.getElementById('drawBtnDesktop').classList.toggle('active',active);
   document.getElementById('ovfDrawItem')&&document.getElementById('ovfDrawItem').classList.toggle('active',active);
+  document.getElementById('deskDrawBtn')&&document.getElementById('deskDrawBtn').classList.toggle('active',active);
   document.getElementById('drawToolbar').classList.toggle('visible',active);
   if(active){
     map.dragging.disable(); map.doubleClickZoom.disable(); map.closePopup();
-    if(geoLayer)geoLayer.eachLayer(l=>{if(l.setStyle)l.setStyle({interactive:false});if(l.options)l.options.interactive=false;});
+    if(geoLayer)geoLayer.eachLayer(l=>{
+      if(l.options)l.options.interactive=false;
+      const el=l.getElement&&l.getElement();
+      if(el)el.style.pointerEvents='none';
+    });
   } else {
     map.dragging.enable(); map.doubleClickZoom.enable();
-    if(geoLayer)geoLayer.eachLayer(l=>{if(l.options)l.options.interactive=true;});
+    if(geoLayer)geoLayer.eachLayer(l=>{
+      if(l.options)l.options.interactive=true;
+      const el=l.getElement&&l.getElement();
+      if(el)el.style.pointerEvents='';
+    });
   }
 }
 function toggleDrawMode() {
@@ -2367,20 +2520,15 @@ let pinsLayerGroup = L.layerGroup().addTo(map);
 let pinsVisible = true;
 
 const PIN_TYPE_META = {
-  callback:     { icon:'', label:'Call Back',      defaultColor:'#3b82f6' },
-  lead:         { icon:'', label:'Lead',            defaultColor:'#f59e0b' },
-  customer:     { icon:'', label:'Customer',        defaultColor:'#10b981' },
-  noanswer:     { icon:'', label:'No Answer',      defaultColor:'#6b7280' },
-  notinterested:{ icon:'', label:'Not Interested', defaultColor:'#ef4444' },
-  competitor:   { icon:'', label:'Competitor',     defaultColor:'#f97316' },
-  note:         { icon:'', label:'Note',           defaultColor:'#8b5cf6' },
-  other:        { icon:'', label:'Other',          defaultColor:'#ec4899' },
+  warmtransfer:  { icon:'', label:'Warm Transfer',  defaultColor:'#95D360' },
+  callback:      { icon:'', label:'Callback',        defaultColor:'#00B8FD' },
+  installed:     { icon:'', label:'Installed',       defaultColor:'#5D39FF' },
+  notinterested: { icon:'', label:'Not Interested',  defaultColor:'#FFB031' },
 };
 
 // Type initials for map pin icons
 const PIN_TYPE_INITIALS = {
-  callback:'CB', lead:'LD', customer:'CX', noanswer:'NA',
-  notinterested:'NI', competitor:'CO', note:'NT', other:'—'
+  warmtransfer:'WT', callback:'CB', installed:'IN', notinterested:'NI'
 };
 
 async function loadPinsFromSupabase() {
@@ -2395,7 +2543,8 @@ async function loadPinsFromSupabase() {
       notes:row.notes||'', first_name:row.first_name||null,
       last_name:row.last_name||null, address:row.address||null,
       callback_at:row.callback_at||null, notify_before:row.notify_before||30,
-      phone:row.phone||null, email:row.email||null
+      phone:row.phone||null, email:row.email||null,
+      last_visited:row.last_visited||null
     };
     renderSavedPin(pinsCache[row.id]);
   });
@@ -2415,15 +2564,12 @@ async function deletePinFromDB(id) {
 }
 
 function buildPinIcon(pin) {
-  const meta=PIN_TYPE_META[pin.type]||PIN_TYPE_META.other;
+  const meta=PIN_TYPE_META[pin.type]||PIN_TYPE_META.warmtransfer;
   const color=pin.color||meta.defaultColor;
-  const initials=PIN_TYPE_INITIALS[pin.type]||'—';
   return L.divIcon({
     className:'',
-    html:`<div class="map-pin-wrapper">
-      <div class="map-pin-head" style="background:${color};">
-        <span class="map-pin-icon" style="font-size:9px;font-weight:700;font-family:'DM Sans',sans-serif;color:#fff;letter-spacing:-0.5px;">${initials}</span>
-      </div>
+    html:`<div class="map-pin-wrapper" style="pointer-events:auto;">
+      <div class="map-pin-head" style="background:${color};"></div>
       <div class="map-pin-tail" style="background:${color};"></div>
     </div>`,
     iconSize:[28,40],
@@ -2433,7 +2579,7 @@ function buildPinIcon(pin) {
 }
 
 function buildPinPopup(pin) {
-  const meta=PIN_TYPE_META[pin.type]||PIN_TYPE_META.other;
+  const meta=PIN_TYPE_META[pin.type]||PIN_TYPE_META.warmtransfer;
   const noteText=pin.notes?pin.notes.substring(0,100)+(pin.notes.length>100?'…':''):null;
   const fullName=[pin.first_name,pin.last_name].filter(Boolean).join(' ');
   let callbackRow='';
@@ -2454,11 +2600,12 @@ function buildPinPopup(pin) {
       ${pin.phone?`<tr><td>Phone</td><td><a href="tel:${escHtml(pin.phone)}" style="color:#3b82f6;font-weight:600;text-decoration:none;">${escHtml(pin.phone)}</a></td></tr>`:''}
       ${pin.email?`<tr><td>Email</td><td><a href="mailto:${escHtml(pin.email)}" style="color:#3b82f6;font-weight:600;text-decoration:none;">${escHtml(pin.email)}</a></td></tr>`:''}
       ${callbackRow}
+      ${pin.last_visited?`<tr><td>Last visit</td><td style="font-weight:600;color:#111;">${new Date(pin.last_visited).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</td></tr>`:''}
       ${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}
     </table>
     <div class="popup-footer" style="padding:10px 12px;display:flex;gap:8px;">
-      <button onclick="map.closePopup();" style="flex:1;padding:10px;border:1.5px solid #e5e7eb;border-radius:8px;background:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#555;cursor:pointer;-webkit-tap-highlight-color:transparent;">View</button>
-      <button onclick="openPinSidebarFor('${escJs(pin.id)}');map.closePopup();return false;" style="flex:1;padding:10px;border:none;border-radius:8px;background:#1e3a5f;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;">Edit</button>
+      <button onclick="openPinSidebarFor('${escJs(pin.id)}');map.closePopup();" style="flex:1;padding:10px;border:1.5px solid #e5e7eb;border-radius:8px;background:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#555;cursor:pointer;-webkit-tap-highlight-color:transparent;">Edit</button>
+      <button onclick="openLogVisit('${escJs(pin.id)}');map.closePopup();" style="flex:1;padding:10px;border:none;border-radius:8px;background:#00B8FD;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;">Log Visit</button>
     </div>
   </div>`;
 }
@@ -2505,12 +2652,17 @@ function startPinMode(){
   document.getElementById('mobPinBtn')&&document.getElementById('mobPinBtn').classList.add('pin-active');
   document.getElementById('mobPinIcon')&&document.getElementById('mobPinIcon').setAttribute('stroke','#8b5cf6');
   document.getElementById('pinBtnDesktop')&&document.getElementById('pinBtnDesktop').classList.add('active');
+  document.getElementById('deskPinBtn')&&document.getElementById('deskPinBtn').classList.add('active');
   // sync overflow menu state
   document.getElementById('ovfPinItem')&&document.getElementById('ovfPinItem').classList.add('pin-active');
   map.dragging.disable();
   map.doubleClickZoom.disable();
   map.closePopup();
-  if(geoLayer)geoLayer.eachLayer(l=>{if(l.options)l.options.interactive=false;});
+  if(geoLayer)geoLayer.eachLayer(l=>{
+    if(l.options)l.options.interactive=false;
+    const el=l.getElement&&l.getElement();
+    if(el)el.style.pointerEvents='none';
+  });
   closeLayersPanel();
   if(legendVisible){legendVisible=false;document.getElementById('legend').classList.add('hidden');document.getElementById('mobLegendBtn')&&document.getElementById('mobLegendBtn').classList.remove('active');}
 }
@@ -2522,10 +2674,15 @@ function cancelPinMode(){
   document.getElementById('mobPinBtn')&&document.getElementById('mobPinBtn').classList.remove('pin-active');
   document.getElementById('mobPinIcon')&&document.getElementById('mobPinIcon').setAttribute('stroke','#999');
   document.getElementById('pinBtnDesktop')&&document.getElementById('pinBtnDesktop').classList.remove('active');
+  document.getElementById('deskPinBtn')&&document.getElementById('deskPinBtn').classList.remove('active');
   document.getElementById('ovfPinItem')&&document.getElementById('ovfPinItem').classList.remove('pin-active');
   map.dragging.enable();
   map.doubleClickZoom.enable();
-  if(geoLayer)geoLayer.eachLayer(l=>{if(l.options)l.options.interactive=true;});
+  if(geoLayer)geoLayer.eachLayer(l=>{
+    if(l.options)l.options.interactive=true;
+    const el=l.getElement&&l.getElement();
+    if(el)el.style.pointerEvents='';
+  });
   if(pendingPinMarker){map.removeLayer(pendingPinMarker);pendingPinMarker=null;}
   pendingPinLatLng=null;
 }
@@ -2540,12 +2697,16 @@ function placePinAtLatLng(latlng){
   document.getElementById('ovfPinItem')&&document.getElementById('ovfPinItem').classList.remove('pin-active');
   map.dragging.enable();
   map.doubleClickZoom.enable();
-  if(geoLayer)geoLayer.eachLayer(l=>{if(l.options)l.options.interactive=true;});
+  if(geoLayer)geoLayer.eachLayer(l=>{
+    if(l.options)l.options.interactive=true;
+    const el=l.getElement&&l.getElement();
+    if(el)el.style.pointerEvents='';
+  });
   pendingPinLatLng=latlng;
   // show a temporary ghost marker
   if(pendingPinMarker)map.removeLayer(pendingPinMarker);
   pendingPinMarker=L.marker([latlng.lat,latlng.lng],{
-    icon:L.divIcon({className:'',html:`<div class="map-pin-wrapper" style="opacity:0.7;"><div class="map-pin-head" style="background:#3b82f6;"><span class="map-pin-icon" style="font-size:9px;font-weight:700;font-family:'DM Sans',sans-serif;color:#fff;">CB</span></div><div class="map-pin-tail" style="background:#3b82f6;"></div></div>`,iconSize:[28,40],iconAnchor:[14,40]})
+    icon:L.divIcon({className:'',html:`<div class="map-pin-wrapper" style="opacity:0.7;pointer-events:auto;"><div class="map-pin-head" style="background:#3b82f6;"></div><div class="map-pin-tail" style="background:#3b82f6;"></div></div>`,iconSize:[28,40],iconAnchor:[14,40]})
   }).addTo(map);
   openPinSidebarFor(null);
 }
@@ -2577,10 +2738,10 @@ function selectPinColor(hex){
   // update ghost pin if present
   if(pendingPinMarker&&pendingPinLatLng){
     const ini=PIN_TYPE_INITIALS[currentPinType]||'—';
-    pendingPinMarker.setIcon(L.divIcon({className:'',html:`<div class="map-pin-wrapper" style="opacity:0.8;"><div class="map-pin-head" style="background:${hex};"><span class="map-pin-icon" style="font-size:9px;font-weight:700;font-family:'DM Sans',sans-serif;color:#fff;">${ini}</span></div><div class="map-pin-tail" style="background:${hex};"></div></div>`,iconSize:[28,40],iconAnchor:[14,40]}));
+    pendingPinMarker.setIcon(L.divIcon({className:'',html:`<div class="map-pin-wrapper" style="opacity:0.8;pointer-events:auto;"><div class="map-pin-head" style="background:${hex};"></div><div class="map-pin-tail" style="background:${hex};"></div></div>`,iconSize:[28,40],iconAnchor:[14,40]}));
   }
 }
-document.getElementById('pinColorPicker').addEventListener('input',function(){selectPinColor(this.value);});
+// color picker removed — type determines color
 
 // selectPinType moved to selectPinTypeFromDropdown
 
@@ -2593,7 +2754,7 @@ function openPinSidebarFor(id){
     const pin=pinsCache[id];
     _populatePinSidebar(pin);
     document.getElementById('pinSidebarTitle').textContent=pin.name||'Edit Pin';
-    document.getElementById('pinSidebarSub').textContent=(PIN_TYPE_META[pin.type]||PIN_TYPE_META.other).label;
+    document.getElementById('pinSidebarSub').textContent=(PIN_TYPE_META[pin.type]||PIN_TYPE_META.warmtransfer).label;
     pinMarkStatus('saved','Saved');
   } else {
     currentPinId=null;
@@ -2700,12 +2861,16 @@ function toggleCalendar(){
     closeCalendar();
   }
   document.getElementById('mobCalBtn').classList.toggle('active', calendarOpen);
+  document.getElementById('calBtnDesktop')&&document.getElementById('calBtnDesktop').classList.toggle('active', calendarOpen);
+  document.getElementById('deskCalBtn')&&document.getElementById('deskCalBtn').classList.toggle('active', calendarOpen);
 }
 
 function closeCalendar(){
   calendarOpen=false;
   document.getElementById('calendarSheet').classList.remove('open');
   document.getElementById('mobCalBtn').classList.remove('active');
+  document.getElementById('calBtnDesktop')&&document.getElementById('calBtnDesktop').classList.remove('active');
+  document.getElementById('deskCalBtn')&&document.getElementById('deskCalBtn').classList.remove('active');
   // only remove backdrop if no sidebar is open
   const anySidebarOpen=[
     document.getElementById('sidebar'),
@@ -2801,8 +2966,8 @@ function renderCalendar(){
 // ═══════════════════════════════════════
 //  STANDALONE CALLBACKS
 // ═══════════════════════════════════════
-let standaloneCache = {};
-let currentAcbId = null;
+var standaloneCache = {};
+var currentAcbId = null;
 
 async function loadStandaloneCallbacks(){
   if(!currentUser)return;
@@ -2897,12 +3062,19 @@ async function deleteStandaloneCallback(id){
 // ═══════════════════════════════════════
 function selectPinTypeFromDropdown(sel){
   currentPinType=sel.value;
-  const meta=PIN_TYPE_META[currentPinType]||PIN_TYPE_META.other;
-  document.getElementById('callbackFields').classList.toggle('visible', currentPinType==='callback');
-  selectPinColor(meta.defaultColor);
+  const meta=PIN_TYPE_META[currentPinType]||PIN_TYPE_META.warmtransfer;
+  document.getElementById('callbackFields').classList.add('visible');
+  // Update date label
+  const dateLabel=document.getElementById('cbDateLabel');
+  if(dateLabel){
+    if(currentPinType==='installed') dateLabel.textContent='Install date & time';
+    else if(currentPinType==='warmtransfer') dateLabel.textContent='Transfer date & time';
+    else dateLabel.textContent='Callback date & time';
+  }
+  currentPinColor=meta.defaultColor;
   if(pendingPinMarker&&pendingPinLatLng){
-    const ini=PIN_TYPE_INITIALS[currentPinType]||'—';
-    pendingPinMarker.setIcon(L.divIcon({className:'',html:`<div class="map-pin-wrapper" style="opacity:0.8;"><div class="map-pin-head" style="background:${currentPinColor};"><span class="map-pin-icon" style="font-size:9px;font-weight:700;font-family:'DM Sans',sans-serif;color:#fff;">${ini}</span></div><div class="map-pin-tail" style="background:${currentPinColor};"></div></div>`,iconSize:[28,40],iconAnchor:[14,40]}));
+    const ini=PIN_TYPE_INITIALS[currentPinType]||'WT';
+    pendingPinMarker.setIcon(L.divIcon({className:'',html:`<div class="map-pin-wrapper" style="opacity:0.8;pointer-events:auto;"><div class="map-pin-head" style="background:${currentPinColor};"></div><div class="map-pin-tail" style="background:${currentPinColor};"></div></div>`,iconSize:[28,40],iconAnchor:[14,40]}));
   }
 }
 
@@ -2958,10 +3130,18 @@ function fetchAddrSuggestions(q){
 function _populatePinSidebar(pin){
   // type dropdown
   const sel=document.getElementById('pinTypeSelect');
-  if(sel) sel.value=pin?pin.type||'callback':'callback';
-  currentPinType=pin?pin.type||'callback':'callback';
-  // callback fields visibility
-  document.getElementById('callbackFields').classList.toggle('visible', currentPinType==='callback');
+  const defaultType='warmtransfer';
+  if(sel) sel.value=pin?pin.type||defaultType:defaultType;
+  currentPinType=pin?pin.type||defaultType:defaultType;
+  // always show fields
+  document.getElementById('callbackFields').classList.add('visible');
+  // update date label
+  const dateLabel=document.getElementById('cbDateLabel');
+  if(dateLabel){
+    if(currentPinType==='installed') dateLabel.textContent='Install date & time';
+    else if(currentPinType==='warmtransfer') dateLabel.textContent='Transfer date & time';
+    else dateLabel.textContent='Callback date & time';
+  }
   // callback field values
   document.getElementById('cbFullName').value=pin?[pin.first_name,pin.last_name].filter(Boolean).join(' '):'';
   document.getElementById('cbAddress').value=pin?pin.address||'':'';
@@ -2980,13 +3160,9 @@ function _populatePinSidebar(pin){
   }
   // notes
   document.getElementById('pinNoteTextarea').value=pin?pin.notes||'':'';
-  // color
-  const meta=PIN_TYPE_META[currentPinType]||PIN_TYPE_META.other;
-  const color=pin?pin.color||meta.defaultColor:meta.defaultColor;
-  currentPinColor=color;
-  renderPinColorSwatches(color);
-  document.getElementById('pinColorPicker').value=color;
-  document.getElementById('pinColorLabel').textContent=color;
+  // color — determined by type, not user-selectable
+  const meta=PIN_TYPE_META[currentPinType]||PIN_TYPE_META.warmtransfer;
+  currentPinColor=meta.defaultColor;
 }
 
 // ═══════════════════════════════════════
@@ -3013,9 +3189,11 @@ async function _savePinNew(){
   // display name: use full name for callback, or a label
   const pinName=fullName||(address?address.split(',')[0]:'Untitled Pin');
 
+  // Color always comes from type
+  const meta=PIN_TYPE_META[currentPinType]||PIN_TYPE_META.warmtransfer;
   const pinData={
     id:currentPinId, name:pinName, type:currentPinType,
-    color:currentPinColor, lat, lng, notes,
+    color:meta.defaultColor, lat, lng, notes,
     first_name:firstName, last_name:lastName,
     address:address||null, callback_at:callbackAt, notify_before:30,
     phone:phone||null, email:email||null
@@ -3075,6 +3253,76 @@ function closeChangelog() {
     else { modal.style.transform = ''; }
   });
 })();
+
+// ═══════════════════════════════════════
+//  LOG VISIT
+// ═══════════════════════════════════════
+var _logVisitPinId = null;
+
+function openLogVisit(pinId){
+  _logVisitPinId = pinId;
+  const pin = pinsCache[pinId];
+  const name = [pin.first_name, pin.last_name].filter(Boolean).join(' ') || pin.name || 'Pin';
+  document.getElementById('logVisitPinName').textContent = name;
+  // Default to now
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('lvDatetime').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  document.getElementById('lvNotes').value = '';
+  document.getElementById('lvStatus').textContent = '';
+  const lvSel = document.getElementById('lvPinType');
+  if(lvSel) lvSel.value = pin.type || 'warmtransfer';
+  document.getElementById('logVisitSheet').classList.add('open');
+  document.getElementById('sheetBackdrop').classList.add('visible');
+  requestAnimationFrame(()=>document.getElementById('sheetBackdrop').classList.add('show'));
+  setTimeout(()=>document.getElementById('lvNotes').focus(), 400);
+}
+
+function closeLogVisit(){
+  document.getElementById('logVisitSheet').classList.remove('open');
+  document.getElementById('sheetBackdrop').classList.remove('show');
+  setTimeout(()=>document.getElementById('sheetBackdrop').classList.remove('visible'), 300);
+  _logVisitPinId = null;
+}
+
+async function saveLogVisit(){
+  if(!_logVisitPinId) return;
+  const pin = pinsCache[_logVisitPinId];
+  const dtVal = document.getElementById('lvDatetime').value;
+  const notes = document.getElementById('lvNotes').value.trim();
+  const newType = document.getElementById('lvPinType').value || pin.type;
+  const newMeta = PIN_TYPE_META[newType] || PIN_TYPE_META.warmtransfer;
+  const visitedAt = dtVal ? new Date(dtVal).toISOString() : new Date().toISOString();
+  document.getElementById('lvStatus').textContent = 'Saving…';
+
+  // Append visit to pin notes and update last_visited
+  const visitEntry = `[${new Date(visitedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}] ${notes||'Visited'}`;
+  const updatedNotes = pin.notes ? pin.notes + '' + visitEntry : visitEntry;
+
+  const payload = {
+    id: pin.id,
+    user_id: currentUser.id,
+    name: pin.name, type: newType, color: newMeta.defaultColor,
+    lat: pin.lat, lng: pin.lng,
+    first_name: pin.first_name, last_name: pin.last_name,
+    address: pin.address, callback_at: pin.callback_at,
+    notify_before: pin.notify_before, phone: pin.phone, email: pin.email,
+    notes: updatedNotes,
+    last_visited: visitedAt,
+    updated_at: new Date().toISOString()
+  };
+
+  const {error} = await sb.from('custom_pins').upsert(payload, {onConflict:'id'});
+  if(error){ document.getElementById('lvStatus').textContent = 'Save failed.'; console.error(error); return; }
+
+  // Update local cache
+  pin.notes = updatedNotes;
+  pin.last_visited = visitedAt;
+  pin.type = newType;
+  pin.color = newMeta.defaultColor;
+  reRenderAllPins();
+  closeLogVisit();
+}
 
 // ═══════════════════════════════════════
 //  LOAD ALL DATA
