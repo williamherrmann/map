@@ -71,6 +71,7 @@ function overflowAction(action){
   closeOverflowMenu();
   if(action==='draw')toggleDrawMode();
   if(action==='pin')togglePinMode();
+  if(action==='pinlist')togglePinList();
   if(action==='filter')togglePinFilter();
   if(action==='prospect')toggleProspectFilter();
   if(action==='legend')toggleLegend();
