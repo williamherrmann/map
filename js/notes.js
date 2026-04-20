@@ -65,6 +65,21 @@ function openSidebarFor(name,cls,county) {
   currentRating=rating;
   document.querySelectorAll('#starRating .star').forEach(s=>{const v=parseInt(s.dataset.val);s.textContent=v<=rating?'★':'☆';s.classList.toggle('on',v<=rating);});
   markSaved(!!saved);
+
+  // Populate full census stats below the Notes field
+  const censusEl=document.getElementById('sidebarCensus');
+  if(censusEl){
+    let muniLayer=null;
+    if(geoLayer)geoLayer.eachLayer(l=>{if(l._muniName===name)muniLayer=l;});
+    if(muniLayer&&Object.keys(incomeLookup).length&&tractGeoCache){
+      const stats=getMuniStats(muniLayer);
+      censusEl.innerHTML=stats?buildMuniStatsHtml(stats,false):'';
+      censusEl.style.display=stats?'block':'none';
+    } else {
+      censusEl.style.display='none';
+    }
+  }
+
   const sidebar=document.getElementById('sidebar'), backdrop=document.getElementById('sheetBackdrop');
   sidebar.classList.add('open'); backdrop.classList.add('visible');
   requestAnimationFrame(()=>backdrop.classList.add('show'));

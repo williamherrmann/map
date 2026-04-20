@@ -96,33 +96,11 @@ function buildPopup(p, muniLayer) {
   const starsHtml=[1,2,3,4,5].map(i=>i<=rating?'<span>★</span>':'<span class="empty">★</span>').join('');
   const noteText=d&&d.note?d.note.substring(0,70)+(d.note.length>70?'…':''): null;
 
-  // Always show census stats — fetch data on demand if not yet loaded
-  const hasData = Object.keys(incomeLookup).length && tractGeoCache;
+  // Census data is eagerly loaded on page start — render synchronously if ready
   let statsHtml = '';
-  if(hasData && muniLayer) {
+  if(muniLayer && Object.keys(incomeLookup).length && tractGeoCache) {
     const stats = getMuniStats(muniLayer);
-    statsHtml = stats ? buildMuniStatsHtml(stats) : '';
-  } else {
-    const loadingId = 'cl-' + p.MUNICIPAL1.replace(/[^a-zA-Z0-9]/g,'_');
-    statsHtml = `<div id="${loadingId}" style="padding:8px 16px 6px;font-size:11px;color:#bbb;font-family:'DM Mono',monospace;">⏳ Loading census data…</div>`;
-    Promise.all([fetchIncomeData(), fetchOwnershipData(), fetchAgeData(), fetchExtendedData(), getTractGeo()])
-      .then(() => {
-        if(!map.isPopupOpen()) return;
-        const loadingEl = document.getElementById(loadingId);
-        if(!loadingEl) return;
-        const stats = getMuniStats(muniLayer);
-        const html = stats ? buildMuniStatsHtml(stats) : '';
-        if(html) {
-          loadingEl.outerHTML = html;
-        } else {
-          loadingEl.textContent = 'No census data for this area.';
-        }
-        map._popup && map._popup.update && map._popup.update();
-      })
-      .catch(() => {
-        const el = document.getElementById(loadingId);
-        if(el) el.textContent = 'Census data unavailable.';
-      });
+    statsHtml = stats ? buildMuniStatsHtml(stats, true) : '';
   }
   return `<div class="popup-inner"><div class="popup-header"><div class="popup-name">${escHtml(p.MUNICIPAL1)}</div></div><table class="popup-table"><tr><td>Type</td><td>${formatClass(p.CLASS_OF_M)}</td></tr><tr><td>County</td><td>${titleCase(p.COUNTY_NAM)}</td></tr><tr><td>Permit</td><td>${permitHtml}</td></tr><tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}</table>${statsHtml}<div class="popup-footer" style="padding:10px 16px;"><button onclick="openSidebarFor('${escJs(p.MUNICIPAL1)}','${escJs(p.CLASS_OF_M)}','${escJs(p.COUNTY_NAM)}');map.closePopup();return false;" style="width:100%;padding:11px;border:none;border-radius:8px;background:#1e3a5f;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;">Edit notes</button></div></div>`;
 }

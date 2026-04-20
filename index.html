@@ -1314,8 +1314,8 @@
   </div>
   <div id="pinFilterTypes"></div>
   <div id="pinFilterAll">
-    <button class="pf-btn" onclick="event.stopPropagation();setPinFilterAll(true)">All on</button>
-    <button class="pf-btn" onclick="event.stopPropagation();setPinFilterAll(false)">All off</button>
+    <button class="pf-btn" onclick="setPinFilterAll(true)">All on</button>
+    <button class="pf-btn" onclick="setPinFilterAll(false)">All off</button>
   </div>
 </div>
 
@@ -1561,6 +1561,7 @@
       <textarea id="noteTextarea" placeholder="Add notes about this municipality…" rows="4"></textarea>
       <div id="saveStatus"><span id="statusDot"></span><span id="statusText">Unsaved</span></div>
     </div>
+    <div id="sidebarCensus" style="display:none;margin-top:-6px;border-top:1.5px solid #f0f0f0;padding-top:4px;"></div>
   </div>
   <div id="sidebarFooter">
     <button class="btn btn-primary" onclick="saveNote()">Save</button>

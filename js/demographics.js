@@ -358,9 +358,8 @@ function getMuniStats(muniLayer) {
   };
 }
 
-function buildMuniStatsHtml(stats) {
+function buildMuniStatsHtml(stats, preview=false) {
   if(!stats)return'';
-  const rows=[];
   const row=(label,value,note)=>value===null?'':
     `<div class="muni-stat-row">
       <div>
@@ -369,15 +368,32 @@ function buildMuniStatsHtml(stats) {
       </div>
       <span class="muni-stat-value">${value}</span>
     </div>`;
-  rows.push(row('💵 Median Income',       stats.income!==null?'$'+(stats.income/1000).toFixed(0)+'k':null));
-  rows.push(row('🏠 Homeownership',        stats.ownership!==null?stats.ownership+'%':null));
-  rows.push(row('🎂 Median Age',           stats.age!==null?stats.age+' yrs':null));
-  rows.push(row('🏡 Median Home Value',    stats.homeValue!==null?'$'+(stats.homeValue/1000).toFixed(0)+'k':null));
-  rows.push(row('🎓 College Educated',     stats.college!==null?stats.college+'%':null,'Bachelor degree+'));
-  rows.push(row('💍 Married Households',   stats.married!==null?stats.married+'%':null));
-  rows.push(row('👥 Avg Household Size',   stats.hhSize!==null?stats.hhSize.toFixed(1)+' people':null));
-  rows.push(row('🏠 Median Year Built',   stats.yearBuilt!==null?stats.yearBuilt:null,'Older = more equity'));
-  rows.push(row('📦 Recent Movers',        stats.movers!==null?stats.movers+'%':null,'Moved in last 5 yrs'));
+
+  if(preview) {
+    // Three most useful stats as compact pills for the map popup
+    const items = [
+      stats.income    !== null ? {icon:'💵', val:'$'+(stats.income/1000).toFixed(0)+'k'}  : null,
+      stats.ownership !== null ? {icon:'🏠', val:stats.ownership+'%'}                      : null,
+      stats.age       !== null ? {icon:'🎂', val:stats.age+' yrs'}                         : null,
+    ].filter(Boolean).slice(0,3);
+    if(!items.length) return '';
+    const pills = items.map(it=>
+      `<span style="display:inline-flex;align-items:center;gap:3px;background:#f4f4f6;border:1px solid #e8e8ee;border-radius:20px;padding:3px 9px;font-size:11px;font-weight:600;color:#333;white-space:nowrap;">${it.icon} ${it.val}</span>`
+    ).join('');
+    return `<div style="border-top:1.5px solid #f0f0f0;padding:8px 16px 10px;display:flex;flex-wrap:wrap;gap:5px;">${pills}</div>`;
+  }
+
+  // Full view — all 9 stats shown in the Edit Notes sidebar below the Notes field
+  const rows=[];
+  rows.push(row('💵 Median Income',      stats.income!==null?'$'+(stats.income/1000).toFixed(0)+'k':null));
+  rows.push(row('🏠 Homeownership',       stats.ownership!==null?stats.ownership+'%':null));
+  rows.push(row('🎂 Median Age',          stats.age!==null?stats.age+' yrs':null));
+  rows.push(row('🏡 Median Home Value',   stats.homeValue!==null?'$'+(stats.homeValue/1000).toFixed(0)+'k':null));
+  rows.push(row('🎓 College Educated',    stats.college!==null?stats.college+'%':null,'Bachelor degree+'));
+  rows.push(row('💍 Married Households',  stats.married!==null?stats.married+'%':null));
+  rows.push(row('👥 Avg Household Size',  stats.hhSize!==null?stats.hhSize.toFixed(1)+' people':null));
+  rows.push(row('🏠 Median Year Built',  stats.yearBuilt!==null?stats.yearBuilt:null,'Older = more equity'));
+  rows.push(row('📦 Recent Movers',       stats.movers!==null?stats.movers+'%':null,'Moved in last 5 yrs'));
   if(stats.pinCount>0){
     rows.push(`<div class="muni-stat-row" style="background:#f0fdf4;border-radius:6px;margin:4px 0;">
       <div><div class="muni-stat-label" style="color:#15803d;">📍 Your Activity</div></div>
@@ -386,10 +402,16 @@ function buildMuniStatsHtml(stats) {
   }
   const filled=rows.filter(r=>r);
   if(!filled.length)return'';
-  return`<div style="border-top:1.5px solid #f0f0f0;margin-top:0;">
-    <div style="padding:8px 16px 4px;font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:0.07em;">
+  return`<div>
+    <div style="padding:4px 0 8px;font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:0.07em;">
       Census Data <span style="font-weight:400;color:#ccc;">(${stats.tractCount} tract${stats.tractCount!==1?'s':''})</span>
     </div>
     ${filled.join('')}
   </div>`;
 }
+// ═══════════════════════════════════════
+//  EAGER LOAD — fetch all census data immediately on page load
+//  No auth needed; Census API is public. Data is ready before first click.
+// ═══════════════════════════════════════
+Promise.all([fetchIncomeData(), fetchOwnershipData(), fetchAgeData(), fetchExtendedData(), getTractGeo()])
+  .catch(e => console.warn('Census eager load failed:', e));
