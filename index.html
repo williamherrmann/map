@@ -4383,13 +4383,50 @@ function applyPreset(btn) {
   const preset = btn.dataset.preset;
   const presets = {
     // Prime Solar: established homeowners, good income, right age, older homes
-    solar:  { income:70000, owner:70, ageMin:40, ageMax:70, college:20, homeVal:200000, married:40, yearBuilt:2010, movers:0 },
-    // High Income: top earners, high home values
-    income: { income:90000, owner:50, ageMin:25, ageMax:80, college:30, homeVal:300000, married:0, yearBuilt:2024, movers:0 },
-    // Established: long-term homeowners, married, older homes = equity built up
-    owners: { income:60000, owner:80, ageMin:45, ageMax:75, college:0, homeVal:150000, married:50, yearBuilt:2000, movers:0 },
-    // Custom: reset to neutral
-    custom: { income:50000, owner:50, ageMin:35, ageMax:65, college:0, homeVal:0, married:0, yearBuilt:2024, movers:0 },
+    solar:  { 
+  income:60000, 
+  owner:70, 
+  ageMin:30, 
+  ageMax:60, 
+  college:15, 
+  homeVal:200000, 
+  married:40, 
+  yearBuilt:2015, 
+  movers:5 
+},    // High Income: top earners, high home values
+income: { 
+  income:90000, 
+  owner:65, 
+  ageMin:30, 
+  ageMax:60, 
+  college:20, 
+  homeVal:300000, 
+  married:30, 
+  yearBuilt:2018, 
+  movers:5 
+},
+owners: { 
+  income:60000, 
+  owner:80, 
+  ageMin:35, 
+  ageMax:65, 
+  college:10, 
+  homeVal:180000, 
+  married:50, 
+  yearBuilt:2012, 
+  movers:3 
+},
+custom: { 
+  income:50000, 
+  owner:50, 
+  ageMin:30, 
+  ageMax:65, 
+  college:0, 
+  homeVal:0, 
+  married:0, 
+  yearBuilt:2024, 
+  movers:10 
+},
   };
   const p = presets[preset] || presets.custom;
   document.getElementById('pfIncome').value = p.income;
