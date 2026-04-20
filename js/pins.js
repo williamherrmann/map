@@ -146,7 +146,6 @@ function startPinMode(){
   document.getElementById('ovfPinItem')&&document.getElementById('ovfPinItem').classList.add('pin-active');
   map.dragging.disable(); map.doubleClickZoom.disable(); map.closePopup();
   if(geoLayer)geoLayer.eachLayer(l=>{if(l.options)l.options.interactive=false;const el=l.getElement&&l.getElement();if(el)el.style.pointerEvents='none';});
-  if(typeof shapesLayerGroup!=='undefined')shapesLayerGroup.eachLayer(l=>{if(l.options)l.options.interactive=false;const el=l.getElement&&l.getElement();if(el)el.style.pointerEvents='none';});
   closeLayersPanel();
   if(legendVisible){legendVisible=false;document.getElementById('legend').classList.add('hidden');document.getElementById('mobLegendBtn')&&document.getElementById('mobLegendBtn').classList.remove('active');}
 }
@@ -162,7 +161,6 @@ function cancelPinMode(){
   document.getElementById('ovfPinItem')&&document.getElementById('ovfPinItem').classList.remove('pin-active');
   map.dragging.enable(); map.doubleClickZoom.enable();
   if(geoLayer)geoLayer.eachLayer(l=>{if(l.options)l.options.interactive=true;const el=l.getElement&&l.getElement();if(el)el.style.pointerEvents='';});
-  if(typeof shapesLayerGroup!=='undefined')shapesLayerGroup.eachLayer(l=>{if(l.options)l.options.interactive=true;const el=l.getElement&&l.getElement();if(el)el.style.pointerEvents='';});
   if(pendingPinMarker){map.removeLayer(pendingPinMarker);pendingPinMarker=null;}
   pendingPinLatLng=null;
 }
@@ -177,7 +175,6 @@ function placePinAtLatLng(latlng){
   document.getElementById('ovfPinItem')&&document.getElementById('ovfPinItem').classList.remove('pin-active');
   map.dragging.enable(); map.doubleClickZoom.enable();
   if(geoLayer)geoLayer.eachLayer(l=>{if(l.options)l.options.interactive=true;const el=l.getElement&&l.getElement();if(el)el.style.pointerEvents='';});
-  if(typeof shapesLayerGroup!=='undefined')shapesLayerGroup.eachLayer(l=>{if(l.options)l.options.interactive=true;const el=l.getElement&&l.getElement();if(el)el.style.pointerEvents='';});
   pendingPinLatLng=latlng;
   if(pendingPinMarker)map.removeLayer(pendingPinMarker);
   pendingPinMarker=L.marker([latlng.lat,latlng.lng],{
@@ -504,7 +501,10 @@ function closePinFilter() {
 }
 
 document.addEventListener('click',e=>{
-  if(pinFilterOpen&&!e.target.closest('#pinFilterPanel')&&!e.target.closest('#deskFilterBtn')&&!e.target.closest('#ovfFilterItem'))
+  if(!pinFilterOpen) return;
+  // If the clicked element is no longer in the DOM (e.g. innerHTML was replaced mid-bubble), ignore
+  if(!e.target.isConnected) return;
+  if(!e.target.closest('#pinFilterPanel')&&!e.target.closest('#deskFilterBtn')&&!e.target.closest('#ovfFilterItem'))
     closePinFilter();
 });
 

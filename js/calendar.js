@@ -1,4 +1,21 @@
 // ═══════════════════════════════════════
+//  OVERDUE BADGE
+// ═══════════════════════════════════════
+function updateOverdueBadge() {
+  const now = new Date();
+  const mapPins = Object.values(pinsCache).filter(p => p.callback_at && new Date(p.callback_at) < now);
+  const standalone = Object.values(standaloneCache).filter(p => p.callback_at && new Date(p.callback_at) < now);
+  const count = mapPins.length + standalone.length;
+  const label = count > 0 ? (count > 99 ? '99+' : String(count)) : '';
+  ['mobCalBadge','deskCalBadge'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.textContent = label;
+    el.style.display = count > 0 ? 'flex' : 'none';
+  });
+}
+
+// ═══════════════════════════════════════
 //  CALENDAR
 // ═══════════════════════════════════════
 let calendarOpen = false;
@@ -198,6 +215,7 @@ async function saveStandaloneCallback(){
   standaloneCache[data.id]=saved;
   closeAddCallback();
   renderCalendar();
+  updateOverdueBadge();
 }
 
 async function deleteStandaloneCallback(id){
@@ -208,4 +226,5 @@ async function deleteStandaloneCallback(id){
   delete standaloneCache[id];
   closeAddCallback();
   renderCalendar();
+  updateOverdueBadge();
 }

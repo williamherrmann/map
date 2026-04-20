@@ -157,6 +157,10 @@ async function loadAllNotesFromSupabase(){
   await loadShapesFromSupabase();
   await loadPinsFromSupabase();
   await loadStandaloneCallbacks();
+  // Prefetch all census data in background so municipality popups load instantly
+  Promise.all([fetchIncomeData(), fetchOwnershipData(), fetchAgeData(), fetchExtendedData(), getTractGeo()])
+    .catch(e=>console.warn('Census prefetch failed:',e));
+  updateOverdueBadge();
 }
 
 // ═══════════════════════════════════════
