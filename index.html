@@ -674,6 +674,45 @@
     .pf-btn { flex:1; padding:7px; border:1.5px solid #ddd; border-radius:7px; background:#fff; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600; color:#666; cursor:pointer; text-align:center; -webkit-tap-highlight-color:transparent; }
     .pf-btn:active { background:#f5f5f5; }
 
+    /* ══ PROSPECT FILTER SHEET ══ */
+    #prospectSheet { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
+    #prospectSheet.open { transform:translateY(0); }
+    #prospectSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    @media (min-width:768px) {
+      #prospectSheet { width:340px; height:100dvh; top:0; left:0; right:auto; bottom:auto; border-radius:0; border-top:none; border-right:1px solid #eee; transform:translateX(-110%); }
+      #prospectSheet.open { transform:translateX(0); }
+      #prospectSheet::before { display:none; }
+    }
+    #prospectHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #prospectTitle { font-size:17px; font-weight:700; color:#111; }
+    #prospectCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; }
+    #prospectBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:16px 20px; display:flex; flex-direction:column; gap:20px; }
+    #prospectFooter { padding:14px 20px; border-top:1.5px solid #eee; display:flex; gap:8px; flex-shrink:0; background:#fff; }
+    .pf-section-label { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:12px; }
+    .pf-preset-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:4px; }
+    .pf-preset-btn { padding:10px 8px; border:1.5px solid #ddd; border-radius:10px; background:#fff; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; color:#555; cursor:pointer; text-align:center; line-height:1.3; -webkit-tap-highlight-color:transparent; transition:all 0.12s; }
+    .pf-preset-btn:active { transform:scale(0.97); }
+    .pf-preset-btn.active { background:#1e3a5f; color:#fff; border-color:#1e3a5f; }
+    .pf-preset-icon { font-size:16px; display:block; margin-bottom:3px; }
+    .pf-slider-row { display:flex; flex-direction:column; gap:6px; }
+    .pf-slider-label { display:flex; justify-content:space-between; align-items:center; }
+    .pf-slider-name { font-size:13px; font-weight:600; color:#222; }
+    .pf-slider-val { font-size:12px; font-family:'DM Mono',monospace; color:#1e3a5f; font-weight:700; background:#e8eef5; padding:2px 8px; border-radius:6px; }
+    .pf-range-wrap { display:flex; gap:8px; align-items:center; }
+    .pf-range { flex:1; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; background:#ddd; outline:none; cursor:pointer; }
+    .pf-range::-webkit-slider-thumb { -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:#1e3a5f; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.2); }
+    .pf-range::-moz-range-thumb { width:18px; height:18px; border-radius:50%; background:#1e3a5f; cursor:pointer; border:none; }
+    .pf-toggle-row { display:flex; align-items:center; justify-content:space-between; padding:4px 0; }
+    .pf-toggle-label { font-size:13px; color:#444; }
+    #prospectResultBadge { display:none; position:absolute; top:-8px; right:-8px; background:#ef4444; color:#fff; font-size:10px; font-weight:700; font-family:'DM Mono',monospace; width:18px; height:18px; border-radius:50%; align-items:center; justify-content:center; }
+
+    /* ══ MUNI STATS POPUP ROW ══ */
+    .muni-stat-row { display:flex; align-items:center; justify-content:space-between; padding:6px 16px; border-bottom:1px solid #f5f5f5; }
+    .muni-stat-row:last-child { border-bottom:none; }
+    .muni-stat-label { font-size:10px; font-family:'DM Mono',monospace; color:#999; text-transform:uppercase; letter-spacing:0.06em; }
+    .muni-stat-value { font-size:13px; font-weight:700; color:#111; }
+    .muni-stat-bar { height:4px; border-radius:2px; margin-top:3px; }
+
     /* ══ PIN LIST SHEET ══ */
     #pinListSheet { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
     #pinListSheet.open { transform:translateY(0); }
@@ -862,7 +901,7 @@
       <div class="settings-section-label">App</div>
       <div class="settings-info-row" style="cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="openChangelog()">
         <span class="settings-info-label">Version</span>
-        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v48 · What's new ›</span>
+        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v62 · What's new ›</span>
       </div>
     </div>
   </div>
@@ -879,7 +918,7 @@
 
     <div class="cl-version">
       <div class="cl-version-header">
-        <span class="cl-version-badge current">v48</span>
+        <span class="cl-version-badge current">v62</span>
         <span class="cl-version-label">Changelog &amp; contact fields</span>
       </div>
       <div class="cl-items">
@@ -1055,12 +1094,20 @@
         <span class="toggle-track"></span>
       </label>
     </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Median age</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggleAge" onchange="applyAgeToggle()">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+
   </div>
 </div>
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v48</span>
+  <span id="badgeVersion">v62</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
@@ -1081,6 +1128,10 @@
   <button class="desk-nav-btn" id="deskCalBtn" onclick="toggleCalendar()">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     Calendar
+  </button>
+  <button class="desk-nav-btn" id="deskProspectBtn" onclick="toggleProspectFilter()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    Prospect
   </button>
   <button class="desk-nav-btn" id="deskPinListBtn" onclick="togglePinList()">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1144,6 +1195,17 @@
       <span>&lt;30%</span><span>60%</span><span>90%+</span>
     </div>
   </div>
+  <div id="ageLegend" style="display:none;margin-top:10px;border-top:1px solid #eee;padding-top:8px;">
+    <h4 style="margin-bottom:6px;">Median Age</h4>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+      <div style="width:80px;height:10px;border-radius:4px;background:linear-gradient(to right,rgb(180,180,220),rgb(59,130,246),rgb(30,58,95));flex-shrink:0;"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:#888;font-family:'DM Mono',monospace;">
+      <span>&lt;25</span><span>45</span><span>65+</span>
+    </div>
+    <div style="font-size:9px;color:#aaa;margin-top:4px;">Sweet spot: 45–65 (dark blue)</div>
+  </div>
+
 </div>
 
 <!-- DRAW TOOLBAR -->
@@ -1277,6 +1339,118 @@
   <div id="logVisitFooter">
     <button class="btn btn-primary" onclick="saveLogVisit()" style="background:#00B8FD;border-color:#00B8FD;">Save Visit</button>
     <button class="btn btn-ghost" onclick="closeLogVisit()">Cancel</button>
+    <button class="btn btn-danger" id="lvDeleteBtn" onclick="deleteVisit()" style="display:none;">Delete</button>
+  </div>
+</div>
+
+<!-- PROSPECT FILTER SHEET -->
+<div id="prospectSheet">
+  <div id="prospectHeader">
+    <div id="prospectTitle">Prospect Filter</div>
+    <button id="prospectCloseBtn" onclick="closeProspectFilter()">×</button>
+  </div>
+  <div id="prospectBody">
+    <div>
+      <div class="pf-section-label">Quick Presets</div>
+      <div class="pf-preset-grid">
+        <button class="pf-preset-btn" data-preset="solar" onclick="applyPreset(this)">
+          <span class="pf-preset-icon">☀️</span>Prime Solar
+        </button>
+        <button class="pf-preset-btn" data-preset="income" onclick="applyPreset(this)">
+          <span class="pf-preset-icon">💰</span>High Income
+        </button>
+        <button class="pf-preset-btn" data-preset="owners" onclick="applyPreset(this)">
+          <span class="pf-preset-icon">🏠</span>Established
+        </button>
+        <button class="pf-preset-btn" data-preset="custom" onclick="applyPreset(this)">
+          <span class="pf-preset-icon">🎯</span>Custom
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <div class="pf-section-label">Criteria</div>
+      <div style="display:flex;flex-direction:column;gap:18px;">
+
+        <div class="pf-slider-row">
+          <div class="pf-slider-label">
+            <span class="pf-slider-name">💵 Min Income</span>
+            <span class="pf-slider-val" id="pfIncomeVal">$50k</span>
+          </div>
+          <input type="range" class="pf-range" id="pfIncome" min="20000" max="150000" step="5000" value="50000" oninput="updateProspectSlider('pfIncome','pfIncomeVal',v=>('$'+(v/1000).toFixed(0)+'k'))">
+        </div>
+
+        <div class="pf-slider-row">
+          <div class="pf-slider-label">
+            <span class="pf-slider-name">🏠 Min Homeownership</span>
+            <span class="pf-slider-val" id="pfOwnerVal">50%</span>
+          </div>
+          <input type="range" class="pf-range" id="pfOwner" min="0" max="100" step="5" value="50" oninput="updateProspectSlider('pfOwner','pfOwnerVal',v=>(v+'%'))">
+        </div>
+
+        <div class="pf-slider-row">
+          <div class="pf-slider-label">
+            <span class="pf-slider-name">🎂 Age Range</span>
+            <span class="pf-slider-val" id="pfAgeVal">35–65</span>
+          </div>
+          <div class="pf-range-wrap">
+            <input type="range" class="pf-range" id="pfAgeMin" min="18" max="80" step="1" value="35" oninput="updateAgeRange()">
+            <input type="range" class="pf-range" id="pfAgeMax" min="18" max="80" step="1" value="65" oninput="updateAgeRange()">
+          </div>
+        </div>
+
+        <div class="pf-slider-row">
+          <div class="pf-slider-label">
+            <span class="pf-slider-name">🎓 Min College Educated</span>
+            <span class="pf-slider-val" id="pfCollegeVal">0%</span>
+          </div>
+          <input type="range" class="pf-range" id="pfCollege" min="0" max="80" step="5" value="0" oninput="updateProspectSlider('pfCollege','pfCollegeVal',v=>(v+'%'))">
+        </div>
+
+        <div class="pf-slider-row">
+          <div class="pf-slider-label">
+            <span class="pf-slider-name">🏡 Min Home Value</span>
+            <span class="pf-slider-val" id="pfHomeValVal">Any</span>
+          </div>
+          <input type="range" class="pf-range" id="pfHomeVal" min="0" max="600000" step="25000" value="0" oninput="updateProspectSlider('pfHomeVal','pfHomeValVal',v=>(v===0?'Any':('$'+(v/1000).toFixed(0)+'k+')))">
+        </div>
+
+        <div class="pf-slider-row">
+          <div class="pf-slider-label">
+            <span class="pf-slider-name">💍 Min Married Households</span>
+            <span class="pf-slider-val" id="pfMarriedVal">0%</span>
+          </div>
+          <input type="range" class="pf-range" id="pfMarried" min="0" max="80" step="5" value="0" oninput="updateProspectSlider('pfMarried','pfMarriedVal',v=>(v+'%'))">
+        </div>
+
+        <div class="pf-slider-row">
+          <div class="pf-slider-label">
+            <span class="pf-slider-name">🏗️ Max Year Built (older homes)</span>
+            <span class="pf-slider-val" id="pfYearBuiltVal">Any</span>
+          </div>
+          <input type="range" class="pf-range" id="pfYearBuilt" min="1950" max="2024" step="5" value="2024" oninput="updateProspectSlider('pfYearBuilt','pfYearBuiltVal',v=>(v===2024?'Any':('≤'+v)))">
+        </div>
+
+        <div class="pf-slider-row">
+          <div class="pf-slider-label">
+            <span class="pf-slider-name">📦 Min Recent Movers (last 5yr)</span>
+            <span class="pf-slider-val" id="pfMoversVal">0%</span>
+          </div>
+          <input type="range" class="pf-range" id="pfMovers" min="0" max="50" step="5" value="0" oninput="updateProspectSlider('pfMovers','pfMoversVal',v=>(v+'%'))">
+        </div>
+
+      </div>
+    </div>
+
+    <div id="pfResultSummary" style="display:none;background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px 16px;">
+      <div style="font-size:13px;font-weight:700;color:#15803d;" id="pfResultText">— qualifying tracts</div>
+      <div style="font-size:11px;color:#166534;margin-top:2px;">Highlighted in green on map</div>
+    </div>
+  </div>
+  <div id="prospectFooter">
+    <button class="btn btn-primary" onclick="applyProspectFilter()" style="background:#15803d;border-color:#15803d;">Apply Filter</button>
+    <button class="btn btn-ghost" onclick="clearProspectFilter()">Clear</button>
+    <button class="btn btn-ghost" onclick="closeProspectFilter()">Close</button>
   </div>
 </div>
 
@@ -1478,6 +1652,10 @@
       <span id="pinStatusDot" style="width:8px;height:8px;border-radius:50%;background:#ddd;flex-shrink:0;transition:background 0.3s;"></span>
       <span id="pinStatusText" style="font-size:12px;color:#999;font-family:'DM Mono',monospace;">Unsaved</span>
     </div>
+    <div id="pinVisitHistory" style="display:none;">
+      <div class="section-label">Visit History</div>
+      <div id="pinVisitHistoryList" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
   </div>
   <div id="pinSidebarFooter">
     <button class="btn btn-primary" onclick="savePin()">Save</button>
@@ -1526,6 +1704,13 @@
         <line x1="23" y1="21" x2="23" y2="15"/><line x1="20" y1="18" x2="26" y2="18"/>
       </svg>
       Pin List
+    </button>
+    <button class="nav-btn" id="mobProspectBtn" onclick="toggleProspectFilter()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+      </svg>
+      Prospect
     </button>
     <button class="nav-btn" id="mobMoreBtn" onclick="toggleOverflowMenu()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobMoreIcon">
@@ -1779,7 +1964,7 @@ fetch('pa_municipalities.geojson')
       style:f=>styleForLayer(f),
       onEachFeature:(feature,layer)=>{
         const p=feature.properties;
-        layer.bindPopup(()=>buildPopup(p),{maxWidth:280});
+        layer.bindPopup(()=>buildPopup(p, layer),{maxWidth:300});
         layer.on('click',(e)=>{
           if(drawMode||pinMode){L.DomEvent.stopPropagation(e);return;}
           geoLayer.resetStyle();
@@ -1801,7 +1986,7 @@ fetch('pa_municipalities.geojson')
   })
   .catch(err=>console.error('GeoJSON load failed:',err));
 
-function buildPopup(p) {
+function buildPopup(p, muniLayer) {
   const d=getNoteForMuni(p.MUNICIPAL1);
   let permitHtml;
   if(d&&d.checkedIn===false)permitHtml=`<span class="popup-permit no-permit">✓ No permit</span>`;
@@ -1810,7 +1995,18 @@ function buildPopup(p) {
   const rating=(d&&d.rating)?d.rating:0;
   const starsHtml=[1,2,3,4,5].map(i=>i<=rating?'<span>★</span>':'<span class="empty">★</span>').join('');
   const noteText=d&&d.note?d.note.substring(0,70)+(d.note.length>70?'…':''):null;
-  return `<div class="popup-inner"><div class="popup-header"><div class="popup-name">${escHtml(p.MUNICIPAL1)}</div></div><table class="popup-table"><tr><td>Type</td><td>${formatClass(p.CLASS_OF_M)}</td></tr><tr><td>County</td><td>${titleCase(p.COUNTY_NAM)}</td></tr><tr><td>Permit</td><td>${permitHtml}</td></tr><tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}</table><div class="popup-footer" style="padding:10px 16px;"><button onclick="openSidebarFor('${escJs(p.MUNICIPAL1)}','${escJs(p.CLASS_OF_M)}','${escJs(p.COUNTY_NAM)}');map.closePopup();return false;" style="width:100%;padding:11px;border:none;border-radius:8px;background:#1e3a5f;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;">Edit notes</button></div></div>`;
+
+  // Census stats — only show if any data loaded
+  const hasData = Object.keys(incomeLookup).length || Object.keys(ownershipLookupGlobal).length || Object.keys(ageLookupGlobal).length;
+  let statsHtml = '';
+  if(hasData && muniLayer) {
+    const stats = getMuniStats(muniLayer);
+    statsHtml = buildMuniStatsHtml(stats);
+  } else if(hasData) {
+    statsHtml = `<div style="padding:8px 16px 6px;font-size:11px;color:#bbb;font-family:'DM Mono',monospace;">Census data available — click to load</div>`;
+  }
+
+  return `<div class="popup-inner"><div class="popup-header"><div class="popup-name">${escHtml(p.MUNICIPAL1)}</div></div><table class="popup-table"><tr><td>Type</td><td>${formatClass(p.CLASS_OF_M)}</td></tr><tr><td>County</td><td>${titleCase(p.COUNTY_NAM)}</td></tr><tr><td>Permit</td><td>${permitHtml}</td></tr><tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}</table>${statsHtml}<div class="popup-footer" style="padding:10px 16px;"><button onclick="openSidebarFor('${escJs(p.MUNICIPAL1)}','${escJs(p.CLASS_OF_M)}','${escJs(p.COUNTY_NAM)}');map.closePopup();return false;" style="width:100%;padding:11px;border:none;border-radius:8px;background:#1e3a5f;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;">Edit notes</button></div></div>`;
 }
 
 function updateLabels() {
@@ -2751,22 +2947,6 @@ function buildPinPopup(pin) {
       ${callbackRow}
       ${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}
     </table>
-    ${(pin._visits&&pin._visits.length)?`
-    <div style="border-top:1.5px solid #f0f0f0;padding:10px 16px 4px;">
-      <div style="font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">Visit History</div>
-      ${pin._visits.slice(0,3).map(v=>{
-        const d=new Date(v.visited_at);
-        const dateStr=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-        const typeBefore=PIN_TYPE_META[v.type_before]?PIN_TYPE_META[v.type_before].label:v.type_before||'—';
-        const typeAfter=PIN_TYPE_META[v.type_after]?PIN_TYPE_META[v.type_after].label:v.type_after||'—';
-        const changed=v.type_before!==v.type_after;
-        return `<div style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #f5f5f5;">
-          <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:3px;">${escHtml(dateStr)}</div>
-          ${changed?`<div style="font-size:11px;color:#888;">${escHtml(typeBefore)} → <strong style="color:#111;">${escHtml(typeAfter)}</strong></div>`:`<div style="font-size:11px;color:#888;">${escHtml(typeAfter)}</div>`}
-          ${v.notes?`<div style="font-size:11px;color:#666;margin-top:2px;">${escHtml(v.notes)}</div>`:''}
-        </div>`;
-      }).join('')}
-    </div>`:''}
     <div class="popup-footer" style="padding:10px 12px;display:flex;gap:8px;">
       <button onclick="openPinSidebarFor('${escJs(pin.id)}');map.closePopup();" style="flex:1;padding:10px;border:1.5px solid #e5e7eb;border-radius:8px;background:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#555;cursor:pointer;-webkit-tap-highlight-color:transparent;">View</button>
       <button onclick="openLogVisit('${escJs(pin.id)}');map.closePopup();" style="flex:1;padding:10px;border:none;border-radius:8px;background:#00B8FD;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;">Log Visit</button>
@@ -3329,6 +3509,60 @@ function _populatePinSidebar(pin){
   // color — determined by type, not user-selectable
   const meta=PIN_TYPE_META[currentPinType]||PIN_TYPE_META.warmtransfer;
   currentPinColor=meta.defaultColor;
+  // visit history
+  const visitSection = document.getElementById('pinVisitHistory');
+  const visitList = document.getElementById('pinVisitHistoryList');
+  if(pin && pin._visits && pin._visits.length) {
+    visitList.innerHTML = '';
+    pin._visits.forEach((v, idx) => {
+      const d = new Date(v.visited_at);
+      const dateStr = d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+      const timeStr = d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+      const typeBefore = PIN_TYPE_META[v.type_before]?PIN_TYPE_META[v.type_before].label:v.type_before||'—';
+      const typeAfter = PIN_TYPE_META[v.type_after]?PIN_TYPE_META[v.type_after].label:v.type_after||'—';
+      const changed = v.type_before !== v.type_after;
+      const metaAfter = PIN_TYPE_META[v.type_after]||PIN_TYPE_META.warmtransfer;
+      const metaBefore = PIN_TYPE_META[v.type_before]||PIN_TYPE_META.warmtransfer;
+
+      const card = document.createElement('div');
+      card.style.cssText = 'background:#f9f9fb;border:1.5px solid #eee;border-radius:10px;padding:10px 12px;';
+
+      // Type badge HTML
+      let typeBadgeHtml;
+      if(changed) {
+        typeBadgeHtml = `<span style="font-size:11px;font-weight:700;color:${metaBefore.defaultColor};">${escHtml(typeBefore)}</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          <span style="font-size:11px;font-weight:700;color:${metaAfter.defaultColor};">${escHtml(typeAfter)}</span>`;
+      } else {
+        typeBadgeHtml = `<span style="font-size:11px;font-weight:700;color:${metaAfter.defaultColor};">${escHtml(typeAfter)}</span>`;
+      }
+
+      card.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span style="font-size:11px;font-weight:700;color:#555;font-family:'DM Mono',monospace;flex-shrink:0;">${escHtml(dateStr)} · ${escHtml(timeStr)}</span>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            ${typeBadgeHtml}
+            <button class="visit-edit-btn" data-pin-id="${escHtml(pin.id)}" data-visit-idx="${idx}"
+              style="width:28px;height:28px;border-radius:50%;background:#f0f0f3;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:background 0.12s;"
+              title="Edit visit">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+            </button>
+          </div>
+        </div>
+        ${v.notes?`<div style="font-size:12px;color:#666;line-height:1.5;margin-top:6px;">${escHtml(v.notes)}</div>`:''}`;
+
+      // Attach click handler safely via JS (no inline onclick with data)
+      card.querySelector('.visit-edit-btn').addEventListener('click', () => {
+        openEditVisit(pin.id, v.id||null, v);
+      });
+
+      visitList.appendChild(card);
+    });
+    visitSection.style.display = 'block';
+  } else {
+    visitSection.style.display = 'none';
+    visitList.innerHTML = '';
+  }
 }
 
 // ═══════════════════════════════════════
@@ -3425,11 +3659,61 @@ function closeChangelog() {
 // ═══════════════════════════════════════
 var _logVisitPinId = null;
 
-function openLogVisit(pinId){
+// Track which visit is being edited (null = new visit)
+var _editingVisitId = null;
+var _editingVisitOrigData = null;
+
+function openEditVisit(pinId, visitId, visitData) {
   _logVisitPinId = pinId;
+  _editingVisitId = visitId || null;
+  _editingVisitOrigData = visitData || null;
   const pin = pinsCache[pinId];
   const name = [pin.first_name, pin.last_name].filter(Boolean).join(' ') || pin.name || 'Pin';
   document.getElementById('logVisitPinName').textContent = name;
+  document.getElementById('logVisitTitle').textContent = 'Edit Visit';
+  // Pre-fill fields from visit data
+  const dt = new Date(visitData.visited_at);
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('lvDatetime').value = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+  document.getElementById('lvNotes').value = visitData.notes || '';
+  document.getElementById('lvStatus').textContent = '';
+  const lvSel = document.getElementById('lvPinType');
+  if(lvSel) lvSel.value = visitData.type_after || pin.type || 'warmtransfer';
+  document.getElementById('lvDeleteBtn').style.display = '';
+  document.getElementById('logVisitSheet').classList.add('open');
+  document.getElementById('sheetBackdrop').classList.add('visible');
+  requestAnimationFrame(()=>document.getElementById('sheetBackdrop').classList.add('show'));
+  setTimeout(()=>document.getElementById('lvNotes').focus(), 400);
+}
+
+async function deleteVisit() {
+  if(!_editingVisitId || !_logVisitPinId) return;
+  if(!confirm('Delete this visit?')) return;
+  document.getElementById('lvStatus').textContent = 'Deleting…';
+  const { error } = await sb.from('pin_visits').delete()
+    .eq('user_id', currentUser.id)
+    .eq('id', _editingVisitId);
+  if(error) { document.getElementById('lvStatus').textContent = 'Delete failed.'; console.error(error); return; }
+  // Remove from local cache
+  const pin = pinsCache[_logVisitPinId];
+  if(pin && pin._visits) {
+    pin._visits = pin._visits.filter(v => v.id !== _editingVisitId);
+    // Recalculate last_visited from remaining visits
+    pin.last_visited = pin._visits.length ? pin._visits[0].visited_at : null;
+  }
+  reRenderAllPins();
+  if(currentPinId === _logVisitPinId) _populatePinSidebar(pin);
+  closeLogVisit();
+}
+
+function openLogVisit(pinId){
+  _logVisitPinId = pinId;
+  _editingVisitId = null;
+  _editingVisitOrigData = null;
+  const pin = pinsCache[pinId];
+  const name = [pin.first_name, pin.last_name].filter(Boolean).join(' ') || pin.name || 'Pin';
+  document.getElementById('logVisitPinName').textContent = name;
+  document.getElementById('logVisitTitle').textContent = 'Log Visit';
   // Default to now
   const now = new Date();
   const pad = n => String(n).padStart(2,'0');
@@ -3438,6 +3722,7 @@ function openLogVisit(pinId){
   document.getElementById('lvStatus').textContent = '';
   const lvSel = document.getElementById('lvPinType');
   if(lvSel) lvSel.value = pin.type || 'warmtransfer';
+  document.getElementById('lvDeleteBtn').style.display = 'none';
   document.getElementById('logVisitSheet').classList.add('open');
   document.getElementById('sheetBackdrop').classList.add('visible');
   requestAnimationFrame(()=>document.getElementById('sheetBackdrop').classList.add('show'));
@@ -3461,15 +3746,45 @@ async function saveLogVisit(){
   const visitedAt = dtVal ? new Date(dtVal).toISOString() : new Date().toISOString();
   document.getElementById('lvStatus').textContent = 'Saving…';
 
+  if(_editingVisitId) {
+    // ── EDIT existing visit ──
+    const {error: vErr} = await sb.from('pin_visits').update({
+      visited_at: visitedAt,
+      type_after: newType,
+      notes: notes || null,
+    }).eq('id', _editingVisitId).eq('user_id', currentUser.id);
+    if(vErr){ document.getElementById('lvStatus').textContent = 'Save failed.'; console.error(vErr); return; }
+    // Update local cache
+    if(pin._visits) {
+      const idx = pin._visits.findIndex(v => v.id === _editingVisitId);
+      if(idx !== -1) {
+        pin._visits[idx] = {...pin._visits[idx], visited_at:visitedAt, type_after:newType, notes:notes||null};
+      }
+    }
+    // Recalculate last_visited and current type from most recent visit
+    if(pin._visits && pin._visits.length) {
+      pin._visits.sort((a,b) => new Date(b.visited_at) - new Date(a.visited_at));
+      pin.last_visited = pin._visits[0].visited_at;
+      const latestType = pin._visits[0].type_after;
+      pin.type = latestType;
+      pin.color = (PIN_TYPE_META[latestType]||PIN_TYPE_META.warmtransfer).defaultColor;
+    }
+    reRenderAllPins();
+    if(currentPinId === pin.id) _populatePinSidebar(pin);
+    closeLogVisit();
+    return;
+  }
+
+  // ── NEW visit ──
   // 1. Log to pin_visits table
-  const {error: vErr} = await sb.from('pin_visits').insert({
+  const {data: vData, error: vErr} = await sb.from('pin_visits').insert({
     user_id: currentUser.id,
     pin_id: pin.id,
     visited_at: visitedAt,
     type_before: pin.type,
     type_after: newType,
     notes: notes || null
-  });
+  }).select().single();
   if(vErr){ document.getElementById('lvStatus').textContent = 'Save failed.'; console.error(vErr); return; }
 
   // 2. Update pin type/color/last_visited
@@ -3487,11 +3802,14 @@ async function saveLogVisit(){
 
   // 3. Update local cache
   pin.last_visited = visitedAt;
+  const oldType = pin.type;
   pin.type = newType;
   pin.color = newMeta.defaultColor;
   if(!pin._visits) pin._visits = [];
-  pin._visits.unshift({visited_at:visitedAt, type_before:pin.type, type_after:newType, notes:notes||null});
+  pin._visits.unshift({id: vData.id, visited_at:visitedAt, type_before:oldType, type_after:newType, notes:notes||null});
   reRenderAllPins();
+  // refresh visit history in sidebar if it's open for this pin
+  if(currentPinId === pin.id) _populatePinSidebar(pin);
   closeLogVisit();
 }
 
@@ -3696,7 +4014,8 @@ function renderPinList() {
 // Heat map visibility flags — declared early so styleForLayer can reference them
 var incomeVisible = false;
 var ownershipVisible = false;
-function anyHeatMapOn(){ return incomeVisible || ownershipVisible; }
+var ageVisible = false;
+function anyHeatMapOn(){ return incomeVisible || ownershipVisible || ageVisible; }
 
 // ── Shared tract GeoJSON cache (used by both income & homeownership) ──
 let tractGeoCache = null;
@@ -3761,28 +4080,47 @@ function incomeToColor(income) {
   return `rgb(${r},${g},${b})`;
 }
 
+// Global lookup tables — shared between heat maps, prospect filter, and muni stats
+let incomeLookup = {};
+let ownershipLookupGlobal = {};
+let ageLookupGlobal = {};
+
+// Extended Census data — loaded once for prospect filter + muni popup
+let extendedDataLoaded = false;
+let collegeLookup = {};      // % with bachelor's degree+
+let homeValueLookup = {};    // median home value
+let householdSizeLookup = {};// avg household size
+let laborForceLookup = {};   // % in labor force
+let marriedLookup = {};      // % married households
+let yearBuiltLookup = {};    // median year structure built
+let recentMoverLookup = {};  // % moved in last 5 years
+
+// Fetch income data only (no drawing) — used by prospect filter
+let incomeDataLoaded = false;
+async function fetchIncomeData() {
+  if(incomeDataLoaded) return;
+  try {
+    const res = await fetch('https://api.census.gov/data/2022/acs/acs5?get=B19013_001E&for=tract:*&in=state:42');
+    const rows = await res.json();
+    for(let i = 1; i < rows.length; i++) {
+      const [inc,,county,tract] = rows[i];
+      incomeLookup[county.padStart(3,'0') + tract.padStart(6,'0')] = parseInt(inc);
+    }
+    incomeDataLoaded = true;
+  } catch(e) { console.error('Income fetch failed:', e); }
+}
+
 async function loadIncomeData() {
   if(incomeLoaded) return;
   setLayerLabel('toggleIncome', 'Loading…');
+  await fetchIncomeData();
   try {
-    // B19013_001E = median household income
-    const res = await fetch('https://api.census.gov/data/2022/acs/acs5?get=B19013_001E&for=tract:*&in=state:42');
-    const rows = await res.json();
-    const lookup = {};
-    for(let i = 1; i < rows.length; i++) {
-      const [inc,,county,tract] = rows[i];
-      lookup[county.padStart(3,'0') + tract.padStart(6,'0')] = parseInt(inc);
-    }
     const geo = await getTractGeo();
-    drawTractLayer(geo, lookup, incomeToColor, incomeLayerGroup);
+    drawTractLayer(geo, incomeLookup, incomeToColor, incomeLayerGroup);
     incomeLoaded = true;
     console.log('Income layer loaded');
-  } catch(e) { console.error('Income load failed:', e); }
+  } catch(e) { console.error('Income draw failed:', e); }
   setLayerLabel('toggleIncome', null);
-}
-
-function anyHeatMapOn() {
-  return incomeVisible || ownershipVisible;
 }
 
 function refreshMuniColors() {
@@ -3822,25 +4160,32 @@ function ownershipToColor(rate) {
   return `rgb(${r},${g},${b})`;
 }
 
-async function loadOwnershipData() {
-  if(ownershipLoaded) return;
-  setLayerLabel('toggleOwnership', 'Loading…');
+let ownershipDataLoaded = false;
+async function fetchOwnershipData() {
+  if(ownershipDataLoaded) return;
   try {
-    // B25003_001E = total occupied housing units, B25003_002E = owner-occupied
     const res = await fetch('https://api.census.gov/data/2022/acs/acs5?get=B25003_001E,B25003_002E&for=tract:*&in=state:42');
     const rows = await res.json();
-    const lookup = {};
     for(let i = 1; i < rows.length; i++) {
       const [total, owned,,county,tract] = rows[i];
       const t = parseInt(total), o = parseInt(owned);
       const rate = (t > 0) ? Math.round((o / t) * 100) : -1;
-      lookup[county.padStart(3,'0') + tract.padStart(6,'0')] = rate;
+      ownershipLookupGlobal[county.padStart(3,'0') + tract.padStart(6,'0')] = rate;
     }
+    ownershipDataLoaded = true;
+  } catch(e) { console.error('Ownership fetch failed:', e); }
+}
+
+async function loadOwnershipData() {
+  if(ownershipLoaded) return;
+  setLayerLabel('toggleOwnership', 'Loading…');
+  await fetchOwnershipData();
+  try {
     const geo = await getTractGeo();
-    drawTractLayer(geo, lookup, ownershipToColor, ownershipLayerGroup);
+    drawTractLayer(geo, ownershipLookupGlobal, ownershipToColor, ownershipLayerGroup);
     ownershipLoaded = true;
     console.log('Homeownership layer loaded');
-  } catch(e) { console.error('Homeownership load failed:', e); }
+  } catch(e) { console.error('Homeownership draw failed:', e); }
   setLayerLabel('toggleOwnership', null);
 }
 
@@ -3853,6 +4198,516 @@ function applyOwnershipToggle() {
     if(map.hasLayer(ownershipLayerGroup)) map.removeLayer(ownershipLayerGroup);
   }
   refreshMuniColors();
+}
+
+// ══ MEDIAN AGE ══
+let ageLayerGroup = L.layerGroup().addTo(map);
+let ageLoaded = false;
+
+function ageToColor(age) {
+  if(!age || age <= 0) return null;
+  // Sweet spot 45-65 = deep blue, too young/too old = lighter
+  // Under 25 = light lavender, 45 = blue, 65+ = dark navy
+  const t = Math.max(0, Math.min(1, (age - 20) / 50)); // 20-70 range
+  let r, g, b;
+  if(t < 0.5) {
+    // lavender to blue
+    const s = t * 2;
+    r = Math.round(180 - s * 121); g = Math.round(180 - s * 50); b = Math.round(220 + s * 35);
+  } else {
+    // blue to dark navy
+    const s = (t - 0.5) * 2;
+    r = Math.round(59 - s * 29); g = Math.round(130 - s * 72); b = Math.round(246 - s * 151);
+  }
+  return `rgb(${r},${g},${b})`;
+}
+
+let ageDataLoaded = false;
+async function fetchAgeData() {
+  if(ageDataLoaded) return;
+  try {
+    const res = await fetch('https://api.census.gov/data/2022/acs/acs5?get=B01002_001E&for=tract:*&in=state:42');
+    const rows = await res.json();
+    for(let i = 1; i < rows.length; i++) {
+      const [age,,county,tract] = rows[i];
+      ageLookupGlobal[county.padStart(3,'0') + tract.padStart(6,'0')] = parseFloat(age);
+    }
+    ageDataLoaded = true;
+  } catch(e) { console.error('Age fetch failed:', e); }
+}
+
+// Fetch all extended Census variables in ONE API call
+async function fetchExtendedData() {
+  if(extendedDataLoaded) return;
+  try {
+    // All variables in a single request to minimize API calls
+    const vars = [
+      'B15003_022E', // bachelor's degree count
+      'B15003_001E', // total education population
+      'B25077_001E', // median home value
+      'B25010_001E', // avg household size
+      'B23025_002E', // in labor force
+      'B23025_001E', // total labor force population
+      'B11001_003E', // married couple households
+      'B11001_001E', // total households
+      'B25035_001E', // median year structure built
+      'B25038_002E', // moved in 2020 or later
+      'B25038_003E', // moved in 2018-2019
+      'B25038_001E', // total householders
+    ].join(',');
+    const res = await fetch(`https://api.census.gov/data/2022/acs/acs5?get=${vars}&for=tract:*&in=state:42`);
+    const rows = await res.json();
+    for(let i = 1; i < rows.length; i++) {
+      const [
+        collegeCount, collegeTotal,
+        homeVal, hhSize,
+        laborCount, laborTotal,
+        marriedCount, hhTotal,
+        yearBuilt,
+        movers2020, movers2018, moversTotal,
+        , county, tract
+      ] = rows[i];
+      const key = county.padStart(3,'0') + tract.padStart(6,'0');
+      const ct = parseInt(collegeTotal), cc = parseInt(collegeCount);
+      collegeLookup[key] = ct > 0 ? Math.round((cc/ct)*100) : -1;
+      homeValueLookup[key] = parseInt(homeVal) || -1;
+      householdSizeLookup[key] = parseFloat(hhSize) || -1;
+      const lt = parseInt(laborTotal), lc = parseInt(laborCount);
+      laborForceLookup[key] = lt > 0 ? Math.round((lc/lt)*100) : -1;
+      const ht = parseInt(hhTotal), mc = parseInt(marriedCount);
+      marriedLookup[key] = ht > 0 ? Math.round((mc/ht)*100) : -1;
+      yearBuiltLookup[key] = parseInt(yearBuilt) || -1;
+      const mt = parseInt(moversTotal);
+      const recentMovers = (parseInt(movers2020)||0) + (parseInt(movers2018)||0);
+      recentMoverLookup[key] = mt > 0 ? Math.round((recentMovers/mt)*100) : -1;
+    }
+    extendedDataLoaded = true;
+    console.log('Extended Census data loaded');
+  } catch(e) { console.error('Extended data fetch failed:', e); }
+}
+
+async function loadAgeData() {
+  if(ageLoaded) return;
+  setLayerLabel('toggleAge', 'Loading…');
+  await fetchAgeData();
+  try {
+    const geo = await getTractGeo();
+    drawTractLayer(geo, ageLookupGlobal, ageToColor, ageLayerGroup);
+    ageLoaded = true;
+    console.log('Age layer loaded');
+  } catch(e) { console.error('Age draw failed:', e); }
+  setLayerLabel('toggleAge', null);
+}
+
+function applyAgeToggle() {
+  ageVisible = document.getElementById('toggleAge').checked;
+  document.getElementById('ageLegend').style.display = ageVisible ? 'block' : 'none';
+  if(ageVisible) {
+    loadAgeData().then(() => { if(ageVisible) ageLayerGroup.addTo(map); });
+  } else {
+    if(map.hasLayer(ageLayerGroup)) map.removeLayer(ageLayerGroup);
+  }
+  refreshMuniColors();
+}
+
+// ══ SOLAR ADOPTION (OpenPV via NREL API — DEMO_KEY) ══
+// Shows installs per zip code for PA as a choropleth over zip boundaries
+let solarLayerGroup = L.layerGroup().addTo(map);
+let solarLoaded = false;
+
+function solarToColor(count) {
+  if(count === null || count === undefined || count < 0) return null;
+  // 0 = pale yellow, 50+ = deep orange
+  const t = Math.max(0, Math.min(1, count / 60));
+  let r, g, b;
+  if(t < 0.5) {
+    const s = t * 2;
+    r = Math.round(240 + s * 15); g = Math.round(240 - s * 60); b = Math.round(200 - s * 200);
+  } else {
+    const s = (t - 0.5) * 2;
+    r = Math.round(255 - s * 35); g = Math.round(180 - s * 80); b = 0;
+  }
+  return `rgb(${r},${g},${b})`;
+}
+
+
+
+// ═══════════════════════════════════════
+//  PROSPECT FILTER
+// ═══════════════════════════════════════
+let prospectOpen = false;
+let prospectFilterActive = false;
+let prospectLayerGroup = L.layerGroup(); // added to map only when filter is applied
+
+function toggleProspectFilter() {
+  if(prospectOpen) { closeProspectFilter(); return; }
+  prospectOpen = true;
+  document.getElementById('prospectSheet').classList.add('open');
+  const bd = document.getElementById('sheetBackdrop');
+  bd.classList.add('visible');
+  requestAnimationFrame(() => bd.classList.add('show'));
+  document.getElementById('mobProspectBtn') && document.getElementById('mobProspectBtn').classList.add('active');
+  document.getElementById('deskProspectBtn') && document.getElementById('deskProspectBtn').classList.add('active');
+}
+
+function closeProspectFilter() {
+  prospectOpen = false;
+  document.getElementById('prospectSheet').classList.remove('open');
+  document.getElementById('sheetBackdrop').classList.remove('show');
+  setTimeout(() => document.getElementById('sheetBackdrop').classList.remove('visible'), 300);
+  document.getElementById('mobProspectBtn') && document.getElementById('mobProspectBtn').classList.remove('active');
+  document.getElementById('deskProspectBtn') && document.getElementById('deskProspectBtn').classList.remove('active');
+}
+
+function updateProspectSlider(sliderId, valId, formatter) {
+  const val = parseInt(document.getElementById(sliderId).value);
+  document.getElementById(valId).textContent = formatter(val);
+  clearPresetActive();
+}
+
+function updateAgeRange() {
+  let min = parseInt(document.getElementById('pfAgeMin').value);
+  let max = parseInt(document.getElementById('pfAgeMax').value);
+  if(min > max) { const tmp = min; min = max; max = tmp; }
+  document.getElementById('pfAgeVal').textContent = `${min}–${max}`;
+  clearPresetActive();
+}
+
+function clearPresetActive() {
+  document.querySelectorAll('.pf-preset-btn').forEach(b => b.classList.remove('active'));
+}
+
+function applyPreset(btn) {
+  clearPresetActive();
+  btn.classList.add('active');
+  const preset = btn.dataset.preset;
+  const presets = {
+    // Prime Solar: established homeowners, good income, right age, older homes
+    solar:  { income:70000, owner:70, ageMin:40, ageMax:70, college:20, homeVal:200000, married:40, yearBuilt:2010, movers:0 },
+    // High Income: top earners, high home values
+    income: { income:90000, owner:50, ageMin:25, ageMax:80, college:30, homeVal:300000, married:0, yearBuilt:2024, movers:0 },
+    // Established: long-term homeowners, married, older homes = equity built up
+    owners: { income:60000, owner:80, ageMin:45, ageMax:75, college:0, homeVal:150000, married:50, yearBuilt:2000, movers:0 },
+    // Custom: reset to neutral
+    custom: { income:50000, owner:50, ageMin:35, ageMax:65, college:0, homeVal:0, married:0, yearBuilt:2024, movers:0 },
+  };
+  const p = presets[preset] || presets.custom;
+  document.getElementById('pfIncome').value = p.income;
+  document.getElementById('pfIncomeVal').textContent = '$' + (p.income/1000).toFixed(0) + 'k';
+  document.getElementById('pfOwner').value = p.owner;
+  document.getElementById('pfOwnerVal').textContent = p.owner + '%';
+  document.getElementById('pfAgeMin').value = p.ageMin;
+  document.getElementById('pfAgeMax').value = p.ageMax;
+  document.getElementById('pfAgeVal').textContent = `${p.ageMin}–${p.ageMax}`;
+  document.getElementById('pfCollege').value = p.college;
+  document.getElementById('pfCollegeVal').textContent = p.college + '%';
+  document.getElementById('pfHomeVal').value = p.homeVal;
+  document.getElementById('pfHomeValVal').textContent = p.homeVal === 0 ? 'Any' : ('$'+(p.homeVal/1000).toFixed(0)+'k+');
+  document.getElementById('pfMarried').value = p.married;
+  document.getElementById('pfMarriedVal').textContent = p.married + '%';
+  document.getElementById('pfYearBuilt').value = p.yearBuilt;
+  document.getElementById('pfYearBuiltVal').textContent = p.yearBuilt === 2024 ? 'Any' : ('≤'+p.yearBuilt);
+  document.getElementById('pfMovers').value = p.movers;
+  document.getElementById('pfMoversVal').textContent = p.movers + '%';
+}
+
+async function applyProspectFilter() {
+  // Ensure all data is loaded
+  const btn = document.querySelector('#prospectFooter .btn-primary');
+  btn.textContent = 'Loading data…'; btn.disabled = true;
+
+  // Fetch all data — don't draw heat map layers
+  await Promise.all([
+    fetchIncomeData(),
+    fetchOwnershipData(),
+    fetchAgeData(),
+    fetchExtendedData(),
+    getTractGeo()
+  ]);
+
+  btn.textContent = 'Apply Filter'; btn.disabled = false;
+
+  const minIncome   = parseInt(document.getElementById('pfIncome').value);
+  const minOwner    = parseInt(document.getElementById('pfOwner').value);
+  const ageMin      = parseInt(document.getElementById('pfAgeMin').value);
+  const ageMax      = parseInt(document.getElementById('pfAgeMax').value);
+  const minCollege  = parseInt(document.getElementById('pfCollege').value);
+  const minHomeVal  = parseInt(document.getElementById('pfHomeVal').value);
+  const minMarried  = parseInt(document.getElementById('pfMarried').value);
+  const maxYearBuilt= parseInt(document.getElementById('pfYearBuilt').value);
+  const minMovers   = parseInt(document.getElementById('pfMovers').value);
+
+  const geo = await getTractGeo();
+  prospectLayerGroup.clearLayers();
+  let qualifying = 0;
+
+  geo.features.forEach(feature => {
+    const props = feature.properties;
+    const key = (props.COUNTYFP||'').padStart(3,'0') + (props.TRACTCE||'').padStart(6,'0');
+    const income  = incomeLookup[key];
+    const owner   = ownershipLookupGlobal[key];
+    const age     = ageLookupGlobal[key];
+    const college = collegeLookup[key];
+    const homeVal = homeValueLookup[key];
+    const married = marriedLookup[key];
+    const yearBuilt = yearBuiltLookup[key];
+    const movers  = recentMoverLookup[key];
+
+    // Must have at least income + ownership + age
+    if(!income || income < 0 || owner === undefined || owner < 0 || !age || age < 0) return;
+
+    const passes =
+      income >= minIncome &&
+      owner >= minOwner &&
+      age >= ageMin && age <= ageMax &&
+      (college < 0 || college >= minCollege) &&
+      (homeVal < 0 || homeVal >= minHomeVal) &&
+      (married < 0 || married >= minMarried) &&
+      (yearBuilt < 0 || yearBuilt <= maxYearBuilt) &&
+      (movers < 0 || movers >= minMovers);
+    if(!passes) return;
+
+    const layer = L.geoJSON(feature, {
+      style: {
+        color: '#15803d',
+        weight: 1.5,
+        fillColor: '#22c55e',
+        fillOpacity: 0.45,
+        interactive: false,
+        pane: 'demographicsPane'
+      },
+      pane: 'demographicsPane',
+      interactive: false
+    });
+    prospectLayerGroup.addLayer(layer);
+    qualifying++;
+  });
+
+  prospectLayerGroup.addTo(map);
+  prospectFilterActive = true;
+
+  // Show result summary
+  document.getElementById('pfResultText').textContent = `${qualifying} qualifying tract${qualifying !== 1 ? 's' : ''} found`;
+  document.getElementById('pfResultSummary').style.display = 'block';
+
+  // Update nav button active state
+  document.getElementById('mobProspectBtn') && document.getElementById('mobProspectBtn').classList.add('active');
+  document.getElementById('deskProspectBtn') && document.getElementById('deskProspectBtn').classList.add('active');
+}
+
+function clearProspectFilter() {
+  // Remove prospect overlay
+  if(map.hasLayer(prospectLayerGroup)) map.removeLayer(prospectLayerGroup);
+  prospectLayerGroup.clearLayers();
+  prospectFilterActive = false;
+
+  // Turn off all heat map layers and their toggles
+  if(incomeVisible) {
+    incomeVisible = false;
+    document.getElementById('toggleIncome').checked = false;
+    if(map.hasLayer(incomeLayerGroup)) map.removeLayer(incomeLayerGroup);
+    document.getElementById('incomeLegend').style.display = 'none';
+  }
+  if(ownershipVisible) {
+    ownershipVisible = false;
+    document.getElementById('toggleOwnership').checked = false;
+    if(map.hasLayer(ownershipLayerGroup)) map.removeLayer(ownershipLayerGroup);
+    document.getElementById('ownershipLegend').style.display = 'none';
+  }
+  if(ageVisible) {
+    ageVisible = false;
+    document.getElementById('toggleAge').checked = false;
+    if(map.hasLayer(ageLayerGroup)) map.removeLayer(ageLayerGroup);
+    document.getElementById('ageLegend').style.display = 'none';
+  }
+
+  // Restore municipality custom colors
+  refreshMuniColors();
+
+  document.getElementById('pfResultSummary').style.display = 'none';
+  document.getElementById('mobProspectBtn') && document.getElementById('mobProspectBtn').classList.remove('active');
+  document.getElementById('deskProspectBtn') && document.getElementById('deskProspectBtn').classList.remove('active');
+  clearPresetActive();
+  // Reset sliders to defaults
+  document.getElementById('pfIncome').value = 50000;
+  document.getElementById('pfIncomeVal').textContent = '$50k';
+  document.getElementById('pfOwner').value = 50;
+  document.getElementById('pfOwnerVal').textContent = '50%';
+  document.getElementById('pfAgeMin').value = 35;
+  document.getElementById('pfAgeMax').value = 65;
+  document.getElementById('pfAgeVal').textContent = '35–65';
+  document.getElementById('pfCollege').value = 0;
+  document.getElementById('pfCollegeVal').textContent = '0%';
+  document.getElementById('pfHomeVal').value = 0;
+  document.getElementById('pfHomeValVal').textContent = 'Any';
+  document.getElementById('pfMarried').value = 0;
+  document.getElementById('pfMarriedVal').textContent = '0%';
+  document.getElementById('pfYearBuilt').value = 2024;
+  document.getElementById('pfYearBuiltVal').textContent = 'Any';
+  document.getElementById('pfMovers').value = 0;
+  document.getElementById('pfMoversVal').textContent = '0%';
+}
+
+// swipe to dismiss prospect sheet
+(function(){
+  const sheet = document.getElementById('prospectSheet');
+  let startY = 0, dragging = false;
+  sheet.addEventListener('touchstart', e => {
+    if(e.target.closest('#prospectBody') && sheet.querySelector('#prospectBody').scrollTop > 0) return;
+    startY = e.touches[0].clientY; dragging = true; sheet.style.transition = 'none';
+  }, {passive:true});
+  sheet.addEventListener('touchmove', e => {
+    if(!dragging) return;
+    const dy = e.touches[0].clientY - startY;
+    if(dy < 0) return;
+    sheet.style.transform = `translateY(${dy}px)`;
+  }, {passive:true});
+  sheet.addEventListener('touchend', e => {
+    if(!dragging) return;
+    dragging = false; sheet.style.transition = '';
+    const dy = e.changedTouches[0].clientY - startY;
+    if(dy > 80) { closeProspectFilter(); sheet.style.transform = ''; }
+    else { sheet.style.transform = ''; }
+  });
+})();
+
+// ═══════════════════════════════════════
+//  MUNICIPALITY STATS (Census data for clicked muni)
+// ═══════════════════════════════════════
+
+// Get the average Census stats for tracts that overlap a municipality
+// We use a point-in-polygon test on each tract centroid vs municipality bounds
+// as a fast approximation — tracts are small enough this works well
+function getMuniStats(muniLayer) {
+  if(!tractGeoCache) return null;
+
+  const muniBounds = muniLayer.getBounds();
+  const muniFeature = muniLayer.feature;
+
+  const incomeVals = [], ownerVals = [], ageVals = [];
+
+  tractGeoCache.features.forEach(tract => {
+    const props = tract.properties;
+    const key = (props.COUNTYFP||'').padStart(3,'0') + (props.TRACTCE||'').padStart(6,'0');
+
+    // Quick bounds check first
+    const tractCoords = tract.geometry.coordinates;
+    let centroid;
+    try {
+      // Get approximate centroid from first ring of first polygon
+      const ring = tract.geometry.type === 'Polygon'
+        ? tract.geometry.coordinates[0]
+        : tract.geometry.coordinates[0][0];
+      const sumLng = ring.reduce((s,c) => s + c[0], 0) / ring.length;
+      const sumLat = ring.reduce((s,c) => s + c[1], 0) / ring.length;
+      centroid = [sumLat, sumLng];
+    } catch(e) { return; }
+
+    if(!muniBounds.contains(centroid)) return;
+
+    // Check centroid is actually in municipality polygon
+    if(!isPointInLayer(centroid[0], centroid[1], muniLayer)) return;
+
+    const inc = incomeLookup[key];
+    const own = ownershipLookupGlobal[key];
+    const age = ageLookupGlobal[key];
+
+    if(inc && inc > 0) incomeVals.push(inc);
+    if(own !== undefined && own >= 0) ownerVals.push(own);
+    if(age && age > 0) ageVals.push(age);
+  });
+
+  if(!incomeVals.length && !ownerVals.length && !ageVals.length) return null;
+
+  const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : null;
+
+  // Extended data (if loaded)
+  const collegeVals=[], homeValueVals=[], hhSizeVals=[], marriedVals=[], yearBuiltVals=[], moverVals=[];
+  if(extendedDataLoaded) {
+    tractGeoCache.features.forEach(tract => {
+      const props = tract.properties;
+      const key = (props.COUNTYFP||'').padStart(3,'0') + (props.TRACTCE||'').padStart(6,'0');
+      let centroid;
+      try {
+        const ring = tract.geometry.type === 'Polygon' ? tract.geometry.coordinates[0] : tract.geometry.coordinates[0][0];
+        const sumLng = ring.reduce((s,c) => s + c[0], 0) / ring.length;
+        const sumLat = ring.reduce((s,c) => s + c[1], 0) / ring.length;
+        centroid = [sumLat, sumLng];
+      } catch(e) { return; }
+      if(!muniBounds.contains(centroid)) return;
+      if(!isPointInLayer(centroid[0], centroid[1], muniLayer)) return;
+      if(collegeLookup[key]  > 0) collegeVals.push(collegeLookup[key]);
+      if(homeValueLookup[key]> 0) homeValueVals.push(homeValueLookup[key]);
+      if(householdSizeLookup[key] > 0) hhSizeVals.push(householdSizeLookup[key]);
+      if(marriedLookup[key]  > 0) marriedVals.push(marriedLookup[key]);
+      if(yearBuiltLookup[key]> 0) yearBuiltVals.push(yearBuiltLookup[key]);
+      if(recentMoverLookup[key] > 0) moverVals.push(recentMoverLookup[key]);
+    });
+  }
+
+  // Count pins in this municipality
+  let pinCount = 0;
+  if(muniLayer && pinsCache) {
+    const bounds = muniLayer.getBounds();
+    Object.values(pinsCache).forEach(pin => {
+      if(pin.lat && pin.lng && bounds.contains([pin.lat, pin.lng]) && isPointInLayer(pin.lat, pin.lng, muniLayer)) pinCount++;
+    });
+  }
+
+  return {
+    income:    avg(incomeVals),
+    ownership: avg(ownerVals),
+    age:       avg(ageVals),
+    homeValue: avg(homeValueVals),
+    college:   avg(collegeVals),
+    married:   avg(marriedVals),
+    hhSize:    hhSizeVals.length ? parseFloat((hhSizeVals.reduce((a,b)=>a+b,0)/hhSizeVals.length).toFixed(1)) : null,
+    yearBuilt: avg(yearBuiltVals),
+    movers:    avg(moverVals),
+    tractCount: incomeVals.length,
+    pinCount
+  };
+}
+
+function buildMuniStatsHtml(stats) {
+  if(!stats) return '';
+  const rows = [];
+
+  const row = (label, value, note) => value === null ? '' :
+    `<div class="muni-stat-row">
+      <div>
+        <div class="muni-stat-label">${label}</div>
+        ${note ? `<div style="font-size:9px;color:#bbb;">${note}</div>` : ''}
+      </div>
+      <span class="muni-stat-value">${value}</span>
+    </div>`;
+
+  rows.push(row('💵 Median Income',        stats.income   !== null ? '$'+(stats.income/1000).toFixed(0)+'k' : null));
+  rows.push(row('🏠 Homeownership',         stats.ownership!== null ? stats.ownership+'%' : null));
+  rows.push(row('🎂 Median Age',            stats.age      !== null ? stats.age+' yrs' : null));
+  rows.push(row('🏡 Median Home Value',     stats.homeValue!== null ? '$'+(stats.homeValue/1000).toFixed(0)+'k' : null));
+  rows.push(row('🎓 College Educated',      stats.college  !== null ? stats.college+'%' : null, 'Bachelor degree+'));
+  rows.push(row('💍 Married Households',    stats.married  !== null ? stats.married+'%' : null));
+  rows.push(row('👥 Avg Household Size',    stats.hhSize   !== null ? stats.hhSize.toFixed(1)+' people' : null));
+  rows.push(row('🏠 Median Year Built',    stats.yearBuilt!== null ? stats.yearBuilt : null, 'Older = more equity'));
+  rows.push(row('📦 Recent Movers',         stats.movers   !== null ? stats.movers+'%' : null, 'Moved in last 5 yrs'));
+
+  // Your own field data
+  if(stats.pinCount > 0) {
+    rows.push(`<div class="muni-stat-row" style="background:#f0fdf4;border-radius:6px;margin:4px 0;">
+      <div><div class="muni-stat-label" style="color:#15803d;">📍 Your Activity</div></div>
+      <span class="muni-stat-value" style="color:#15803d;">${stats.pinCount} pin${stats.pinCount!==1?'s':''}</span>
+    </div>`);
+  }
+
+  const filled = rows.filter(r => r);
+  if(!filled.length) return '';
+  return `<div style="border-top:1.5px solid #f0f0f0;margin-top:0;">
+    <div style="padding:8px 16px 4px;font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:0.07em;">
+      Census Data <span style="font-weight:400;color:#ccc;">(${stats.tractCount} tract${stats.tractCount!==1?'s':''})</span>
+    </div>
+    ${filled.join('')}
+  </div>`;
 }
 
 // ═══════════════════════════════════════
