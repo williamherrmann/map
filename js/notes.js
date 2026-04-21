@@ -136,5 +136,7 @@ function handleBackdropClick() {
   else if(document.getElementById('pinSidebar').classList.contains('open'))closePinSidebar();
   else if(document.getElementById('shapeSidebar').classList.contains('open'))closeShapeSidebar();
   else if(document.getElementById('sidebar').classList.contains('open'))closeSidebar();
+  else if(document.getElementById('transferSheet').classList.contains('open'))closeTransferSheet();
+  else if(document.getElementById('analyticsSheet').classList.contains('open'))closeAnalytics();
   else if(calendarOpen)closeCalendar();
 }

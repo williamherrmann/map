@@ -823,6 +823,85 @@
     .popup-footer { padding:0; border-top:none; background:none; }
     .popup-edit-link { font-size:13px; color:var(--blue); font-weight:600; text-decoration:none; display:flex; align-items:center; gap:5px; }
     .popup-edit-link:hover { color:#1d4ed8; }
+
+    /* ══ TRANSFER SHEET ══ */
+    #transferSheet { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
+    #transferSheet.open { transform:translateY(0); }
+    #transferSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    @media(min-width:768px){
+      #transferSheet { width:400px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(110%); }
+      #transferSheet.open { transform:translateX(0); }
+      #transferSheet::before { display:none; }
+    }
+    #transferHeader { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1.5px solid #eee; flex-shrink:0; }
+    #transferSheetTitle { font-size:16px; font-weight:700; color:#111; }
+    #transferBody { flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
+    .tf-field-label { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; }
+    .tf-input { width:100%; padding:10px 12px; border:1.5px solid #e0e0e6; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; color:#111; background:#fafafa; outline:none; transition:border-color 0.15s; }
+    .tf-input:focus { border-color:#1e3a5f; background:#fff; }
+    #transferStatusRow { margin-top:4px; }
+    .tf-status-label { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px; }
+    #transferStatusBtns { display:flex; gap:6px; flex-wrap:wrap; }
+    .tf-status-btn { flex:1; min-width:100px; padding:9px 8px; border:2px solid #e0e0e6; border-radius:10px; background:#fff; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; color:#555; cursor:pointer; text-align:center; transition:all 0.15s; -webkit-tap-highlight-color:transparent; }
+    .tf-status-btn.active { border-color:var(--sc,#1e3a5f); background:rgba(0,0,0,0.04); color:#111; }
+    #transferFooter { padding:12px 18px; border-top:1.5px solid #eee; display:flex; gap:8px; flex-shrink:0; }
+    #transferDeleteBtn { padding:12px 16px; background:#fff0f1; border:1.5px solid #fca5a5; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; color:#dc2626; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    #tfStatus { font-size:12px; color:#ef4444; min-height:16px; text-align:center; }
+
+    /* ══ ANALYTICS SHEET ══ */
+    #analyticsSheet { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
+    #analyticsSheet.open { transform:translateY(0); }
+    #analyticsSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    @media(min-width:768px){
+      #analyticsSheet { width:400px; height:100dvh; top:0; left:0; right:auto; bottom:auto; border-radius:0; border-top:none; border-right:1px solid #eee; transform:translateX(-110%); }
+      #analyticsSheet.open { transform:translateX(0); }
+      #analyticsSheet::before { display:none; }
+    }
+    #analyticsHeader { padding:14px 18px 0; flex-shrink:0; }
+    #analyticsTitle { font-size:16px; font-weight:700; color:#111; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
+    .an-tabs { display:flex; gap:4px; overflow-x:auto; padding-bottom:10px; border-bottom:1.5px solid #eee; }
+    .an-tab { padding:6px 12px; border-radius:20px; border:1.5px solid #e0e0e6; background:#fff; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; color:#666; cursor:pointer; white-space:nowrap; -webkit-tap-highlight-color:transparent; transition:all 0.15s; flex-shrink:0; }
+    .an-tab.active { background:#1e3a5f; border-color:#1e3a5f; color:#fff; }
+    #analyticsBody { flex:1; overflow-y:auto; padding:16px 18px; }
+    .an-section-label { font-size:10px; font-weight:700; color:#aaa; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:10px; display:block; }
+    .an-empty { text-align:center; color:#aaa; font-size:13px; padding:32px 16px; line-height:1.6; }
+    .an-funnel { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+    .an-funnel-step { display:flex; align-items:center; gap:10px; }
+    .an-funnel-bar { height:28px; border-radius:6px; transition:width 0.5s; min-width:4px; }
+    .an-funnel-meta { display:flex; align-items:center; gap:8px; min-width:160px; }
+    .an-funnel-emoji { font-size:18px; flex-shrink:0; }
+    .an-funnel-label { font-size:12px; color:#555; font-weight:600; }
+    .an-funnel-count { font-size:22px; font-weight:700; color:#111; line-height:1; }
+    .an-funnel-arrow { font-size:11px; color:#bbb; padding-left:8px; font-family:'DM Mono',monospace; }
+    .an-stat-grid { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; margin-bottom:20px; }
+    .an-stat-card { background:#f8f8fb; border-radius:10px; padding:12px 8px; text-align:center; }
+    .an-stat-num { font-size:22px; font-weight:700; line-height:1; margin-bottom:4px; }
+    .an-stat-lbl { font-size:10px; color:#aaa; font-weight:600; text-transform:uppercase; }
+    .an-muni-card { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid #f0f0f0; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .an-muni-card:active { opacity:0.7; }
+    .an-muni-rank { width:24px; font-size:13px; font-weight:700; color:#ccc; text-align:center; flex-shrink:0; }
+    .an-muni-info { flex:1; min-width:0; }
+    .an-muni-name { font-size:13px; font-weight:700; color:#111; }
+    .an-muni-county { font-size:11px; color:#aaa; margin-bottom:4px; }
+    .an-muni-bars { display:flex; flex-direction:column; gap:3px; }
+    .an-mini-bar-wrap { height:4px; background:#f0f0f4; border-radius:2px; overflow:hidden; }
+    .an-mini-bar { height:100%; border-radius:2px; transition:width 0.5s; }
+    .an-muni-nums { display:flex; gap:8px; flex-shrink:0; text-align:center; }
+    .an-muni-stat { display:flex; flex-direction:column; align-items:center; font-size:13px; font-weight:700; }
+    .an-muni-stat-lbl { font-size:9px; color:#bbb; font-weight:600; text-transform:uppercase; }
+    .an-rep-card { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid #f0f0f0; cursor:pointer; }
+    .an-rep-card:active { opacity:0.7; }
+    .an-rep-avatar { width:36px; height:36px; border-radius:50%; background:#e0e7ff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#4338ca; flex-shrink:0; }
+    .an-rep-info { flex:1; min-width:0; }
+    .an-rep-name { font-size:13px; font-weight:700; color:#111; }
+    .an-rep-sub { font-size:11px; color:#aaa; margin-bottom:4px; }
+    .an-rep-track { height:4px; background:#f0f0f4; border-radius:2px; overflow:hidden; }
+    .an-rep-fill { height:100%; border-radius:2px; transition:width 0.5s; }
+    .an-rep-big { font-size:20px; font-weight:700; flex-shrink:0; text-align:right; line-height:1.2; }
+    .an-fingerprint { background:#f5f3ff; border:1.5px solid #e0d9ff; border-radius:10px; padding:12px 14px; margin-bottom:14px; }
+    .an-fp-title { font-size:12px; font-weight:700; color:#6d28d9; margin-bottom:6px; }
+    .an-fp-stats { display:flex; gap:10px; flex-wrap:wrap; font-size:12px; color:#555; }
+    .an-heat-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #f0f0f0; }
   </style>
 </head>
 <body>
@@ -901,7 +980,7 @@
       <div class="settings-section-label">App</div>
       <div class="settings-info-row" style="cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="openChangelog()">
         <span class="settings-info-label">Version</span>
-        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v62 · What's new ›</span>
+        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v64 · What's new ›</span>
       </div>
     </div>
   </div>
@@ -916,9 +995,34 @@
   </div>
   <div id="changelogBody">
 
+        <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge current">v64</span>
+        <span class="cl-version-label">Fix: Electric utility lookup</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Fixed missing utilities.js causing map popups to crash on open</div>
+        <div class="cl-item">County electric utility data now loads correctly before map initializes</div>
+      </div>
+    </div>
+
     <div class="cl-version">
       <div class="cl-version-header">
-        <span class="cl-version-badge current">v62</span>
+        <span class="cl-version-badge">v63</span>
+        <span class="cl-version-label">Warm Transfer tracking &amp; Analytics</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Log warm transfers with homeowner name, phone, address &amp; appointment time</div>
+        <div class="cl-item">3-stage funnel: Transferred → Appointment Ran → Signed</div>
+        <div class="cl-item">Analytics dashboard: funnel rates, top municipalities, rep board</div>
+        <div class="cl-item">Replication engine: finds unworked areas matching your best-converting demographics</div>
+        <div class="cl-item">Success heatmap overlay on municipality layer</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v62</span>
         <span class="cl-version-label">Changelog &amp; contact fields</span>
       </div>
       <div class="cl-items">
@@ -1101,13 +1205,20 @@
         <span class="toggle-track"></span>
       </label>
     </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Warm Transfers</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggleTransfers" checked onchange="applyTransfersToggle()">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
 
   </div>
 </div>
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v62</span>
+  <span id="badgeVersion">v64</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
@@ -1151,6 +1262,10 @@
   <button class="desk-nav-btn" id="deskFilterBtn" onclick="togglePinFilter()">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
     Filter
+  </button>
+  <button class="desk-nav-btn" id="deskAnalyticsBtn" onclick="toggleAnalytics()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Analytics
   </button>
 </div>
 <!-- Keep hidden stubs for JS refs -->
@@ -1242,6 +1357,10 @@
   <div class="overflow-item" id="ovfFilterItem" onclick="overflowAction('filter')">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
     Filter Pins
+  </div>
+  <div class="overflow-item" id="ovfAnalyticsItem" onclick="overflowAction('analytics')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Analytics
   </div>
   <div class="overflow-item" id="ovfLegendItem" onclick="overflowAction('legend')">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="3" y="10" width="5" height="5" rx="1"/><rect x="3" y="17" width="5" height="5" rx="1"/><line x1="12" y1="5.5" x2="21" y2="5.5"/><line x1="12" y1="12.5" x2="21" y2="12.5"/><line x1="12" y1="19.5" x2="21" y2="19.5"/></svg>
@@ -1743,6 +1862,7 @@
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/auth.js"></script>
+<script src="js/utilities.js"></script>
 <script src="js/demographics.js"></script>
 <script src="js/map.js"></script>
 <script src="js/search.js"></script>
@@ -1752,5 +1872,68 @@
 <script src="js/calendar.js"></script>
 <script src="js/prospect.js"></script>
 <script src="js/ui.js"></script>
+
+<!-- TRANSFER SHEET -->
+<div id="transferSheet">
+  <div id="transferHeader">
+    <div id="transferSheetTitle">Log Warm Transfer</div>
+    <button onclick="closeTransferSheet()" style="background:#f0f0f0;border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:18px;color:#666;display:flex;align-items:center;justify-content:center;flex-shrink:0;">×</button>
+  </div>
+  <div id="transferBody">
+    <div>
+      <div class="tf-field-label">Homeowner Name *</div>
+      <input id="tfName" class="tf-input" type="text" placeholder="First Last" autocomplete="off">
+    </div>
+    <div>
+      <div class="tf-field-label">Phone</div>
+      <input id="tfPhone" class="tf-input" type="tel" placeholder="(555) 555-5555">
+    </div>
+    <div>
+      <div class="tf-field-label">Address</div>
+      <input id="tfAddress" class="tf-input" type="text" placeholder="123 Main St">
+    </div>
+    <div>
+      <div class="tf-field-label">Rep Name</div>
+      <input id="tfRep" class="tf-input" type="text" placeholder="Your name">
+    </div>
+    <div>
+      <div class="tf-field-label">Appointment Date &amp; Time</div>
+      <input id="tfDatetime" class="tf-input" type="datetime-local">
+    </div>
+    <div>
+      <div class="tf-field-label">Notes</div>
+      <input id="tfNotes" class="tf-input" type="text" placeholder="Optional notes">
+    </div>
+    <div id="transferStatusRow" style="display:none;">
+      <div class="tf-status-label">Update Status</div>
+      <div id="transferStatusBtns"></div>
+    </div>
+    <div id="tfStatus"></div>
+  </div>
+  <div id="transferFooter">
+    <button id="transferDeleteBtn" onclick="deleteTransfer(currentTransferId)" style="display:none;padding:12px 16px;background:#fff0f1;border:1.5px solid #fca5a5;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:#dc2626;cursor:pointer;">🗑 Delete</button>
+    <button onclick="saveTransfer()" style="flex:1;padding:13px;background:#1e3a5f;color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;">Save Transfer</button>
+  </div>
+</div>
+
+<!-- ANALYTICS SHEET -->
+<div id="analyticsSheet">
+  <div id="analyticsHeader">
+    <div id="analyticsTitle">
+      <span>📊 Performance</span>
+      <button onclick="closeAnalytics()" style="background:#f0f0f0;border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:18px;color:#666;display:flex;align-items:center;justify-content:center;flex-shrink:0;">×</button>
+    </div>
+    <div class="an-tabs">
+      <button class="an-tab active" data-tab="funnel" onclick="setAnalyticsTab('funnel')">📞 Funnel</button>
+      <button class="an-tab" data-tab="munis" onclick="setAnalyticsTab('munis')">🗺 Top Areas</button>
+      <button class="an-tab" data-tab="reps" onclick="setAnalyticsTab('reps')">👤 Reps</button>
+      <button class="an-tab" data-tab="replicate" onclick="setAnalyticsTab('replicate')">🎯 Replicate</button>
+    </div>
+  </div>
+  <div id="analyticsBody"></div>
+</div>
+
+<script src="js/transfers.js"></script>
+<script src="js/analytics.js"></script>
 </body>
 </html>

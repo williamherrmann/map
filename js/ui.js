@@ -74,6 +74,7 @@ function overflowAction(action){
   if(action==='pinlist')togglePinList();
   if(action==='filter')togglePinFilter();
   if(action==='prospect')toggleProspectFilter();
+  if(action==='analytics')toggleAnalytics();
   if(action==='legend')toggleLegend();
 }
 document.addEventListener('click',e=>{

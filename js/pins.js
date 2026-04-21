@@ -6,15 +6,20 @@ let pinsLayerGroup = L.layerGroup().addTo(map);
 let pinsVisible = true;
 
 const PIN_TYPE_META = {
-  warmtransfer:    { icon:'', label:'Warm Transfer',    defaultColor:'#95D360' },
-  callback:        { icon:'', label:'Callback',          defaultColor:'#00B8FD' },
-  installed:       { icon:'', label:'Installed',         defaultColor:'#5D39FF' },
-  notinterested:   { icon:'', label:'Not Interested',    defaultColor:'#FFB031' },
-  newconstruction: { icon:'', label:'New Construction',  defaultColor:'#FF31AD' },
+  callback:        { label:'Callback',          defaultColor:'#00B8FD' },
+
+  warmtransfer:    { label:'Warm Transfer',     defaultColor:'#95D360' },
+
+  appointmentrun:  { label:'Appointment Run',   defaultColor:'#3b82f6' },
+
+  contractsigned:  { label:'Contract Signed',   defaultColor:'#10b981' },
+
+  notinterested:   { label:'Not Interested',    defaultColor:'#FFB031' },
+  newconstruction: { label:'New Construction',  defaultColor:'#FF31AD' },
 };
 
 const PIN_TYPE_INITIALS = {
-  warmtransfer:'WT', callback:'CB', installed:'IN', notinterested:'NI', newconstruction:'NC'
+  warmtransfer:'WT', callback:'CB', appointmentrun:'AR', installed:'IN', notinterested:'NI', newconstruction:'NC'
 };
 
 async function loadPinsFromSupabase() {
