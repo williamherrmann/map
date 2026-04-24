@@ -497,14 +497,14 @@
     /* ══ CALENDAR SHEET ══ */
     #calendarSheet { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
     #calendarSheet.open { transform:translateY(0); }
+    #calendarHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #calendarTitle { font-size:17px; font-weight:700; color:#111; }
     #calendarSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
     @media (min-width:768px) {
       #calendarSheet { width:360px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(110%); }
       #calendarSheet.open { transform:translateX(0); }
       #calendarSheet::before { display:none; }
     }
-    #calendarHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
-    #calendarTitle { font-size:17px; font-weight:700; color:#111; }
     #calendarCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; }
     .cal-filter-row { display:flex; gap:6px; padding:12px 20px; overflow-x:auto; flex-shrink:0; border-bottom:1px solid #f0f0f0; -webkit-overflow-scrolling:touch; }
     .cal-filter-row::-webkit-scrollbar { display:none; }
@@ -1002,7 +1002,73 @@
 
         <div class="cl-version">
       <div class="cl-version-header">
-        <span class="cl-version-badge current">v76</span>
+        <span class="cl-version-badge current">v82</span>
+        <span class="cl-version-label">Shape sidebar cleanup</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Removed redundant Log Visit and Schedule buttons from sidebar footer</div>
+        <div class="cl-item">Log Visit stays in popup (View / Log Visit / Edit) for quick one-tap access</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v81</span>
+        <span class="cl-version-label">Shape popup: View &amp; Edit only</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Shape popup now shows only View and Edit buttons</div>
+        <div class="cl-item">Log Visit and Schedule moved into the shape sidebar below the Save/Cancel/Delete row</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v80</span>
+        <span class="cl-version-label">Calendar layout simplified</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Single header row: title left, Add + close right</div>
+        <div class="cl-item">Tabs (Callbacks / Scheduled / History) live in the chip row — one row total, no sub-filters</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v79</span>
+        <span class="cl-version-label">Calendar: 3 tabs, shape visit history</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Calendar now has 3 compact scrollable tab chips: Callbacks, Scheduled, History</div>
+        <div class="cl-item">History tab shows all shapes with a last knocked date, sorted most recent first</div>
+        <div class="cl-item">History filters: All, This Week, This Month, Older</div>
+        <div class="cl-item">Each history card shows name, visit date, star rating, next scheduled date if set</div>
+        <div class="cl-item">Tapping any card flies map to that shape and opens popup</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v78</span>
+        <span class="cl-version-label">Fix: new shape draw crash</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Fixed TypeError — focusSchedule param shifted verts into wrong slot in openShapeSidebarFor</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v77</span>
+        <span class="cl-version-label">Shape scheduling &amp; visit logging</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Shape popup now has View / Schedule / Log Visit / Edit buttons</div>
+        <div class="cl-item">Log Visit sets last knocked to now and clears any scheduled date</div>
+        <div class="cl-item">Schedule button opens shape sidebar focused on the new Scheduled Visit date picker</div>
+        <div class="cl-item">Calendar now has two tabs: Callbacks and Shape Visits</div>
+        <div class="cl-item">Shape Visits tab shows all scheduled shapes with Overdue/Today/Week/Upcoming filters</div>
+        <div class="cl-item">Overdue badge counts overdue shape visits alongside overdue callbacks</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v76</span>
         <span class="cl-version-label">Fix: shape hover cursor disabled in pin mode</span>
       </div>
       <div class="cl-items">
@@ -1347,7 +1413,7 @@
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v76</span>
+  <span id="badgeVersion">v82</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
@@ -1500,7 +1566,7 @@
 <!-- CALENDAR SHEET -->
 <div id="calendarSheet">
   <div id="calendarHeader">
-    <div id="calendarTitle">Callbacks</div>
+    <div id="calendarTitle">Schedule</div>
     <div style="display:flex;align-items:center;gap:8px;">
       <button id="calAddBtn" onclick="openAddCallback()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -1509,12 +1575,10 @@
       <button id="calendarCloseBtn" onclick="closeCalendar()">×</button>
     </div>
   </div>
-  <div class="cal-filter-row">
-    <button class="cal-chip active" data-filter="all" onclick="setCalFilter(this)">All</button>
-    <button class="cal-chip" data-filter="overdue" onclick="setCalFilter(this)">Overdue</button>
-    <button class="cal-chip" data-filter="today" onclick="setCalFilter(this)">Today</button>
-    <button class="cal-chip" data-filter="week" onclick="setCalFilter(this)">This Week</button>
-    <button class="cal-chip" data-filter="upcoming" onclick="setCalFilter(this)">Upcoming</button>
+  <div class="cal-filter-row" id="calFilterRow">
+    <button class="cal-chip active" id="calTabCallbacks" onclick="setCalTab('callbacks')">Callbacks</button>
+    <button class="cal-chip" id="calTabShapes" onclick="setCalTab('shapes')">Scheduled</button>
+    <button class="cal-chip" id="calTabHistory" onclick="setCalTab('history')">History</button>
   </div>
   <div id="calendarBody"></div>
 </div>
@@ -1858,6 +1922,10 @@
     <div>
       <div class="section-label">Last Knocked</div>
       <input type="datetime-local" id="shapeLastKnocked" class="pin-text-input" style="font-family:'DM Mono',monospace;font-size:15px;" />
+    </div>
+    <div>
+      <div class="section-label">Scheduled Visit</div>
+      <input type="datetime-local" id="shapeScheduledAt" class="pin-text-input" style="font-family:'DM Mono',monospace;font-size:15px;" />
     </div>
     <div>
       <div class="section-label">Notes</div>

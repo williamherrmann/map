@@ -5,7 +5,8 @@ function updateOverdueBadge() {
   const now = new Date();
   const mapPins = Object.values(pinsCache).filter(p => p.callback_at && new Date(p.callback_at) < now);
   const standalone = Object.values(standaloneCache).filter(p => p.callback_at && new Date(p.callback_at) < now);
-  const count = mapPins.length + standalone.length;
+  const shapes = Object.values(shapesCache).filter(s => s.scheduled_at && new Date(s.scheduled_at) < now);
+  const count = mapPins.length + standalone.length + shapes.length;
   const label = count > 0 ? (count > 99 ? '99+' : String(count)) : '';
   ['mobCalBadge','deskCalBadge'].forEach(id => {
     const el = document.getElementById(id);
@@ -20,12 +21,28 @@ function updateOverdueBadge() {
 // ═══════════════════════════════════════
 let calendarOpen = false;
 let calFilter = 'all';
+let calTab = 'callbacks';
+
+function setCalTab(tab) {
+  calTab = tab;
+  document.getElementById('calTabCallbacks').classList.toggle('active', tab==='callbacks');
+  document.getElementById('calTabShapes').classList.toggle('active', tab==='shapes');
+  document.getElementById('calTabHistory').classList.toggle('active', tab==='history');
+  document.getElementById('calAddBtn').style.display = tab==='callbacks' ? '' : 'none';
+  renderCalendar();
+}
 
 function toggleCalendar(){
   calendarOpen=!calendarOpen;
   if(calendarOpen){
     closeLayersPanel(); closeOverflowMenu();
     if(legendVisible){legendVisible=false;document.getElementById('legend').classList.add('hidden');document.getElementById('mobLegendBtn').classList.remove('active');}
+    // init tab state
+    calTab='callbacks';
+    document.getElementById('calTabCallbacks').classList.add('active');
+    document.getElementById('calTabShapes').classList.remove('active');
+    document.getElementById('calTabHistory').classList.remove('active');
+    document.getElementById('calAddBtn').style.display='';
     renderCalendar();
     document.getElementById('calendarSheet').classList.add('open');
     const bd=document.getElementById('sheetBackdrop');
@@ -64,6 +81,8 @@ function setCalFilter(btn){
 }
 
 function renderCalendar(){
+  if(calTab === 'shapes') { renderShapeVisits(); return; }
+  if(calTab === 'history') { renderShapeHistory(); return; }
   const body=document.getElementById('calendarBody');
   body.innerHTML='';
   const now=new Date();
@@ -141,6 +160,141 @@ function renderCalendar(){
   sheet.addEventListener('touchmove',e=>{if(!dragging)return;const dy=e.touches[0].clientY-startY;if(dy<0)return;sheet.style.transform=`translateY(${dy}px)`;},{passive:true});
   sheet.addEventListener('touchend',e=>{if(!dragging)return;dragging=false;sheet.style.transition='';const dy=e.changedTouches[0].clientY-startY;if(dy>80){closeCalendar();sheet.style.transform='';}else{sheet.style.transform='';}});
 })();
+
+// ═══════════════════════════════════════
+//  SHAPE VISITS TAB
+// ═══════════════════════════════════════
+function renderShapeVisits() {
+  const body = document.getElementById('calendarBody');
+  body.innerHTML = '';
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayEnd = new Date(todayStart.getTime() + 86400000);
+  const weekEnd = new Date(todayStart.getTime() + 7*86400000);
+
+  let shapes = Object.values(shapesCache).filter(s => s.scheduled_at);
+  shapes.sort((a,b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
+
+  shapes = shapes.filter(s => {
+    const t = new Date(s.scheduled_at);
+    if(calFilter==='overdue') return t < now;
+    if(calFilter==='today') return t >= todayStart && t < todayEnd;
+    if(calFilter==='week') return t >= todayStart && t < weekEnd;
+    if(calFilter==='upcoming') return t >= now;
+    return true;
+  });
+
+  if(shapes.length === 0) {
+    body.innerHTML = `<div class="cal-empty">No shape visits scheduled${calFilter!=='all'?' for this filter':''}.<br>Open a shape popup and tap <strong>Schedule</strong> to set a visit date.</div>`;
+    return;
+  }
+
+  shapes.forEach(shape => {
+    const t = new Date(shape.scheduled_at);
+    const isOverdue = t < now;
+    const isToday = t >= todayStart && t < todayEnd;
+    const isSoon = !isOverdue && !isToday && t < new Date(now.getTime() + 2*86400000);
+    const dateStr = t.toLocaleDateString('en-US', {weekday:'short',month:'short',day:'numeric'});
+    const timeStr = t.toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'});
+    let lastKnockedStr = '';
+    if(shape.last_knocked) {
+      const lk = new Date(shape.last_knocked);
+      lastKnockedStr = `Last knocked: ${lk.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
+    }
+    let badge = '';
+    if(isOverdue) badge = `<span class="cal-badge overdue">Overdue</span>`;
+    else if(isToday) badge = `<span class="cal-badge today">Today</span>`;
+    else if(isSoon) badge = `<span class="cal-badge soon">Soon</span>`;
+
+    const card = document.createElement('div');
+    card.className = 'cal-card' + (isOverdue?' overdue':isToday?' today':'');
+    card.innerHTML = `
+      <div class="cal-dot" style="background:${shape.color||'#3b82f6'};"></div>
+      <div class="cal-card-main">
+        <div class="cal-card-name">${escHtml(shape.name||'Untitled')}</div>
+        <div class="cal-card-time">${dateStr} · ${timeStr} ${badge}</div>
+        ${lastKnockedStr ? `<div style="font-size:11px;color:#aaa;margin-top:3px;">${escHtml(lastKnockedStr)}</div>` : ''}
+        ${shape.notes ? `<div style="font-size:11px;color:#aaa;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(shape.notes)}</div>` : ''}
+      </div>`;
+    card.onclick = () => {
+      closeCalendar();
+      // Fly to shape center
+      let center = null;
+      shapesLayerGroup.eachLayer(l => {
+        if(l._shapeId === shape.id) {
+          try { center = l.getBounds().getCenter(); } catch(e){}
+        }
+      });
+      if(center) map.flyTo(center, 15, {duration:0.8});
+      setTimeout(() => {
+        shapesLayerGroup.eachLayer(l => { if(l._shapeId === shape.id) l.openPopup(); });
+      }, 900);
+    };
+    body.appendChild(card);
+  });
+}
+
+// ═══════════════════════════════════════
+//  SHAPE HISTORY TAB
+// ═══════════════════════════════════════
+function renderShapeHistory() {
+  const body = document.getElementById('calendarBody');
+  body.innerHTML = '';
+  const now = new Date();
+  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  let shapes = Object.values(shapesCache).filter(s => s.last_knocked);
+  shapes.sort((a,b) => new Date(b.last_knocked) - new Date(a.last_knocked));
+
+  shapes = shapes.filter(s => {
+    const t = new Date(s.last_knocked);
+    if(calFilter==='week') return t >= weekStart;
+    if(calFilter==='month') return t >= monthStart;
+    if(calFilter==='older') return t < monthStart;
+    return true;
+  });
+
+  if(shapes.length === 0) {
+    body.innerHTML = `<div class="cal-empty">No visited shapes${calFilter!=='all'?' in this period':''}.<br>Tap <strong>Log Visit</strong> on any shape popup to record a visit.</div>`;
+    return;
+  }
+
+  shapes.forEach(shape => {
+    const lk = new Date(shape.last_knocked);
+    const dateStr = lk.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+    const timeStr = lk.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
+    const rating = shape.rating || 0;
+    const starsHtml = [1,2,3,4,5].map(i => `<span style="color:${i<=rating?'#f59e0b':'#ddd'};font-size:12px;">★</span>`).join('');
+    const schedStr = shape.scheduled_at
+      ? `Next: ${new Date(shape.scheduled_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})}`
+      : '';
+
+    const card = document.createElement('div');
+    card.className = 'cal-card';
+    card.innerHTML = `
+      <div class="cal-dot" style="background:${shape.color||'#3b82f6'};"></div>
+      <div class="cal-card-main">
+        <div class="cal-card-name">${escHtml(shape.name||'Untitled')}</div>
+        <div class="cal-card-time">${dateStr} · ${timeStr}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:3px;">
+          <span>${starsHtml}</span>
+          ${schedStr ? `<span style="font-size:11px;color:#1e3a5f;font-weight:600;">${escHtml(schedStr)}</span>` : ''}
+        </div>
+        ${shape.notes ? `<div style="font-size:11px;color:#aaa;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(shape.notes)}</div>` : ''}
+      </div>`;
+    card.onclick = () => {
+      closeCalendar();
+      let center = null;
+      shapesLayerGroup.eachLayer(l => {
+        if(l._shapeId === shape.id) { try { center = l.getBounds().getCenter(); } catch(e){} }
+      });
+      if(center) map.flyTo(center, 15, {duration:0.8});
+      setTimeout(() => { shapesLayerGroup.eachLayer(l => { if(l._shapeId === shape.id) l.openPopup(); }); }, 900);
+    };
+    body.appendChild(card);
+  });
+}
 
 // ═══════════════════════════════════════
 //  STANDALONE CALLBACKS

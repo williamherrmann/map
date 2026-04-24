@@ -12,14 +12,14 @@ async function loadShapesFromSupabase() {
   shapesCache={};
   shapesLayerGroup.clearLayers();
   (data||[]).forEach(row=>{
-    shapesCache[row.id]={id:row.id,name:row.name,color:row.color||'#3b82f6',vertices:row.vertices||[],is_polygon:row.is_polygon,rating:row.rating||0,notes:row.notes||'',last_knocked:row.last_knocked||null};
+    shapesCache[row.id]={id:row.id,name:row.name,color:row.color||'#3b82f6',vertices:row.vertices||[],is_polygon:row.is_polygon,rating:row.rating||0,notes:row.notes||'',last_knocked:row.last_knocked||null,scheduled_at:row.scheduled_at||null};
     renderSavedShape(shapesCache[row.id]);
   });
 }
 
 async function upsertShape(shapeData) {
   if(!currentUser)return;
-  const payload={user_id:currentUser.id,name:shapeData.name,color:shapeData.color,vertices:shapeData.vertices,is_polygon:shapeData.is_polygon,rating:shapeData.rating,notes:shapeData.notes,last_knocked:shapeData.last_knocked||null,updated_at:new Date().toISOString()};
+  const payload={user_id:currentUser.id,name:shapeData.name,color:shapeData.color,vertices:shapeData.vertices,is_polygon:shapeData.is_polygon,rating:shapeData.rating,notes:shapeData.notes,last_knocked:shapeData.last_knocked||null,scheduled_at:shapeData.scheduled_at||null,updated_at:new Date().toISOString()};
   if(shapeData.id)payload.id=shapeData.id;
   const{data,error}=await sb.from('custom_shapes').upsert(payload,{onConflict:'id'}).select().single();
   if(error){console.error('Shape save error:',error);throw error;}
@@ -37,6 +37,13 @@ function buildShapePopup(shape) {
   const starsHtml=[1,2,3,4,5].map(i=>i<=rating?'<span>★</span>':'<span class="empty">★</span>').join('');
   let lastKnockedStr='—';
   if(shape.last_knocked){const lk=new Date(shape.last_knocked);lastKnockedStr=lk.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}
+  let scheduledStr='';
+  if(shape.scheduled_at){
+    const sd=new Date(shape.scheduled_at);
+    const isOverdue=sd<new Date();
+    scheduledStr=sd.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+' '+sd.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    scheduledStr=`<tr><td>Scheduled</td><td style="font-weight:600;color:${isOverdue?'#dc2626':'#1e3a5f'};">${scheduledStr}${isOverdue?' <span style="font-size:10px;background:#fee2e2;color:#dc2626;padding:1px 5px;border-radius:4px;">Overdue</span>':''}</td></tr>`;
+  }
   const noteText=shape.notes?shape.notes.substring(0,80)+(shape.notes.length>80?'…':''):'—';
   return `<div class="popup-inner">
     <div class="popup-header" style="background:${shape.color||'#3b82f6'};">
@@ -45,16 +52,21 @@ function buildShapePopup(shape) {
     <table class="popup-table">
       <tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>
       <tr><td>Last knocked</td><td style="font-weight:600;color:#111;">${lastKnockedStr}</td></tr>
+      ${scheduledStr}
       <tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>
     </table>
     <div style="display:flex;border-top:1.5px solid #eee;">
       <button onclick="openShapeSidebarFor('${escJs(shape.id)}');map.closePopup();"
         style="flex:1;padding:13px 8px;background:#fff;border:none;border-right:1px solid #eee;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#1e3a5f;cursor:pointer;border-radius:0 0 0 11px;-webkit-tap-highlight-color:transparent;">
-        View info
+        View
+      </button>
+      <button onclick="logShapeVisit('${escJs(shape.id)}');map.closePopup();"
+        style="flex:1;padding:13px 8px;background:#fff;border:none;border-right:1px solid #eee;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#10b981;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+        Log Visit
       </button>
       <button onclick="enterShapeEditMode('${escJs(shape.id)}');map.closePopup();"
         style="flex:1;padding:13px 8px;background:#fff;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#f59e0b;cursor:pointer;border-radius:0 0 11px 0;-webkit-tap-highlight-color:transparent;">
-        Edit shape
+        Edit
       </button>
     </div>
   </div>`;
@@ -69,21 +81,13 @@ function renderSavedShape(shape) {
   if(shape.is_polygon&&verts.length>=3){layer=L.polygon(latlngs,{color:shape.color,weight:2.5,fillColor:shape.color,fillOpacity:0.18,interactive:true,pane:'shapesPane'});}
   else{layer=L.polyline(latlngs,{color:shape.color,weight:3,interactive:true,pane:'shapesPane'});}
   layer._shapeId=shape.id;
-  // NOTE: No bindPopup — we open manually so Leaflet's internal click listener
-  // cannot bypass our pinMode/drawMode guard.
   layer.on('click', function(e){
-    console.log('[SHAPE] click — pinMode:', pinMode, 'drawMode:', drawMode);
-    if(drawMode||pinMode){
-      console.log('[SHAPE] blocked');
-      L.DomEvent.stopPropagation(e);
-      e.originalEvent&&e.originalEvent.stopPropagation();
-      e.originalEvent&&e.originalEvent.preventDefault();
-      return false;
-    }
+    if(drawMode||pinMode)return;
     L.DomEvent.stopPropagation(e);
-    e.originalEvent&&e.originalEvent.stopPropagation();
-    L.popup({maxWidth:260,className:'shape-popup'}).setLatLng(e.latlng).setContent(buildShapePopup(shape)).openOn(map);
+    e.originalEvent && e.originalEvent.stopPropagation();
+    this.openPopup();
   });
+  layer.bindPopup(()=>buildShapePopup(shape),{maxWidth:260,className:'shape-popup'});
   shapesLayerGroup.addLayer(layer);
   const labelPt=shape.is_polygon&&verts.length>=3?layer.getBounds().getCenter():latlngs[Math.floor(latlngs.length/2)];
   const labelName=(shape.name||'').trim();
@@ -216,7 +220,7 @@ function finishDrawing(isPolygon=false) {
   drawMarkers.forEach(m=>map.removeLayer(m));drawMarkers=[];
   if(drawPolyline){map.removeLayer(drawPolyline);drawPolyline=null;}
   drawVertices=[];setDrawActive(false);
-  openShapeSidebarFor(null,verts,isPolygon);
+  openShapeSidebarFor(null, false, verts, isPolygon);
 }
 
 // ═══════════════════════════════════════
@@ -244,12 +248,14 @@ document.getElementById('shapeStarRating').addEventListener('click',e=>{const s=
 document.getElementById('shapeStarRating').addEventListener('mouseover',e=>{const s=e.target.closest('.shape-star');if(!s)return;const h=parseInt(s.dataset.val);document.querySelectorAll('#shapeStarRating .shape-star').forEach(st=>{st.textContent=parseInt(st.dataset.val)<=h?'★':'☆';});});
 document.getElementById('shapeStarRating').addEventListener('mouseleave',()=>setShapeStars(currentShapeRating));
 
-function openShapeSidebarFor(id, verts, isPolygon) {
+function openShapeSidebarFor(id, focusSchedule, verts, isPolygon) {
   closePinSidebar();
   if(id&&shapesCache[id]){
     const shape=shapesCache[id];currentShapeId=id;currentShapeVertices=shape.vertices.map(v=>[...v]);currentShapeIsPolygon=shape.is_polygon;currentShapeColor=shape.color||'#3b82f6';
     document.getElementById('shapeName').value=shape.name||'';document.getElementById('shapeNoteTextarea').value=shape.notes||'';
-    if(shape.last_knocked){const dt=new Date(shape.last_knocked);const pad=n=>String(n).padStart(2,'0');document.getElementById('shapeLastKnocked').value=`${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;}else{document.getElementById('shapeLastKnocked').value='';}
+    const pad=n=>String(n).padStart(2,'0');
+    if(shape.last_knocked){const dt=new Date(shape.last_knocked);document.getElementById('shapeLastKnocked').value=`${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;}else{document.getElementById('shapeLastKnocked').value='';}
+    if(shape.scheduled_at){const dt=new Date(shape.scheduled_at);document.getElementById('shapeScheduledAt').value=`${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;}else{document.getElementById('shapeScheduledAt').value='';}
     setShapeStars(shape.rating||0);renderShapeSwatches(currentShapeColor);selectShapeColor(currentShapeColor);
     document.getElementById('shapeSidebarTitle').textContent=shape.name||'Shape';document.getElementById('shapeSidebarSub').textContent=shape.is_polygon?'Polygon':'Line';
     startEditHandles(id);
@@ -257,6 +263,7 @@ function openShapeSidebarFor(id, verts, isPolygon) {
     currentShapeId=null;currentShapeVertices=verts||[];currentShapeIsPolygon=isPolygon||false;currentShapeColor='#3b82f6';
     document.getElementById('shapeName').value='';document.getElementById('shapeNoteTextarea').value='';
     document.getElementById('shapeLastKnocked').value='';
+    document.getElementById('shapeScheduledAt').value='';
     setShapeStars(0);renderShapeSwatches('#3b82f6');selectShapeColor('#3b82f6');
     document.getElementById('shapeSidebarTitle').textContent='New Shape';document.getElementById('shapeSidebarSub').textContent=isPolygon?'Polygon':'Line';
     showNewShapePreview(verts,isPolygon);
@@ -265,7 +272,11 @@ function openShapeSidebarFor(id, verts, isPolygon) {
   const sidebar=document.getElementById('shapeSidebar'),backdrop=document.getElementById('sheetBackdrop');
   sidebar.classList.add('open');backdrop.classList.add('visible');requestAnimationFrame(()=>backdrop.classList.add('show'));
   if(!isMobile()){document.getElementById('legend').classList.add('shifted');document.getElementById('layersPanel').classList.add('shifted');}
-  setTimeout(()=>document.getElementById('shapeName').focus(),400);
+  if(focusSchedule){
+    setTimeout(()=>document.getElementById('shapeScheduledAt').focus(),400);
+  } else {
+    setTimeout(()=>document.getElementById('shapeName').focus(),400);
+  }
 }
 
 let newShapePreviewLayer=null;
@@ -352,12 +363,15 @@ async function saveShape(){
   const notes=document.getElementById('shapeNoteTextarea').value.trim();
   const lkVal=document.getElementById('shapeLastKnocked').value;
   const lastKnocked=lkVal?new Date(lkVal).toISOString():null;
+  const saVal=document.getElementById('shapeScheduledAt').value;
+  const scheduledAt=saVal?new Date(saVal).toISOString():null;
   shapeMarkStatus('saving','Saving…');
-  const shapeData={id:currentShapeId,name,color:currentShapeColor,vertices:currentShapeVertices,is_polygon:currentShapeIsPolygon,rating:currentShapeRating,notes,last_knocked:lastKnocked};
+  const shapeData={id:currentShapeId,name,color:currentShapeColor,vertices:currentShapeVertices,is_polygon:currentShapeIsPolygon,rating:currentShapeRating,notes,last_knocked:lastKnocked,scheduled_at:scheduledAt};
   try{
     const saved=await upsertShape(shapeData);shapeData.id=saved.id;shapesCache[saved.id]=shapeData;reRenderAllShapes();
     if(newShapePreviewLayer){map.removeLayer(newShapePreviewLayer);newShapePreviewLayer=null;}
     clearEditHandles();currentShapeId=saved.id;closeShapeSidebar();
+    updateOverdueBadge();
   }catch(e){shapeMarkStatus('','Save failed');alert('Save failed — check connection.');}
 }
 
@@ -366,6 +380,28 @@ async function deleteShape(){
   if(!confirm('Delete this shape?'))return;
   try{await deleteShapeFromDB(currentShapeId);delete shapesCache[currentShapeId];reRenderAllShapes();closeShapeSidebar();}
   catch(e){alert('Delete failed — check connection.');}
+}
+
+// ═══════════════════════════════════════
+//  LOG VISIT (one-tap from popup)
+// ═══════════════════════════════════════
+async function logShapeVisit(id) {
+  const shape = shapesCache[id];
+  if(!shape) return;
+  const now = new Date().toISOString();
+  shape.last_knocked = now;
+  shape.scheduled_at = null;  // clear scheduled visit — we just went!
+  try {
+    await upsertShape(shape);
+    reRenderAllShapes();
+    updateOverdueBadge();
+    // Re-open popup with updated data
+    setTimeout(()=>{
+      shapesLayerGroup.eachLayer(l=>{
+        if(l._shapeId===id) l.openPopup();
+      });
+    }, 100);
+  } catch(e) { alert('Save failed — check connection.'); }
 }
 
 function shapeMarkStatus(dotClass,text){
