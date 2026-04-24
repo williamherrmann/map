@@ -69,13 +69,21 @@ function renderSavedShape(shape) {
   if(shape.is_polygon&&verts.length>=3){layer=L.polygon(latlngs,{color:shape.color,weight:2.5,fillColor:shape.color,fillOpacity:0.18,interactive:true,pane:'shapesPane'});}
   else{layer=L.polyline(latlngs,{color:shape.color,weight:3,interactive:true,pane:'shapesPane'});}
   layer._shapeId=shape.id;
+  // NOTE: No bindPopup — we open manually so Leaflet's internal click listener
+  // cannot bypass our pinMode/drawMode guard.
   layer.on('click', function(e){
-    if(drawMode||pinMode)return;
+    console.log('[SHAPE] click — pinMode:', pinMode, 'drawMode:', drawMode);
+    if(drawMode||pinMode){
+      console.log('[SHAPE] blocked');
+      L.DomEvent.stopPropagation(e);
+      e.originalEvent&&e.originalEvent.stopPropagation();
+      e.originalEvent&&e.originalEvent.preventDefault();
+      return false;
+    }
     L.DomEvent.stopPropagation(e);
-    e.originalEvent && e.originalEvent.stopPropagation();
-    this.openPopup();
+    e.originalEvent&&e.originalEvent.stopPropagation();
+    L.popup({maxWidth:260,className:'shape-popup'}).setLatLng(e.latlng).setContent(buildShapePopup(shape)).openOn(map);
   });
-  layer.bindPopup(()=>buildShapePopup(shape),{maxWidth:260,className:'shape-popup'});
   shapesLayerGroup.addLayer(layer);
   const labelPt=shape.is_polygon&&verts.length>=3?layer.getBounds().getCenter():latlngs[Math.floor(latlngs.length/2)];
   const labelName=(shape.name||'').trim();

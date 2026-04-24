@@ -27,7 +27,6 @@ map.getPane('shapesPane').style.zIndex = 450;
 map.getPane('shapesPane').style.pointerEvents = 'none';
 map.createPane('pinsPane');
 map.getPane('pinsPane').style.zIndex = 460;
-map.getPane('pinsPane').style.pointerEvents = 'none';
 map.createPane('demographicsPane');
 map.getPane('demographicsPane').style.zIndex = 420;
 map.getPane('demographicsPane').style.pointerEvents = 'none';
@@ -96,37 +95,30 @@ function buildPopup(p, muniLayer) {
   const starsHtml=[1,2,3,4,5].map(i=>i<=rating?'<span>★</span>':'<span class="empty">★</span>').join('');
   const noteText=d&&d.note?d.note.substring(0,70)+(d.note.length>70?'…':''): null;
 
-  // Always show census stats — fetch data on demand if not yet loaded
-  const hasData = Object.keys(incomeLookup).length || Object.keys(ownershipLookupGlobal).length || Object.keys(ageLookupGlobal).length;
+  // Census stats — render inline if ready, else fetch then reopen popup
   let statsHtml = '';
-  if(hasData && muniLayer) {
+  // Use the loaded flags — more reliable than checking lookup object size
+  const _censusReady = tractGeoCache && incomeDataLoaded && ownershipDataLoaded && ageDataLoaded;
+
+  if (_censusReady && muniLayer) {
     const stats = getMuniStats(muniLayer);
-    statsHtml = buildMuniStatsHtml(stats);
-  } else {
-    // Show a loading state and kick off a background fetch
-    statsHtml = `<div id="census-loading-${escHtml(p.MUNICIPAL1.replace(/\s/g,'_'))}" style="padding:8px 16px 6px;font-size:11px;color:#bbb;font-family:'DM Mono',monospace;">⏳ Loading census data…</div>`;
-    // Fetch the three core datasets in parallel, then refresh popup
-    Promise.all([fetchIncomeData(), fetchOwnershipData(), fetchAgeData(), getTractGeo()])
-      .then(() => {
-        // Find the open popup for this municipality and update it in place
-        if(!map.isPopupOpen()) return;
-        const popupEl = document.querySelector('.leaflet-popup-content');
-        if(!popupEl) return;
-        const loadingEl = popupEl.querySelector('[id^="census-loading-"]');
-        if(!loadingEl) return;
-        const stats = getMuniStats(muniLayer);
-        const html = buildMuniStatsHtml(stats);
-        loadingEl.outerHTML = html || '<div style="padding:8px 16px 6px;font-size:11px;color:#bbb;font-family:\'DM Mono\',monospace;">No census data for this area.</div>';
-        // Reposition popup in case content grew
-        map._popup && map._popup.update && map._popup.update();
-      })
-      .catch(() => {
-        const popupEl = document.querySelector('.leaflet-popup-content');
-        if(popupEl) {
-          const loadingEl = popupEl.querySelector('[id^="census-loading-"]');
-          if(loadingEl) loadingEl.textContent = 'Census data unavailable.';
+    statsHtml = stats ? buildMuniStatsHtml(stats, true) : '';
+  } else if (muniLayer) {
+    const _layer = muniLayer;
+    Promise.all([
+      fetchIncomeData(),
+      fetchOwnershipData(),
+      fetchAgeData(),
+      getTractGeo()
+    ]).then(() => {
+      if (!map.isPopupOpen()) return;
+      map.closePopup();
+      setTimeout(() => {
+        if (tractGeoCache && incomeDataLoaded && ownershipDataLoaded && ageDataLoaded) {
+          _layer.openPopup();
         }
-      });
+      }, 100);
+    }).catch(e => console.warn('Census load failed:', e));
   }
 
   return `<div class="popup-inner"><div class="popup-header"><div class="popup-name">${escHtml(p.MUNICIPAL1)}</div></div><table class="popup-table"><tr><td>Type</td><td>${formatClass(p.CLASS_OF_M)}</td></tr><tr><td>County</td><td>${titleCase(p.COUNTY_NAM)}</td></tr>${(()=>{const utils=getElectricUtilitiesForCounty(p.COUNTY_NAM);return utils.length?`<tr><td>Electric</td><td style="font-size:11px;line-height:1.6;">${utils.map(u=>escHtml(u)).join('<br>')}</td></tr>`:''})()}<tr><td>Permit</td><td>${permitHtml}</td></tr><tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>${noteText?`<tr class="popup-note-row"><td>Notes</td><td>${escHtml(noteText)}</td></tr>`:''}</table>${statsHtml}<div class="popup-footer" style="padding:10px 16px;"><button onclick="openSidebarFor('${escJs(p.MUNICIPAL1)}','${escJs(p.CLASS_OF_M)}','${escJs(p.COUNTY_NAM)}');map.closePopup();return false;" style="width:100%;padding:11px;border:none;border-radius:8px;background:#1e3a5f;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;">Edit notes</button></div></div>`;

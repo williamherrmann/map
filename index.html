@@ -542,6 +542,11 @@
       transition:border-color 0.15s;
     }
     .pin-type-select:focus { border-color:#1e3a5f; }
+    #pinModeStage, #pinModeMarker { transition:background 0.15s, color 0.15s; }
+    #pinModeStage.active { background:#1e3a5f !important; color:#fff !important; }
+    #pinModeMarker.active { background:#1e3a5f !important; color:#fff !important; }
+    #pinModeStage:not(.active) { background:#f4f4f6 !important; color:#666 !important; }
+    #pinModeMarker:not(.active) { background:#f4f4f6 !important; color:#666 !important; }
 
     /* ══ CALLBACK FIELDS ══ */
     #callbackFields {
@@ -997,7 +1002,112 @@
 
         <div class="cl-version">
       <div class="cl-version-header">
-        <span class="cl-version-badge current">v64</span>
+        <span class="cl-version-badge current">v74</span>
+        <span class="cl-version-label">Fix: Prior Install shows in stage dropdown</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Prior Install now appears in the Funnel Stage dropdown when viewing an existing pin</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v73</span>
+        <span class="cl-version-label">Appointment Run back as funnel stage</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">5-stage funnel: Callback → Warm Transfer → Appointment Run → Contract Signed → Installed</div>
+        <div class="cl-item">Prior Install now shows in Stage mode (not Marker) when clicked</div>
+        <div class="cl-item">Analytics funnel updated with Appointment Run sat rate step</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v72</span>
+        <span class="cl-version-label">Fix: Marker dropdown now visible in pin sidebar</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Fixed Marker mode toggle — wrapper div was hidden, select was never shown</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v71</span>
+        <span class="cl-version-label">Fix: duplicate meta variable crash in pin sidebar</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Fixed SyntaxError — meta was declared twice in _populatePinSidebar</div>
+        <div class="cl-item">Fixed missing dateLabel declaration introduced by prior edit</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v70</span>
+        <span class="cl-version-label">Fix: Installed pins no longer convert to Prior Install</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Removed the auto-migration that was converting all Installed pins to Prior Install on load</div>
+        <div class="cl-item">New Installed pins you create will now stay as Installed correctly</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v69</span>
+        <span class="cl-version-label">Stage vs Marker pin mode</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Pin sidebar now has a Stage / Marker toggle at the top</div>
+        <div class="cl-item">Stage: Callback, Warm Transfer, Contract Signed, Installed — tracked in analytics</div>
+        <div class="cl-item">Marker: New Construction (and others in future) — reference only, not in funnel</div>
+        <div class="cl-item">Marker pins show a minimal form (no contact fields) since they track locations not people</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v68</span>
+        <span class="cl-version-label">New Construction pins → pink squares</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Existing New Construction pins are auto-converted to pink square shapes on load</div>
+        <div class="cl-item">The original pin is deleted from the database and replaced with a shape</div>
+        <div class="cl-item">One-time migration — runs automatically, no action needed</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v67</span>
+        <span class="cl-version-label">Prior Installs use standard purple pin</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Prior Install pins now render as normal purple teardrops, same style as Installed pins</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v66</span>
+        <span class="cl-version-label">All existing installs → Prior Install</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">All previously saved Installed pins now load as Prior Install (purple square) on the map</div>
+        <div class="cl-item">Prior Installs are purple squares; your Installed pins (from your funnel) are purple teardrops</div>
+        <div class="cl-item">Prior Installs remain excluded from funnel analytics</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v65</span>
+        <span class="cl-version-label">Pin stages redesign &amp; Prior Installs</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Removed New Construction pins — replaced with square Prior Install markers (pink)</div>
+        <div class="cl-item">New pin stages: Callback → Warm Transfer → Contract Signed → Installed</div>
+        <div class="cl-item">Prior Installs show as pink squares on map but are excluded from your funnel analytics</div>
+        <div class="cl-item">Analytics funnel updated to reflect 4-stage pipeline</div>
+        <div class="cl-item">Legacy pins auto-migrated on load (newconstruction→priorinstall, appointmentrun→contractsigned)</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v64</span>
         <span class="cl-version-label">Fix: Electric utility lookup</span>
       </div>
       <div class="cl-items">
@@ -1218,7 +1328,7 @@
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v64</span>
+  <span id="badgeVersion">v74</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
@@ -1449,10 +1559,12 @@
     <div>
       <div class="lv-field-label">Update pin type</div>
       <select id="lvPinType" class="pin-type-select">
-        <option value="warmtransfer">Warm Transfer</option>
         <option value="callback">Callback</option>
+        <option value="warmtransfer">Warm Transfer</option>
+        <option value="appointmentrun">Appointment Run</option>
+        <option value="contractsigned">Contract Signed</option>
         <option value="installed">Installed</option>
-        <option value="notinterested">Not Interested</option>
+        <option value="priorinstall">Prior Install</option>
         <option value="newconstruction">New Construction</option>
       </select>
     </div>
@@ -1599,10 +1711,13 @@
   </div>
   <div id="pinListFilters">
     <button class="cal-chip active" data-plfilter="all" onclick="setPinListFilter(this)">All</button>
-    <button class="cal-chip" data-plfilter="warmtransfer" onclick="setPinListFilter(this)">Warm Transfer</button>
     <button class="cal-chip" data-plfilter="callback" onclick="setPinListFilter(this)">Callback</button>
+    <button class="cal-chip" data-plfilter="warmtransfer" onclick="setPinListFilter(this)">Warm Transfer</button>
+    <button class="cal-chip" data-plfilter="appointmentrun" onclick="setPinListFilter(this)">Appt Run</button>
+    <button class="cal-chip" data-plfilter="contractsigned" onclick="setPinListFilter(this)">Contract Signed</button>
     <button class="cal-chip" data-plfilter="installed" onclick="setPinListFilter(this)">Installed</button>
-    <button class="cal-chip" data-plfilter="notinterested" onclick="setPinListFilter(this)">Not Interested</button>
+    <button class="cal-chip" data-plfilter="priorinstall" onclick="setPinListFilter(this)">Prior Install</button>
+    <button class="cal-chip" data-plfilter="newconstruction" onclick="setPinListFilter(this)">New Construction</button>
   </div>
   <div id="pinListCount"></div>
   <div id="pinListBody"></div>
@@ -1751,18 +1866,43 @@
     <button id="pinCloseBtn" onclick="closePinSidebar()" aria-label="Close">×</button>
   </div>
   <div id="pinSidebarBody">
-    <div>
-      <div class="section-label">Pin Type</div>
-      <select id="pinTypeSelect" class="pin-type-select" onchange="selectPinTypeFromDropdown(this)">
-        <option value="warmtransfer">Warm Transfer</option>
+    <!-- PIN MODE TOGGLE -->
+    <div style="margin-bottom:14px;">
+      <div style="display:flex;gap:0;border:1.5px solid #e0e0e6;border-radius:10px;overflow:hidden;">
+        <button id="pinModeStage" onclick="setPinMode('stage')"
+          style="flex:1;padding:9px 0;border:none;background:#1e3a5f;color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:background 0.15s;"
+          class="active">
+          📊 Stage
+        </button>
+        <button id="pinModeMarker" onclick="setPinMode('marker')"
+          style="flex:1;padding:9px 0;border:none;background:#f4f4f6;color:#666;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:background 0.15s;">
+          📍 Marker
+        </button>
+      </div>
+    </div>
+    <!-- STAGE SELECT -->
+    <div id="pinStageSelectWrap">
+      <div class="section-label">Funnel Stage</div>
+      <select id="pinStageSelect" class="pin-type-select" onchange="selectPinTypeFromDropdown(this)">
         <option value="callback">Callback</option>
+        <option value="warmtransfer">Warm Transfer</option>
+        <option value="appointmentrun">Appointment Run</option>
+        <option value="contractsigned">Contract Signed</option>
         <option value="installed">Installed</option>
-        <option value="notinterested">Not Interested</option>
+        <option value="priorinstall">Prior Install</option>
+      </select>
+    </div>
+    <!-- MARKER SELECT -->
+    <div id="pinMarkerSelectWrap" style="display:none;">
+      <div class="section-label">Marker Type</div>
+      <select id="pinMarkerSelect" class="pin-type-select" onchange="selectPinTypeFromDropdown(this)">
         <option value="newconstruction">New Construction</option>
       </select>
     </div>
 
-    <!-- PIN DETAILS — same fields for all 3 types -->
+    <!-- CONTACT FIELDS (stage only) -->
+    <div id="pinContactFields">
+    <!-- PIN DETAILS — same fields for all stage types -->
     <div id="callbackFields" class="visible">
       <input type="text" id="cbFullName" class="pin-text-input" placeholder="Full name" autocomplete="name" />
       <div class="cb-contact-row">
@@ -1778,6 +1918,7 @@
         <input type="datetime-local" id="cbDatetime" class="pin-text-input" />
       </div>
     </div>
+    </div><!-- /pinContactFields -->
 
     <div>
       <div class="section-label">Notes</div>

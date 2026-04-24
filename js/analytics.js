@@ -47,12 +47,14 @@ function setAnalyticsTab(tab) {
 
 // ── CORE STATS BUILDER ───────────────────
 // Pin type → funnel stage mapping
-// warmtransfer = Transferred, callback/appointmentrun = Appointment Ran, installed = Signed
-// notinterested / newconstruction = excluded
+// callback = Callback, warmtransfer = Warm Transfer, contractsigned = Contract Signed, installed = Installed (my lead)
+// priorinstall = excluded (shown on map only, not my leads)
 const FUNNEL_MAP = {
-    warmtransfer:   'transferred',
-    appointmentrun: 'sat',
-    contractsigned: 'signed',
+    callback:        'callback',
+    warmtransfer:    'transferred',
+    appointmentrun:  'sat',
+    contractsigned:  'signed',
+    installed:       'installed',
   };
 
 function buildStats() {
@@ -84,30 +86,35 @@ function buildStats() {
       };
     });
 
+    const callbacks  = all.filter(t => t.status === 'callback').length;
     const total   = all.filter(t => t.status === 'transferred').length;
     const sat     = all.filter(t => t.status === 'sat').length;
     const signed  = all.filter(t => t.status === 'signed').length;
+    const installed = all.filter(t => t.status === 'installed').length;
   // By muni
   const byMuni = {};
   all.forEach(t => {
     const key = t.muni_name || 'Unknown';
-    if (!byMuni[key]) byMuni[key] = { name: key, county: t.county, transferred: 0, sat: 0, signed: 0 };
+    if (!byMuni[key]) byMuni[key] = { name: key, county: t.county, callbacks: 0, transferred: 0, sat: 0, signed: 0, installed: 0 };
     byMuni[key].transferred++;
+    if (t.status === 'callback') byMuni[key].callbacks++;
     if (t.status === 'sat') byMuni[key].sat++;
     if (t.status === 'signed') byMuni[key].signed++;
+    if (t.status === 'installed') byMuni[key].installed++;
   });
 
   // By rep
   const byRep = {};
   all.forEach(t => {
     const key = t.rep_name || 'Unassigned';
-    if (!byRep[key]) byRep[key] = { name: key, transferred: 0, sat: 0, signed: 0 };
+    if (!byRep[key]) byRep[key] = { name: key, transferred: 0, sat: 0, signed: 0, installed: 0 };
     byRep[key].transferred++;
-    if (t.status === 'sat' || t.status === 'signed') byRep[key].sat++;
-    if (t.status === 'signed') byRep[key].signed++;
+    if (t.status === 'sat' || t.status === 'signed' || t.status === 'installed') byRep[key].sat++;
+    if (t.status === 'signed' || t.status === 'installed') byRep[key].signed++;
+    if (t.status === 'installed') byRep[key].installed++;
   });
 
-  return { all, total, sat, signed, byMuni, byRep };
+  return { all, callbacks, total, sat, signed, installed, byMuni, byRep };
 }
 
 // ── RENDER ───────────────────────────────
@@ -128,87 +135,86 @@ function pct(num, den) {
   return Math.round((num / den) * 100);
 }
 
-// ─ FUNNEL TAB ────────────────────────────
 function renderFunnel(body, stats) {
-  const { total, sat, signed } = stats;
+  const { callbacks, total, sat, signed, installed } = stats;
+  const transferRate = pct(total, callbacks + total);
   const satRate = pct(sat, total);
-  const closeRate = pct(signed, sat);
-  const overallRate = pct(signed, total);
+  const signRate = pct(signed, sat);
+  const installRate = pct(installed, signed);
+  const overallRate = pct(installed, callbacks + total);
 
   body.innerHTML = `
     <div class="an-section-label">Overall Funnel</div>
     <div class="an-funnel">
       <div class="an-funnel-step">
-        <div class="an-funnel-bar" style="background:#f59e0b;width:100%;"></div>
+        <div class="an-funnel-bar" style="background:#00B8FD;width:100%;"></div>
+        <div class="an-funnel-meta">
+          <span class="an-funnel-emoji">📋</span>
+          <div><div class="an-funnel-label">Callbacks</div><div class="an-funnel-count">${callbacks}</div></div>
+        </div>
+      </div>
+      <div class="an-funnel-arrow">↓ ${transferRate}% transferred</div>
+      <div class="an-funnel-step">
+        <div class="an-funnel-bar" style="background:#95D360;width:${pct(total,callbacks+total)||0}%;min-width:${total?'20%':'0'};"></div>
         <div class="an-funnel-meta">
           <span class="an-funnel-emoji">📞</span>
-          <div>
-            <div class="an-funnel-label">Warm Transfers</div>
-            <div class="an-funnel-count">${total}</div>
-          </div>
+          <div><div class="an-funnel-label">Warm Transfers</div><div class="an-funnel-count">${total}</div></div>
         </div>
       </div>
       <div class="an-funnel-arrow">↓ ${satRate}% sat rate</div>
       <div class="an-funnel-step">
-        <div class="an-funnel-bar" style="background:#3b82f6;width:${satRate}%;min-width:${sat?'20%':'0'};"></div>
+        <div class="an-funnel-bar" style="background:#f59e0b;width:${pct(sat,callbacks+total)||0}%;min-width:${sat?'15%':'0'};"></div>
         <div class="an-funnel-meta">
           <span class="an-funnel-emoji">✅</span>
-          <div>
-            <div class="an-funnel-label">Appointments Ran</div>
-            <div class="an-funnel-count">${sat}</div>
-          </div>
+          <div><div class="an-funnel-label">Appointments Run</div><div class="an-funnel-count">${sat}</div></div>
         </div>
       </div>
-      <div class="an-funnel-arrow">↓ ${closeRate}% close rate</div>
+      <div class="an-funnel-arrow">↓ ${signRate}% close rate</div>
       <div class="an-funnel-step">
-        <div class="an-funnel-bar" style="background:#10b981;width:${pct(signed,total)}%;min-width:${signed?'15%':'0'};"></div>
+        <div class="an-funnel-bar" style="background:#10b981;width:${pct(signed,callbacks+total)||0}%;min-width:${signed?'12%':'0'};"></div>
         <div class="an-funnel-meta">
-          <span class="an-funnel-emoji">💰</span>
-          <div>
-            <div class="an-funnel-label">Signed</div>
-            <div class="an-funnel-count">${signed}</div>
-          </div>
+          <span class="an-funnel-emoji">✍️</span>
+          <div><div class="an-funnel-label">Contract Signed</div><div class="an-funnel-count">${signed}</div></div>
+        </div>
+      </div>
+      <div class="an-funnel-arrow">↓ ${installRate}% install rate</div>
+      <div class="an-funnel-step">
+        <div class="an-funnel-bar" style="background:#8b5cf6;width:${pct(installed,callbacks+total)||0}%;min-width:${installed?'10%':'0'};"></div>
+        <div class="an-funnel-meta">
+          <span class="an-funnel-emoji">⚡</span>
+          <div><div class="an-funnel-label">Installed</div><div class="an-funnel-count">${installed}</div></div>
         </div>
       </div>
     </div>
     <div class="an-stat-grid">
-      <div class="an-stat-card">
-        <div class="an-stat-num" style="color:#f59e0b;">${total}</div>
-        <div class="an-stat-lbl">Transfers</div>
-      </div>
-      <div class="an-stat-card">
-        <div class="an-stat-num" style="color:#3b82f6;">${satRate}%</div>
-        <div class="an-stat-lbl">Sat Rate</div>
-      </div>
-      <div class="an-stat-card">
-        <div class="an-stat-num" style="color:#10b981;">${closeRate}%</div>
-        <div class="an-stat-lbl">Close Rate</div>
-      </div>
-      <div class="an-stat-card">
-        <div class="an-stat-num" style="color:#8b5cf6;">${overallRate}%</div>
-        <div class="an-stat-lbl">Overall</div>
-      </div>
+      <div class="an-stat-card"><div class="an-stat-num" style="color:#00B8FD;">${callbacks}</div><div class="an-stat-lbl">Callbacks</div></div>
+      <div class="an-stat-card"><div class="an-stat-num" style="color:#95D360;">${total}</div><div class="an-stat-lbl">Transfers</div></div>
+      <div class="an-stat-card"><div class="an-stat-num" style="color:#f59e0b;">${satRate}%</div><div class="an-stat-lbl">Sat Rate</div></div>
+      <div class="an-stat-card"><div class="an-stat-num" style="color:#10b981;">${signRate}%</div><div class="an-stat-lbl">Close Rate</div></div>
+      <div class="an-stat-card"><div class="an-stat-num" style="color:#8b5cf6;">${installed}</div><div class="an-stat-lbl">Installed</div></div>
+      <div class="an-stat-card"><div class="an-stat-num" style="color:#6366f1;">${overallRate}%</div><div class="an-stat-lbl">Overall</div></div>
     </div>
-    ${total === 0 ? `<div class="an-empty">No funnel pins yet.<br>Place <strong>Warm Transfer</strong>, <strong>Callback</strong>, <strong>Appointment Run</strong>, or <strong>Installed</strong> pins on the map.</div>` : ''}
+    ${(callbacks + total) === 0 ? `<div class="an-empty">No funnel pins yet.<br>Place <strong>Callback</strong>, <strong>Warm Transfer</strong>, <strong>Appointment Run</strong>, <strong>Contract Signed</strong>, or <strong>Installed</strong> pins on the map.</div>` : ''}
   `;
 }
+
 
 // ─ TOP MUNIS TAB ─────────────────────────
 function renderMunis(body, stats) {
   const munis = Object.values(stats.byMuni)
     .filter(m => m.transferred > 0)
-    .sort((a, b) => (pct(b.signed, b.transferred) - pct(a.signed, a.transferred)) || b.transferred - a.transferred);
+    .sort((a, b) => (pct(b.installed, b.transferred) - pct(a.installed, a.transferred)) || b.transferred - a.transferred);
 
   if (munis.length === 0) {
     body.innerHTML = `<div class="an-empty">No municipality data yet.<br>Make sure pins are placed on the map so they auto-detect the municipality.</div>`;
     return;
   }
 
-  body.innerHTML = `<div class="an-section-label">By Municipality · sorted by close rate</div>`;
+  body.innerHTML = `<div class="an-section-label">By Municipality · sorted by install rate</div>`;
 
   munis.forEach((m, i) => {
-    const satRate = pct(m.sat, m.transferred);
-    const closeRate = pct(m.signed, m.transferred);
+    const signRate = pct(m.signed, m.transferred);
+    const installRate = pct(m.installed, m.transferred);
     const card = document.createElement('div');
     card.className = 'an-muni-card';
     card.innerHTML = `
@@ -217,19 +223,19 @@ function renderMunis(body, stats) {
         <div class="an-muni-name">${escHtml(m.name)}</div>
         ${m.county ? `<div class="an-muni-county">${escHtml(m.county)} County</div>` : ''}
         <div class="an-muni-bars">
-          <div class="an-mini-bar-wrap" title="Sat rate">
-            <div class="an-mini-bar" style="width:${satRate}%;background:#3b82f6;"></div>
-          </div>
           <div class="an-mini-bar-wrap" title="Close rate">
-            <div class="an-mini-bar" style="width:${closeRate}%;background:#10b981;"></div>
+            <div class="an-mini-bar" style="width:${signRate}%;background:#10b981;"></div>
+          </div>
+          <div class="an-mini-bar-wrap" title="Install rate">
+            <div class="an-mini-bar" style="width:${installRate}%;background:#8b5cf6;"></div>
           </div>
         </div>
       </div>
       <div class="an-muni-nums">
-        <div class="an-muni-stat"><span style="color:#f59e0b;">${m.transferred}</span><span class="an-muni-stat-lbl">set</span></div>
-        <div class="an-muni-stat"><span style="color:#3b82f6;">${m.sat}</span><span class="an-muni-stat-lbl">ran</span></div>
+        <div class="an-muni-stat"><span style="color:#95D360;">${m.transferred}</span><span class="an-muni-stat-lbl">set</span></div>
         <div class="an-muni-stat"><span style="color:#10b981;">${m.signed}</span><span class="an-muni-stat-lbl">signed</span></div>
-        <div class="an-muni-stat"><span style="color:#8b5cf6;font-weight:700;">${closeRate}%</span><span class="an-muni-stat-lbl">close</span></div>
+        <div class="an-muni-stat"><span style="color:#8b5cf6;">${m.installed}</span><span class="an-muni-stat-lbl">installed</span></div>
+        <div class="an-muni-stat"><span style="color:#6366f1;font-weight:700;">${installRate}%</span><span class="an-muni-stat-lbl">rate</span></div>
       </div>
     `;
     card.onclick = () => {
@@ -272,20 +278,20 @@ function renderReps(body, stats) {
   body.innerHTML = `<div class="an-section-label">Rep Performance · sorted by signed</div>`;
 
   reps.forEach((r, i) => {
-    const satRate = pct(r.sat, r.transferred);
-    const closeRate = pct(r.signed, r.transferred);
+    const signRate = pct(r.signed, r.transferred);
+    const installRate = pct(r.installed, r.transferred);
     const card = document.createElement('div');
     card.className = 'an-rep-card';
     card.innerHTML = `
       <div class="an-rep-avatar">${escHtml((r.name||'?').slice(0,2).toUpperCase())}</div>
       <div class="an-rep-info">
         <div class="an-rep-name">${escHtml(r.name)}</div>
-        <div class="an-rep-sub">${r.transferred} transfers · ${satRate}% sat · ${closeRate}% close</div>
+        <div class="an-rep-sub">${r.transferred} transfers · ${signRate}% close · ${installRate}% install</div>
         <div class="an-rep-track">
-          <div class="an-rep-fill" style="width:${pct(r.signed,stats.total?Math.max(...Object.values(stats.byRep).map(x=>x.signed),1):1)}%;background:#10b981;"></div>
+          <div class="an-rep-fill" style="width:${pct(r.installed,stats.total?Math.max(...Object.values(stats.byRep).map(x=>x.installed),1):1)}%;background:#8b5cf6;"></div>
         </div>
       </div>
-      <div class="an-rep-big" style="color:#10b981;">${r.signed} <span style="font-size:11px;color:#aaa;">signed</span></div>
+      <div class="an-rep-big" style="color:#8b5cf6;">${r.installed} <span style="font-size:11px;color:#aaa;">installed</span></div>
     `;
     body.appendChild(card);
   });
@@ -295,10 +301,10 @@ function renderReps(body, stats) {
 function renderReplicate(body, stats) {
   body.innerHTML = `<div class="an-section-label">Replication Targets</div>`;
 
-  const signed = Object.values(stats.byMuni).filter(m => m.signed > 0);
+  const signed = Object.values(stats.byMuni).filter(m => m.installed > 0);
 
   if (signed.length === 0) {
-    body.innerHTML += `<div class="an-empty">No installed customers yet.<br>Once you mark pins as <strong>Installed</strong>, this tab will find similar unworked municipalities to target next.</div>`;
+    body.innerHTML += `<div class="an-empty">No installed customers yet.<br>Once you mark pins as <strong>Installed</strong> (your leads), this tab will find similar unworked municipalities to target next.</div>`;
     return;
   }
 
@@ -427,13 +433,13 @@ function applyAnalyticsHeat() {
     return;
   }
   const stats = buildStats();
-  const maxSigned = Math.max(...Object.values(stats.byMuni).map(m => m.signed), 1);
+  const maxSigned = Math.max(...Object.values(stats.byMuni).map(m => m.installed), 1);
 
   if (geoLayer) {
     geoLayer.eachLayer(l => {
       const m = stats.byMuni[l._muniName];
-      if (!m || m.signed === 0) return;
-      const intensity = m.signed / maxSigned;
+      if (!m || m.installed === 0) return;
+      const intensity = m.installed / maxSigned;
       const alpha = 0.15 + intensity * 0.55;
       const g = Math.round(200 - intensity * 80);
       const layer = L.geoJSON(l.feature, {

@@ -71,10 +71,29 @@ function openSidebarFor(name,cls,county) {
   if(censusEl){
     let muniLayer=null;
     if(geoLayer)geoLayer.eachLayer(l=>{if(l._muniName===name)muniLayer=l;});
-    if(muniLayer&&Object.keys(incomeLookup).length&&tractGeoCache){
+    if(muniLayer&&incomeDataLoaded&&ownershipDataLoaded&&ageDataLoaded&&tractGeoCache){
       const stats=getMuniStats(muniLayer);
       censusEl.innerHTML=stats?buildMuniStatsHtml(stats,false):'';
       censusEl.style.display=stats?'block':'none';
+      // Also fetch extended data if not loaded yet — re-render when ready
+      if(!extendedDataLoaded){
+        fetchExtendedData().then(()=>{
+          if(currentMuni&&currentMuni.name===name){
+            const s2=getMuniStats(muniLayer);
+            if(s2){censusEl.innerHTML=buildMuniStatsHtml(s2,false);censusEl.style.display='block';}
+          }
+        }).catch(()=>{});
+      }
+    } else if(muniLayer) {
+      // Data not loaded yet — fetch everything then render
+      censusEl.style.display='none';
+      Promise.all([fetchIncomeData(),fetchOwnershipData(),fetchAgeData(),fetchExtendedData(),getTractGeo()])
+        .then(()=>{
+          if(currentMuni&&currentMuni.name===name){
+            const s2=getMuniStats(muniLayer);
+            if(s2){censusEl.innerHTML=buildMuniStatsHtml(s2,false);censusEl.style.display='block';}
+          }
+        }).catch(()=>{});
     } else {
       censusEl.style.display='none';
     }

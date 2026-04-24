@@ -370,17 +370,21 @@ function buildMuniStatsHtml(stats, preview=false) {
     </div>`;
 
   if(preview) {
-    // Three most useful stats as compact pills for the map popup
+    // Compact pills for the map popup: income, ownership, age, pin count
     const items = [
       stats.income    !== null ? {icon:'💵', val:'$'+(stats.income/1000).toFixed(0)+'k'}  : null,
       stats.ownership !== null ? {icon:'🏠', val:stats.ownership+'%'}                      : null,
       stats.age       !== null ? {icon:'🎂', val:stats.age+' yrs'}                         : null,
     ].filter(Boolean).slice(0,3);
-    if(!items.length) return '';
+    if(!items.length && !stats.pinCount) return '';
     const pills = items.map(it=>
       `<span style="display:inline-flex;align-items:center;gap:3px;background:#f4f4f6;border:1px solid #e8e8ee;border-radius:20px;padding:3px 9px;font-size:11px;font-weight:600;color:#333;white-space:nowrap;">${it.icon} ${it.val}</span>`
     ).join('');
-    return `<div style="border-top:1.5px solid #f0f0f0;padding:8px 16px 10px;display:flex;flex-wrap:wrap;gap:5px;">${pills}</div>`;
+    const pinPill = stats.pinCount > 0
+      ? `<span style="display:inline-flex;align-items:center;gap:3px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:20px;padding:3px 9px;font-size:11px;font-weight:600;color:#15803d;white-space:nowrap;">📍 ${stats.pinCount} pin${stats.pinCount!==1?'s':''}</span>`
+      : '';
+    if(!pills && !pinPill) return '';
+    return `<div style="border-top:1.5px solid #f0f0f0;padding:8px 16px 10px;display:flex;flex-wrap:wrap;gap:5px;">${pills}${pinPill}</div>`;
   }
 
   // Full view — all 9 stats shown in the Edit Notes sidebar below the Notes field

@@ -6,20 +6,19 @@ let pinsLayerGroup = L.layerGroup().addTo(map);
 let pinsVisible = true;
 
 const PIN_TYPE_META = {
-  callback:        { label:'Callback',          defaultColor:'#00B8FD' },
-
-  warmtransfer:    { label:'Warm Transfer',     defaultColor:'#95D360' },
-
-  appointmentrun:  { label:'Appointment Run',   defaultColor:'#3b82f6' },
-
-  contractsigned:  { label:'Contract Signed',   defaultColor:'#10b981' },
-
-  notinterested:   { label:'Not Interested',    defaultColor:'#FFB031' },
-  newconstruction: { label:'New Construction',  defaultColor:'#FF31AD' },
+  // ── Funnel stages ──────────────────────
+  callback:        { label:'Callback',          defaultColor:'#00B8FD',  category:'stage'  },
+  warmtransfer:    { label:'Warm Transfer',     defaultColor:'#95D360',  category:'stage'  },
+  appointmentrun:  { label:'Appointment Run',   defaultColor:'#f59e0b',  category:'stage'  },
+  contractsigned:  { label:'Contract Signed',   defaultColor:'#10b981',  category:'stage'  },
+  installed:       { label:'Installed',         defaultColor:'#8b5cf6',  category:'stage'  },
+  priorinstall:    { label:'Prior Install',     defaultColor:'#8b5cf6',  category:'stage'  },
+  // ── Reference markers (not funnel) ─────
+  newconstruction: { label:'New Construction',  defaultColor:'#FF31AD',  category:'marker' },
 };
 
 const PIN_TYPE_INITIALS = {
-  warmtransfer:'WT', callback:'CB', appointmentrun:'AR', installed:'IN', notinterested:'NI', newconstruction:'NC'
+  callback:'CB', warmtransfer:'WT', appointmentrun:'AR', contractsigned:'CS', installed:'IN', priorinstall:'PI', newconstruction:'NC'
 };
 
 async function loadPinsFromSupabase() {
@@ -28,9 +27,15 @@ async function loadPinsFromSupabase() {
   if(error){console.error('Pins load error:',error);return;}
   pinsCache={};pinsLayerGroup.clearLayers();
   (data||[]).forEach(row=>{
+    // Migrate legacy types on load
+    let type = row.type || 'warmtransfer';
+    if(type === 'notinterested') type = 'callback';
+    // newconstruction pins are migrated to shapes separately in migrateNewConstructionPins()
+    // Always use the canonical default color for migrated/known types
+    const migratedColor = (PIN_TYPE_META[type]||{}).defaultColor || row.color || '#95D360';
     pinsCache[row.id]={
-      id:row.id, name:row.name, type:row.type||'warmtransfer',
-      color:row.color||'#95D360', lat:row.lat, lng:row.lng,
+      id:row.id, name:row.name, type:type,
+      color:migratedColor, lat:row.lat, lng:row.lng,
       notes:row.notes||'', first_name:row.first_name||null,
       last_name:row.last_name||null, address:row.address||null,
       callback_at:row.callback_at||null, notify_before:row.notify_before||30,
@@ -41,6 +46,47 @@ async function loadPinsFromSupabase() {
   });
   const{data:visits}=await sb.from('pin_visits').select('*').eq('user_id',currentUser.id).order('visited_at',{ascending:false});
   (visits||[]).forEach(v=>{if(pinsCache[v.pin_id])pinsCache[v.pin_id]._visits.push(v);});
+  await migrateNewConstructionPins();
+}
+
+// ═══════════════════════════════════════
+//  MIGRATE NEW CONSTRUCTION PINS → SHAPES
+// ═══════════════════════════════════════
+async function migrateNewConstructionPins() {
+  const ncPins = Object.values(pinsCache).filter(p => p.type === 'newconstruction');
+  if(!ncPins.length) return;
+
+  // ~50m offset in degrees for a small square polygon
+  const D = 0.00045;
+
+  for(const pin of ncPins) {
+    const lat = pin.lat, lng = pin.lng;
+    const vertices = [
+      [lat+D, lng-D],
+      [lat+D, lng+D],
+      [lat-D, lng+D],
+      [lat-D, lng-D],
+    ];
+    const shapePayload = {
+      name: pin.name || 'New Construction',
+      color: '#FF31AD',
+      vertices,
+      is_polygon: true,
+      rating: 0,
+      notes: pin.notes || '',
+      last_knocked: null,
+    };
+    try {
+      const saved = await upsertShape(shapePayload);
+      shapesCache[saved.id] = { ...shapePayload, id: saved.id };
+      renderSavedShape(shapesCache[saved.id]);
+      await deletePinFromDB(pin.id);
+      delete pinsCache[pin.id];
+    } catch(e) {
+      console.error('NC pin migration failed for', pin.id, e);
+    }
+  }
+  reRenderAllPins();
 }
 
 async function upsertPinDB(pinData) {
@@ -61,6 +107,16 @@ async function deletePinFromDB(id) {
 function buildPinIcon(pin) {
   const meta=PIN_TYPE_META[pin.type]||PIN_TYPE_META.warmtransfer;
   const color=pin.color||meta.defaultColor;
+  if(meta.square){
+    // Square marker for Prior Installs
+    return L.divIcon({
+      className:'',
+      html:`<div style="pointer-events:auto;width:18px;height:18px;background:${color};border:2.5px solid rgba(0,0,0,0.25);border-radius:3px;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`,
+      iconSize:[18,18],
+      iconAnchor:[9,9],
+      popupAnchor:[0,-12]
+    });
+  }
   return L.divIcon({
     className:'',
     html:`<div class="map-pin-wrapper" style="pointer-events:auto;">
@@ -223,26 +279,66 @@ function selectPinTypeFromDropdown(sel){
   document.getElementById('callbackFields').classList.add('visible');
   const dateLabel=document.getElementById('cbDateLabel');
   if(dateLabel){
-    if(currentPinType==='installed') dateLabel.textContent='Install date & time';
+    if(currentPinType==='installed'||currentPinType==='priorinstall') dateLabel.textContent='Install date & time';
     else if(currentPinType==='warmtransfer') dateLabel.textContent='Transfer date & time';
+    else if(currentPinType==='contractsigned') dateLabel.textContent='Signed date & time';
+    else if(currentPinType==='appointmentrun') dateLabel.textContent='Appointment date & time';
+    else if(currentPinType==='newconstruction') dateLabel.textContent='Date & time';
     else dateLabel.textContent='Callback date & time';
   }
   currentPinColor=meta.defaultColor;
   if(pendingPinMarker&&pendingPinLatLng){
-    pendingPinMarker.setIcon(L.divIcon({className:'',html:`<div class="map-pin-wrapper" style="opacity:0.8;pointer-events:auto;"><div class="map-pin-head" style="background:${currentPinColor};"></div><div class="map-pin-tail" style="background:${currentPinColor};"></div></div>`,iconSize:[28,40],iconAnchor:[14,40]}));
+    pendingPinMarker.setIcon(buildPinIcon({type:currentPinType,color:currentPinColor}));
+  }
+}
+
+function setPinMode(mode){
+  // mode: 'stage' or 'marker'
+  document.getElementById('pinModeStage').classList.toggle('active', mode==='stage');
+  document.getElementById('pinModeMarker').classList.toggle('active', mode==='marker');
+  document.getElementById('pinStageSelectWrap').style.display = mode==='stage' ? '' : 'none';
+  document.getElementById('pinMarkerSelectWrap').style.display = mode==='marker' ? '' : 'none';
+  // Show/hide contact fields — markers only need notes
+  document.getElementById('pinContactFields').style.display = mode==='stage' ? '' : 'none';
+  if(mode==='stage'){
+    currentPinType = document.getElementById('pinStageSelect').value || 'warmtransfer';
+  } else {
+    currentPinType = document.getElementById('pinMarkerSelect').value || 'newconstruction';
+  }
+  const meta = PIN_TYPE_META[currentPinType]||PIN_TYPE_META.warmtransfer;
+  currentPinColor = meta.defaultColor;
+  if(pendingPinMarker&&pendingPinLatLng){
+    pendingPinMarker.setIcon(buildPinIcon({type:currentPinType,color:currentPinColor}));
   }
 }
 
 function _populatePinSidebar(pin){
-  const sel=document.getElementById('pinTypeSelect');
   const defaultType='warmtransfer';
-  if(sel) sel.value=pin?pin.type||defaultType:defaultType;
-  currentPinType=pin?pin.type||defaultType:defaultType;
-  document.getElementById('callbackFields').classList.add('visible');
+  const pinType = pin ? pin.type||defaultType : defaultType;
+  const meta = PIN_TYPE_META[pinType]||PIN_TYPE_META.warmtransfer;
+  const isMarker = meta.category === 'marker';
+
+  // Set mode toggle
+  document.getElementById('pinModeStage').classList.toggle('active', !isMarker);
+  document.getElementById('pinModeMarker').classList.toggle('active', isMarker);
+  document.getElementById('pinStageSelectWrap').style.display = isMarker ? 'none' : '';
+  document.getElementById('pinMarkerSelectWrap').style.display = isMarker ? '' : 'none';
+  document.getElementById('pinContactFields').style.display = isMarker ? 'none' : '';
+
+  // Set correct dropdown
+  if(isMarker){
+    document.getElementById('pinMarkerSelect').value = pinType;
+  } else {
+    document.getElementById('pinStageSelect').value = pinType;
+  }
+  currentPinType = pinType;
+  currentPinColor = meta.defaultColor;
   const dateLabel=document.getElementById('cbDateLabel');
   if(dateLabel){
-    if(currentPinType==='installed') dateLabel.textContent='Install date & time';
+    if(currentPinType==='installed'||currentPinType==='priorinstall') dateLabel.textContent='Install date & time';
     else if(currentPinType==='warmtransfer') dateLabel.textContent='Transfer date & time';
+    else if(currentPinType==='contractsigned') dateLabel.textContent='Signed date & time';
+    else if(currentPinType==='appointmentrun') dateLabel.textContent='Appointment date & time';
     else dateLabel.textContent='Callback date & time';
   }
   document.getElementById('cbFullName').value=pin?[pin.first_name,pin.last_name].filter(Boolean).join(' '):'';
@@ -257,7 +353,6 @@ function _populatePinSidebar(pin){
     document.getElementById('cbDatetime').value='';
   }
   document.getElementById('pinNoteTextarea').value=pin?pin.notes||'':'';
-  const meta=PIN_TYPE_META[currentPinType]||PIN_TYPE_META.warmtransfer;
   currentPinColor=meta.defaultColor;
   // visit history
   const visitSection=document.getElementById('pinVisitHistory');
@@ -325,7 +420,8 @@ function openPinSidebarFor(id){
   const sidebar=document.getElementById('pinSidebar'),backdrop=document.getElementById('sheetBackdrop');
   sidebar.classList.add('open');backdrop.classList.add('visible');requestAnimationFrame(()=>backdrop.classList.add('show'));
   if(!isMobile()){document.getElementById('legend').classList.add('shifted');document.getElementById('layersPanel').classList.add('shifted');}
-  setTimeout(()=>document.getElementById('cbFullName').focus(),400);
+  const meta=PIN_TYPE_META[currentPinType]||PIN_TYPE_META.warmtransfer;
+  if(meta.category!=='marker') setTimeout(()=>document.getElementById('cbFullName').focus(),400);
 }
 
 function closePinSidebar(){
@@ -688,7 +784,10 @@ async function saveLogVisit(){
   const pin=pinsCache[_logVisitPinId];
   const dtVal=document.getElementById('lvDatetime').value;
   const notes=document.getElementById('lvNotes').value.trim();
-  const newType=document.getElementById('lvPinType').value||pin.type;
+  const newType_raw=document.getElementById('lvPinType').value||pin.type;
+  // Migrate legacy types
+  const typeMap={'newconstruction':'priorinstall','appointmentrun':'contractsigned','notinterested':'callback'};
+  const newType=typeMap[newType_raw]||newType_raw;
   const newMeta=PIN_TYPE_META[newType]||PIN_TYPE_META.warmtransfer;
   const visitedAt=dtVal?new Date(dtVal).toISOString():new Date().toISOString();
 

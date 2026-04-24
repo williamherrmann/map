@@ -207,7 +207,7 @@ function renderTransferMarkers() {
       </div>`,
       iconSize: [28, 38], iconAnchor: [14, 38],
     });
-    const marker = L.marker([t.lat, t.lng], { icon, pane: 'markerPane' });
+    const marker = L.marker([t.lat, t.lng], { icon, pane: 'pinsPane' });
 
     const nextInfo = info.next ? TRANSFER_STATUS[info.next] : null;
     const advBtn = nextInfo
