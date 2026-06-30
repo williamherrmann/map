@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>PA Territory Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0f0f13">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --sat: env(safe-area-inset-top, 0px);
+      --sar: env(safe-area-inset-right, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+      --sal: env(safe-area-inset-left, 0px);
+      --nav-h: 56px;
+      --search-h: 60px;
+      --total-chrome: calc(var(--nav-h) + var(--search-h) + var(--sab));
+      --bg: #0f0f13; --surface: #1a1a24; --border: #2e2e40;
+      --text: #e8e8ee; --text-dim: #6b6b8a;
+      --accent: #f59e0b; --blue: #3b82f6; --red: #ef4444; --green: #4ade80;
+      --sheet-radius: 20px;
+    }
+    html, body { height: 100%; height: 100dvh; overflow: hidden; font-family: 'DM Sans', sans-serif; background: var(--bg); }
+    #map { position: fixed; inset: 0; z-index: 0; }
+    .leaflet-control-zoom { margin-bottom: calc(var(--total-chrome) + 8px) !important; margin-right: calc(var(--sar) + 12px) !important; }
+    .location-pin { width:16px; height:16px; background:var(--blue); border:2.5px solid #fff; border-radius:50%; box-shadow:0 0 0 3px rgba(59,130,246,0.3),0 2px 8px rgba(59,130,246,0.5); }
+    .muni-label { font-size:10px; font-weight:600; font-family:'DM Sans',sans-serif; color:#222; text-shadow:0 0 4px #fff,0 0 4px #fff,0 0 3px #fff; white-space:nowrap; pointer-events:none; }
+    .search-pin { width:14px; height:14px; background:var(--red); border:2.5px solid #fff; border-radius:50%; box-shadow:0 0 0 2px var(--red),0 2px 8px rgba(0,0,0,0.35); }
+
+    /* ══ CUSTOM MAP PINS ══ */
+    .map-pin-wrapper {
+      display: flex; flex-direction: column; align-items: center;
+      cursor: pointer; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
+      transition: transform 0.15s;
+    }
+    .map-pin-wrapper:hover { transform: scale(1.15) translateY(-2px); }
+    .map-pin-head {
+      width: 28px; height: 28px; border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg); border: 2.5px solid rgba(255,255,255,0.8);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .map-pin-icon {
+      transform: rotate(45deg); font-size: 13px; line-height: 1;
+    }
+    .map-pin-tail {
+      width: 3px; height: 8px; margin-top: -1px;
+      border-radius: 0 0 3px 3px;
+    }
+
+    /* ══ GEAR BUTTON ══ */
+    #gearBtn { display:none; position:fixed; top:calc(12px + env(safe-area-inset-top,0px)); right:12px; z-index:400; width:36px; height:36px; background:rgba(255,255,255,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1.5px solid #ddd; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.12); cursor:pointer; color:#444; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; transition:background 0.15s; }
+    #gearBtn:active { background:#f0f0f0; }
+
+    /* ── ADMIN PANEL ── */
+    #adminBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1100; opacity:0; transition:opacity 0.3s; }
+    #adminSheet { position:fixed; bottom:0; left:0; right:0; z-index:1101; background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); padding-bottom:env(safe-area-inset-bottom,0px); transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); will-change:transform; max-height:85vh; display:flex; flex-direction:column; }
+    #adminSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #adminSheetHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #adminSheetTitle { font-size:17px; font-weight:700; color:#111; }
+    #adminSheetCloseBtn { background:none; border:none; font-size:22px; color:#999; cursor:pointer; padding:0 4px; line-height:1; }
+    .admin-tabs { display:flex; gap:8px; padding:14px 16px 0; flex-shrink:0; }
+    .admin-tab-btn { flex:1; padding:8px 0; border:1.5px solid #e5e7eb; background:#fff; border-radius:8px; font-size:13px; font-weight:600; color:#555; cursor:pointer; }
+    .admin-tab-btn.active { background:#111; color:#fff; border-color:#111; }
+    #adminBody { flex:1; overflow-y:auto; padding:16px; }
+    #adminTabTransfer { display:none; }
+    .admin-loading { color:#999; font-size:13px; text-align:center; padding:24px 0; }
+    .admin-user-card { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #f0f0f0; }
+    .admin-user-card:last-child { border-bottom:none; }
+    .admin-user-avatar { width:36px; height:36px; border-radius:50%; background:#1e3a5f; color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; }
+    .admin-user-info { flex:1; min-width:0; }
+    .admin-user-email { font-size:13px; font-weight:600; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .admin-user-meta { font-size:11px; color:#999; margin-top:2px; }
+    .admin-role-badge { font-size:10px; font-weight:700; background:#7c3aed; color:#fff; padding:2px 7px; border-radius:4px; flex-shrink:0; }
+    .admin-transfer-label { font-size:12px; font-weight:600; color:#555; margin-bottom:5px; margin-top:14px; }
+    .admin-transfer-label:first-child { margin-top:0; }
+    .admin-transfer-input { width:100%; box-sizing:border-box; padding:10px 12px; border:1.5px solid #ddd; border-radius:8px; font-size:14px; font-family:inherit; outline:none; }
+    .admin-transfer-input:focus { border-color:#111; }
+    #adminTransferBtn { width:100%; margin-top:16px; padding:12px; background:#111; color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
+    #adminTransferBtn:disabled { opacity:0.5; cursor:not-allowed; }
+    .admin-transfer-status { font-size:12px; padding:10px 12px; border-radius:8px; margin-top:10px; white-space:pre-wrap; display:none; }
+    .admin-transfer-status.success { background:#dcfce7; color:#15803d; }
+    .admin-transfer-status.error { background:#fee2e2; color:#b91c1c; }
+    #adminSettingsRow { display:none; align-items:center; justify-content:space-between; padding:13px 0; border-top:1px solid #f0f0f0; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .admin-settings-label { font-size:14px; color:#111; font-weight:500; }
+    .admin-settings-chevron { color:#bbb; font-size:16px; }
+    /* ── END ADMIN ── */
+    /* ══ SETTINGS SHEET ══ */
+    #settingsBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:800; opacity:0; transition:opacity 0.3s; }
+    #settingsSheet { position:fixed; bottom:0; left:0; right:0; z-index:900; background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); padding-bottom:env(safe-area-inset-bottom,0px); transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); will-change:transform; }
+    #settingsSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; }
+    #settingsSheetHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; }
+    #settingsSheetTitle { font-size:17px; font-weight:700; color:#111; }
+    #settingsCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; flex-shrink:0; -webkit-tap-highlight-color:transparent; line-height:1; }
+    #settingsBody { padding:18px 20px; display:flex; flex-direction:column; gap:16px; }
+    .settings-section-label { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:10px; }
+    #settingsAccountRow { display:flex; align-items:center; gap:12px; padding:10px 14px; background:#f5f5f8; border-radius:10px; margin-bottom:10px; }
+    #settingsAvatar { width:36px; height:36px; border-radius:50%; background:#e0e7ff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:#4338ca; flex-shrink:0; }
+    #settingsEmail { font-size:14px; font-weight:600; color:#111; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    #settingsEmailSub { font-size:11px; color:#888; font-family:'DM Mono',monospace; }
+    #settingsSignOutBtn { width:100%; padding:13px 16px; background:#fff0f1; border:1.5px solid #fca5a5; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; color:#dc2626; cursor:pointer; display:flex; align-items:center; gap:10px; -webkit-tap-highlight-color:transparent; transition:background 0.15s; }
+    #settingsSignOutBtn:active { background:#ffe4e6; }
+    .settings-info-row { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-radius:10px; }
+    .settings-info-label { font-size:14px; color:#111; }
+    .settings-info-value { font-family:'DM Mono',monospace; font-size:12px; color:#888; background:#f0f0f3; padding:3px 8px; border-radius:6px; }
+
+    /* ══ LAYERS PANEL ══ */
+    #layersPanel {
+      position:fixed;
+      z-index:400;
+      background:rgba(255,255,255,0.97);
+      backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+      border:1.5px solid #ddd; border-radius:12px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.13);
+      width:220px;
+      opacity:0; pointer-events:none; transform:scale(0.96) translateY(6px);
+      transition:opacity 0.18s, transform 0.18s;
+      bottom: calc(var(--total-chrome) + 10px);
+      left: 12px;
+    }
+    #layersPanel.open { opacity:1; pointer-events:all; transform:scale(1) translateY(0); }
+    .layers-section { padding:12px 14px; border-bottom:1px solid #f0f0f0; }
+    .layers-section:last-child { border-bottom:none; }
+    .layers-section-title { font-size:10px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:9px; }
+
+    .opacity-presets { display:flex; gap:5px; }
+    .opacity-btn { flex:1; padding:6px 4px; border:1.5px solid #ddd; border-radius:7px; background:#fff; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600; color:#666; cursor:pointer; text-align:center; -webkit-tap-highlight-color:transparent; transition:all 0.12s; }
+    .opacity-btn:active { transform:scale(0.95); }
+    .opacity-btn.active { background:#1e3a5f; color:#fff; border-color:#1e3a5f; }
+
+    .basemap-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+    .basemap-btn { border:1.5px solid #ddd; border-radius:8px; padding:8px 6px; background:#fff; cursor:pointer; text-align:center; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600; color:#555; -webkit-tap-highlight-color:transparent; transition:all 0.12s; line-height:1.3; }
+    .basemap-btn:active { transform:scale(0.95); }
+    .basemap-btn.active { background:#1e3a5f; color:#fff; border-color:#1e3a5f; }
+    .basemap-btn .bm-icon { font-size:16px; display:block; margin-bottom:3px; }
+
+    .toggle-row { display:flex; align-items:center; justify-content:space-between; padding:5px 0; }
+    .toggle-row:not(:last-child) { margin-bottom:4px; }
+    .toggle-label { font-size:13px; color:#222; font-weight:500; }
+    .toggle-switch { position:relative; width:40px; height:22px; flex-shrink:0; }
+    .toggle-switch input { opacity:0; width:0; height:0; position:absolute; }
+    .toggle-track { position:absolute; inset:0; background:#ddd; border-radius:11px; cursor:pointer; transition:background 0.2s; }
+    .toggle-track::after { content:''; position:absolute; left:3px; top:3px; width:16px; height:16px; background:#fff; border-radius:50%; transition:transform 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.2); }
+    .toggle-switch input:checked + .toggle-track { background:#1e3a5f; }
+    .toggle-switch input:checked + .toggle-track::after { transform:translateX(18px); }
+
+    @media (min-width:768px) {
+      #layersPanel {
+        position:absolute;
+        bottom:30px;
+        right:14px; left:auto;
+        transition:right 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.18s, transform 0.18s;
+      }
+      #layersPanel.shifted { right:334px; }
+    }
+
+    /* ══ BOTTOM CHROME ══ */
+    #bottomChrome { position:fixed; bottom:0; left:0; right:0; z-index:500; background:rgba(255,255,255,0.97); backdrop-filter:blur(20px) saturate(180%); -webkit-backdrop-filter:blur(20px) saturate(180%); border-top:1.5px solid #e2e2e2; box-shadow:0 -4px 24px rgba(0,0,0,0.10); padding-bottom:var(--sab); }
+    #searchRow { display:flex; align-items:center; padding:10px 12px 6px; gap:8px; }
+    #searchWrap { flex:1; display:flex; align-items:center; background:#f4f4f6; border:1.5px solid #e0e0e6; border-radius:12px; overflow:visible; position:relative; transition:border-color 0.15s,box-shadow 0.15s; }
+    #searchWrap:focus-within { border-color:#1e3a5f; background:#fff; box-shadow:0 2px 12px rgba(30,58,95,0.12); }
+    #searchIcon { padding:0 8px 0 12px; color:#888; font-size:17px; line-height:1; user-select:none; flex-shrink:0; }
+    #search { flex:1; border:none; outline:none; padding:11px 4px; font-family:'DM Sans',sans-serif; font-size:16px; color:#111; background:transparent; min-width:0; }
+    #search::placeholder { color:#aaa; }
+    #clearBtn { display:none; background:none; border:none; cursor:pointer; padding:0 12px; color:#bbb; font-size:20px; line-height:1; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
+    #suggestions { display:none; position:fixed; bottom:calc(var(--total-chrome) + 4px); left:12px; right:12px; background:#fff; border:1.5px solid #1e3a5f; border-radius:14px; z-index:600; max-height:55vh; overflow-y:auto; -webkit-overflow-scrolling:touch; box-shadow:0 -8px 32px rgba(0,0,0,0.18); }
+    .suggestion-item { padding:13px 16px; cursor:pointer; border-bottom:1px solid #f0f0f0; display:flex; flex-direction:column; gap:3px; -webkit-tap-highlight-color:transparent; transition:background 0.08s; }
+    .suggestion-item:last-child { border-bottom:none; }
+    .suggestion-item:active { background:#f5f5f5; }
+    .suggestion-name { font-size:14px; font-weight:600; color:#111; }
+    .suggestion-sub { font-size:12px; color:#888; font-family:'DM Mono',monospace; }
+    #statusMsg { display:none; padding:14px 16px; font-size:13px; color:#888; font-family:'DM Mono',monospace; text-align:center; }
+    #navRow { display:flex; align-items:center; justify-content:space-around; height:var(--nav-h); }
+    .nav-btn { display:flex; flex-direction:column; align-items:center; gap:3px; flex:1; background:none; border:none; cursor:pointer; padding:6px 2px; font-family:'DM Sans',sans-serif; font-size:9px; font-weight:600; color:#999; letter-spacing:0.03em; text-transform:uppercase; -webkit-tap-highlight-color:transparent; transition:color 0.12s; min-height:44px; }
+    .nav-btn svg { flex-shrink:0; }
+    .nav-btn.active { color:var(--blue); }
+    .nav-btn.active svg { stroke:var(--blue) !important; }
+    .nav-btn.danger { color:#fca5a5; }
+    .nav-btn.danger svg { stroke:var(--red) !important; }
+    .nav-btn.pin-active { color:#8b5cf6; }
+    .nav-btn.pin-active svg { stroke:#8b5cf6 !important; }
+
+    /* ══ DESKTOP ══ */
+    @media (min-width:768px) {
+      #bottomChrome { display:none; }
+      #gearBtn { display:none !important; }
+
+      #settingsSheet { left:50%; right:auto; transform:translateX(-50%) translateY(110%); width:420px; border-radius:16px; bottom:20px; }
+      #settingsSheet.open-desktop { transform:translateX(-50%) translateY(0); }
+      #suggestions { position:absolute; bottom:auto; left:auto; right:auto; top:100%; width:100%; max-height:300px; border-top:none; border-radius:0 0 10px 10px; box-shadow:0 4px 12px rgba(0,0,0,0.12); }
+      #desktopSearch { display:block; position:absolute; top:14px; left:14px; z-index:500; width:320px; }
+      #desktopSearch #searchWrap { background:#fff; border:2px solid #1e3a5f; border-radius:8px; box-shadow:3px 3px 0 rgba(30,58,95,0.25); }
+      #desktopSearch #search { font-size:13px; }
+      #desktopSearch .suggestions-wrap { position:relative; }
+      #locBtnDesktop { display:none !important; }
+      #locBtnDesktop:hover { background:#f5f5f5; }
+      #locBtnDesktop.active { background:var(--blue); border-color:var(--blue); color:#fff; box-shadow:3px 3px 0 #1d4ed8; }
+      #sessionBadge { position:absolute; top:14px; right:14px; z-index:500; background:#1e3a5f; border:1.5px solid #152b47; border-radius:8px; padding:7px 12px; display:flex; align-items:center; gap:10px; box-shadow:2px 2px 0 rgba(0,0,0,0.3); }
+      #sessionBadge.hidden { display:none !important; }
+      #badgeEmail { font-family:'DM Mono',monospace; font-size:11px; color:#fff; letter-spacing:0.04em; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      #badgeLogout { background:none; border:none; cursor:pointer; font-size:11px; color:rgba(255,255,255,0.6); font-family:'DM Mono',monospace; transition:color 0.15s; }
+      #badgeLogout:hover { color:#fca5a5; }
+      #badgeVersion { font-family:'DM Mono',monospace; font-size:10px; color:rgba(255,255,255,0.5); background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15); border-radius:4px; padding:2px 6px; letter-spacing:0.06em; user-select:none; flex-shrink:0; }
+      #legend { position:absolute; bottom:30px; right:116px; z-index:500; background:#fff; border:1.5px solid #ddd; border-radius:10px; padding:12px 16px; box-shadow:0 4px 16px rgba(0,0,0,0.1); font-size:12px; transition:right 0.25s cubic-bezier(0.4,0,0.2,1); }
+      #legend.shifted { right:436px; }
+      #layersPanel { right:14px; bottom:30px; }
+      #layersPanel.shifted { right:334px; }
+      #drawBtnDesktop { display:flex; position:absolute; bottom:30px; right:56px; z-index:500; width:36px; height:36px; background:#fff; border:2px solid #1e3a5f; border-radius:8px; box-shadow:3px 3px 0 rgba(30,58,95,0.25); align-items:center; justify-content:center; cursor:pointer; color:#555; transition:background 0.15s,color 0.15s; }
+      #drawBtnDesktop:hover { background:#f5f5f5; }
+      #drawBtnDesktop.active { background:#3b82f6; border-color:#3b82f6; color:#fff; box-shadow:3px 3px 0 #1d4ed8; }
+      #pinBtnDesktop { display:flex; position:absolute; bottom:30px; right:100px; z-index:500; width:36px; height:36px; background:#fff; border:2px solid #1e3a5f; border-radius:8px; box-shadow:3px 3px 0 rgba(30,58,95,0.25); align-items:center; justify-content:center; cursor:pointer; color:#555; transition:background 0.15s,color 0.15s; }
+      #pinBtnDesktop:hover { background:#f5f5f5; }
+      #pinBtnDesktop.active { background:#8b5cf6; border-color:#8b5cf6; color:#fff; box-shadow:3px 3px 0 #6d28d9; }
+      #sidebar { width:320px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(100%); transition:transform 0.25s cubic-bezier(0.4,0,0.2,1); box-shadow:-8px 0 24px rgba(0,0,0,0.1); }
+      #sidebar.open { transform:translateX(0); }
+      #sidebar::before { display:none; }
+      /* Desktop toolbar buttons — bottom-right cluster */
+      /* Desktop nav toolbar — bottom center */
+      #desktopNav {
+        display:flex; position:fixed; bottom:0; left:0; right:0; z-index:500;
+        background:rgba(255,255,255,0.97); backdrop-filter:blur(20px) saturate(180%);
+        -webkit-backdrop-filter:blur(20px) saturate(180%);
+        border-top:1.5px solid #e2e2e2; box-shadow:0 -4px 24px rgba(0,0,0,0.10);
+        align-items:center; justify-content:center; gap:0; padding:0 20px;
+        height:64px;
+      }
+      .desk-nav-btn {
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        gap:4px; padding:8px 18px; background:none; border:none; cursor:pointer;
+        font-family:'DM Sans',sans-serif; font-size:10px; font-weight:600;
+        color:#888; letter-spacing:0.04em; text-transform:uppercase;
+        -webkit-tap-highlight-color:transparent; transition:color 0.12s;
+        min-width:72px; height:100%; border-bottom:2px solid transparent;
+        transition:color 0.12s, border-color 0.12s;
+      }
+      .desk-nav-btn:hover { color:#1e3a5f; }
+      .desk-nav-btn.active { color:var(--blue); border-bottom-color:var(--blue); }
+      .desk-nav-btn.active svg { stroke:var(--blue); }
+      .desk-nav-btn svg { flex-shrink:0; }
+      /* Layers panel and legend open above toolbar */
+      #layersPanel { bottom:74px; right:auto; left:14px; }
+      #layersPanel.shifted { right:auto; left:14px; }
+      #legend { bottom:74px; left:14px; right:auto; transform:none !important; }
+      #legend.hidden { opacity:0; pointer-events:none; transform:scale(0.95) !important; }
+      #legend.shifted { left:14px; right:auto; }
+      /* Draw/Pin mode toolbars above desktop nav */
+      #drawToolbar { bottom:74px; }
+      #pinToolbar { bottom:74px; }
+      /* Hide old individual buttons */
+      #drawBtnDesktop { display:none !important; }
+      #pinBtnDesktop { display:none !important; }
+      #locBtnDesktop { display:none !important; }
+      /* Hide zoom control — use scroll to zoom on desktop */
+      .leaflet-control-zoom { display:none !important; }
+    }
+
+    #desktopSearch { display:none; }
+    #locBtnDesktop { display:none; }
+    #sessionBadge { display:none; }
+    #drawBtnDesktop { display:none; }
+    #pinBtnDesktop { display:none; }
+    #legendBtnDesktop { display:none; }
+    #layersBtnDesktop { display:none; }
+    #calBtnDesktop { display:none; }
+    #desktopNav { display:none; }
+
+    /* ══ SHEET BACKDROP ══ */
+    #sheetBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:800; opacity:0; transition:opacity 0.3s; -webkit-tap-highlight-color:transparent; }
+    #sheetBackdrop.visible { display:block; }
+    #sheetBackdrop.show { opacity:1; }
+
+    /* ══ NOTES SIDEBAR ══ */
+    #sidebar { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:var(--sheet-radius) var(--sheet-radius) 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
+    #sidebar.open { transform:translateY(0); }
+    #sidebar::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #sidebarHeader { display:flex; align-items:flex-start; justify-content:space-between; padding:14px 20px; border-bottom:1.5px solid #eee; flex-shrink:0; }
+    #sidebarTitle { font-size:17px; font-weight:700; color:#111; line-height:1.2; }
+    #sidebarSub { font-size:12px; color:#888; margin-top:3px; font-family:'DM Mono',monospace; }
+    #closeBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-left:8px; -webkit-tap-highlight-color:transparent; line-height:1; }
+    #sidebarBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:18px 20px; display:flex; flex-direction:column; gap:22px; }
+    #sidebarFooter { padding:14px 20px; border-top:1.5px solid #eee; display:flex; gap:10px; align-items:center; flex-shrink:0; background:#fff; }
+
+    /* ══ SHAPE SIDEBAR ══ */
+    #shapeSidebar { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:var(--sheet-radius) var(--sheet-radius) 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
+    #shapeSidebar.open { transform:translateY(0); }
+    #shapeSidebar::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #shapeSidebarHeader { display:flex; align-items:flex-start; justify-content:space-between; padding:14px 20px; border-bottom:1.5px solid #eee; flex-shrink:0; }
+    #shapeSidebarTitle { font-size:17px; font-weight:700; color:#111; line-height:1.2; }
+    #shapeSidebarSub { font-size:12px; color:#888; margin-top:3px; font-family:'DM Mono',monospace; }
+    #shapeCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-left:8px; -webkit-tap-highlight-color:transparent; line-height:1; }
+    #shapeSidebarBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:18px 20px; display:flex; flex-direction:column; gap:22px; }
+    #shapeSidebarFooter { padding:14px 20px; border-top:1.5px solid #eee; display:flex; gap:10px; align-items:center; flex-shrink:0; background:#fff; }
+    @media (min-width:768px) {
+      #shapeSidebar { width:320px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(100%); transition:transform 0.25s cubic-bezier(0.4,0,0.2,1); box-shadow:-8px 0 24px rgba(0,0,0,0.1); }
+      #shapeSidebar.open { transform:translateX(0); }
+      #shapeSidebar::before { display:none; }
+    }
+
+    /* ══ PIN SIDEBAR ══ */
+    #pinSidebar { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:var(--sheet-radius) var(--sheet-radius) 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
+    #pinSidebar.open { transform:translateY(0); }
+    #pinSidebar::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #pinSidebarHeader { display:flex; align-items:flex-start; justify-content:space-between; padding:14px 20px; border-bottom:1.5px solid #eee; flex-shrink:0; }
+    #pinSidebarTitle { font-size:17px; font-weight:700; color:#111; line-height:1.2; }
+    #pinSidebarSub { font-size:12px; color:#888; margin-top:3px; font-family:'DM Mono',monospace; }
+    #pinCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-left:8px; -webkit-tap-highlight-color:transparent; line-height:1; }
+    #pinSidebarBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:18px 20px; display:flex; flex-direction:column; gap:20px; }
+    #pinSidebarFooter { padding:14px 20px; border-top:1.5px solid #eee; display:flex; gap:10px; align-items:center; flex-shrink:0; background:#fff; }
+    @media (min-width:768px) {
+      #pinSidebar { width:320px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(100%); transition:transform 0.25s cubic-bezier(0.4,0,0.2,1); box-shadow:-8px 0 24px rgba(0,0,0,0.1); }
+      #pinSidebar.open { transform:translateX(0); }
+      #pinSidebar::before { display:none; }
+    }
+
+
+
+    /* pin mode cursor hint */
+    body.pin-mode { cursor: crosshair; }
+    body.pin-mode .leaflet-grab { cursor: crosshair !important; }
+
+    /* pin mode toolbar */
+    #pinToolbar {
+      display: none;
+      position: fixed;
+      left: 50%; transform: translateX(-50%);
+      z-index: 600;
+      background: #fff;
+      border: 1.5px solid #ddd;
+      border-radius: 12px;
+      padding: 8px 16px;
+      gap: 10px;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+      white-space: nowrap;
+      bottom: calc(var(--total-chrome) + 10px);
+    }
+    #pinToolbar.visible { display: flex; }
+    @media (min-width:768px) { #pinToolbar { bottom: 30px; } }
+    #pinToolbarLabel {
+      font-family: 'DM Mono', monospace; font-size: 12px;
+      color: #1e3a5f; display:flex; align-items:center; gap:6px;
+    }
+    .pin-tb-btn {
+      padding: 6px 14px; border-radius: 8px; border: 1.5px solid #3a3a55;
+      background: #e8eef5; font-family: 'DM Sans', sans-serif;
+      font-size: 12px; font-weight: 600; color: #1e3a5f;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      transition: background 0.12s;
+    }
+    .pin-tb-btn.danger { border-color:#ef4444; color:#ef4444; }
+    .pin-tb-btn.danger:hover { background:#fff0f1; }
+
+    .section-label { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:10px; }
+    #colorSwatches { display:flex; gap:8px; flex-wrap:wrap; }
+    .swatch { width:36px; height:36px; border-radius:8px; cursor:pointer; border:2.5px solid transparent; transition:transform 0.1s,border-color 0.1s; -webkit-tap-highlight-color:transparent; }
+    .swatch:active { transform:scale(0.9); }
+    .swatch.active { border-color:#1e3a5f; transform:scale(1.1); }
+    #customColorRow { display:flex; align-items:center; gap:10px; margin-top:10px; }
+    #customColorPicker { width:40px; height:40px; border:2px solid #ddd; border-radius:8px; cursor:pointer; padding:2px; background:none; }
+    #customColorLabel { font-size:12px; color:#666; font-family:'DM Mono',monospace; }
+    .permit-row { display:flex; gap:8px; flex-wrap:wrap; }
+    .check-radio-label { display:flex; align-items:center; gap:6px; cursor:pointer; font-size:13px; color:#111; padding:10px 14px; border:1.5px solid #ddd; border-radius:10px; transition:border-color 0.15s,background 0.15s; -webkit-tap-highlight-color:transparent; flex:1; min-width:0; justify-content:center; font-weight:500; }
+    .check-radio-label:has(input:checked) { border-color:#1e3a5f; background:#e8eef5; font-weight:600; }
+    .check-radio-label input { accent-color:#1e3a5f; }
+    .util-dropdown { position:relative; width:100%; }
+    .util-trigger { width:100%; min-height:48px; padding:8px 36px 8px 12px; border:1.5px solid #ddd; border-radius:10px; background:#fff; cursor:pointer; display:flex; align-items:center; flex-wrap:wrap; gap:4px; text-align:left; transition:border-color 0.15s; position:relative; -webkit-tap-highlight-color:transparent; }
+    .util-trigger:active { border-color:#aaa; }
+    .util-trigger.open { border-color:#1e3a5f; border-radius:10px 10px 0 0; }
+    .util-trigger-arrow { position:absolute; right:12px; top:50%; transform:translateY(-50%); color:#999; font-size:10px; pointer-events:none; transition:transform 0.15s; }
+    .util-trigger.open .util-trigger-arrow { transform:translateY(-50%) rotate(180deg); }
+    .util-placeholder { font-size:13px; color:#aaa; font-family:'DM Mono',monospace; }
+    .util-pill { display:inline-flex; align-items:center; gap:4px; background:#eef2ff; border:1px solid #c7d2fe; border-radius:6px; padding:3px 7px; font-size:11px; font-family:'DM Mono',monospace; color:#3730a3; }
+    .util-pill-remove { background:none; border:none; cursor:pointer; color:#818cf8; font-size:14px; line-height:1; padding:0; flex-shrink:0; }
+    .util-panel { display:none; position:absolute; top:100%; left:0; right:0; z-index:950; background:#fff; border:1.5px solid #1e3a5f; border-top:none; border-radius:0 0 10px 10px; max-height:220px; overflow-y:auto; -webkit-overflow-scrolling:touch; box-shadow:0 8px 24px rgba(0,0,0,0.15); }
+    .util-panel.open { display:block; }
+    .util-group-label { font-size:10px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:0.08em; padding:8px 14px 5px; background:#fafafa; border-top:1px solid #eee; border-bottom:1px solid #eee; position:sticky; top:0; }
+    .util-group-label:first-child { border-top:none; }
+    .util-option { display:flex; align-items:center; gap:10px; padding:12px 14px; cursor:pointer; font-size:13px; color:#111; transition:background 0.08s; user-select:none; -webkit-tap-highlight-color:transparent; min-height:44px; }
+    .util-option:active { background:#f5f5f5; }
+    .util-option.selected { background:#f0f7ff; color:#1d4ed8; }
+    .util-check-icon { width:16px; height:16px; flex-shrink:0; border:1.5px solid #ddd; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#fff; background:#fff; transition:border-color 0.1s,background 0.1s; }
+    .util-option.selected .util-check-icon { background:#1d4ed8; border-color:#1d4ed8; }
+    #starRating { display:flex; gap:6px; }
+    .star { font-size:34px; color:#ddd; cursor:pointer; transition:color 0.1s,transform 0.1s; user-select:none; -webkit-tap-highlight-color:transparent; line-height:1; }
+    .star:active { transform:scale(0.9); }
+    .star.on { color:#f59e0b; }
+    #noteTextarea { width:100%; min-height:90px; resize:vertical; border:1.5px solid #ddd; border-radius:10px; padding:12px 14px; font-family:'DM Sans',sans-serif; font-size:16px; line-height:1.5; color:#111; outline:none; transition:border-color 0.15s; background:#fff; }
+    #noteTextarea:focus { border-color:#1e3a5f; }
+    #saveStatus { display:flex; align-items:center; gap:7px; margin-top:8px; }
+    #statusDot { width:8px; height:8px; border-radius:50%; background:#ddd; flex-shrink:0; transition:background 0.3s; }
+    #statusDot.saved { background:#22c55e; }
+    #statusDot.saving { background:var(--accent); }
+    #statusText { font-size:12px; color:#999; font-family:'DM Mono',monospace; }
+    .btn { flex:1; padding:13px 16px; border-radius:10px; border:1.5px solid #1e3a5f; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:background 0.15s,transform 0.1s; -webkit-tap-highlight-color:transparent; min-height:48px; }
+    .btn:active { transform:scale(0.97); }
+    .btn-primary { background:#1e3a5f; color:#fff; border-color:#1e3a5f; }
+    .btn-primary:hover { background:#152b47; }
+    .btn-ghost { background:#fff; color:#1e3a5f; }
+    .btn-ghost:hover { background:#f5f5f5; }
+    .btn-danger { background:#fff; color:#fca5a5; border-color:#fca5a5; }
+    .btn-danger:hover { background:#fff0f1; }
+
+    /* ══ LEGEND ══ */
+    #legend { position:fixed; bottom:calc(var(--total-chrome) + 10px); left:12px; z-index:400; background:rgba(255,255,255,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1.5px solid #ddd; border-radius:10px; padding:10px 14px; font-size:12px; box-shadow:0 4px 16px rgba(0,0,0,0.1); transition:opacity 0.2s,transform 0.2s; }
+    #legend.hidden { opacity:0; pointer-events:none; transform:scale(0.95); }
+    #legend h4 { font-size:10px; font-family:'DM Mono',monospace; color:#888; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px; }
+    .legend-row { display:flex; align-items:center; gap:8px; margin-bottom:5px; }
+    .legend-row:last-child { margin-bottom:0; }
+    .legend-swatch { width:14px; height:14px; border:1.5px solid #aaa; border-radius:3px; flex-shrink:0; }
+
+    /* ══ DRAW MODE ══ */
+    body.draw-mode { cursor: crosshair; }
+    body.draw-mode .leaflet-grab { cursor: crosshair !important; }
+    body.draw-mode .leaflet-crosshair { cursor: crosshair !important; }
+
+    .draw-vertex {
+      width: 12px; height: 12px;
+      background: #fff; border: 2.5px solid #3b82f6;
+      border-radius: 50%;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+      cursor: grab;
+      transition: transform 0.1s;
+    }
+    .draw-vertex.first-vertex {
+      width: 20px; height: 20px;
+      background: #3b82f6;
+      border-color: #fff;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.4);
+      cursor: pointer;
+    }
+    .draw-vertex.dragging { cursor: grabbing; transform: scale(1.3); }
+
+    .edit-handle {
+      width: 11px; height: 11px;
+      background: #fff; border: 2px solid #f59e0b;
+      border-radius: 50%;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      cursor: grab;
+    }
+    .edit-handle.dragging { cursor: grabbing; }
+
+    .shape-label {
+      font-size: 11px; font-weight: 800; font-family: 'DM Sans', sans-serif;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.7), 0 0 6px rgba(0,0,0,0.5);
+      white-space: nowrap; pointer-events: none;
+      background: none; border: none; box-shadow: none; padding: 0;
+    }
+
+    #drawToolbar {
+      display: none;
+      position: fixed;
+      left: 50%; transform: translateX(-50%);
+      z-index: 600;
+      background: #fff;
+      border: 1.5px solid #ddd;
+      border-radius: 12px;
+      padding: 8px 12px;
+      gap: 10px;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+      white-space: nowrap;
+      bottom: calc(var(--total-chrome) + 10px);
+    }
+    #drawToolbar.visible { display: flex; }
+    @media (min-width: 768px) { #drawToolbar { bottom: 30px; } }
+    #drawVertexCount {
+      font-family: 'DM Mono', monospace; font-size: 11px;
+      color: #666; min-width: 60px;
+    }
+    .draw-tb-btn {
+      padding: 6px 14px; border-radius: 8px; border: 1.5px solid #3a3a55;
+      background: #e8eef5; font-family: 'DM Sans', sans-serif;
+      font-size: 12px; font-weight: 600; color: #1e3a5f;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .draw-tb-btn:hover { background: #e8eef5; }
+    .draw-tb-btn.primary { background: #1e3a5f; border-color: #1e3a5f; color: #fff; }
+    .draw-tb-btn.primary:hover { background: #152b47; }
+    .draw-tb-btn.danger { border-color: #ef4444; color: #ef4444; }
+    .draw-tb-btn.danger:hover { background: #fff0f1; }
+
+    #shapeName {
+      width: 100%; border: 1.5px solid #ddd; border-radius: 10px;
+      padding: 12px 14px; font-family: 'DM Sans', sans-serif;
+      font-size: 16px; color: #111; outline: none;
+      transition: border-color 0.15s; background: #fff;
+    }
+    #shapeName:focus { border-color: #1e3a5f; }
+
+    /* shared text inputs in pin sidebar */
+    .pin-text-input {
+      width: 100%; border: 1.5px solid #ddd; border-radius: 10px;
+      padding: 12px 14px; font-family: 'DM Sans', sans-serif;
+      font-size: 16px; color: #111; outline: none;
+      transition: border-color 0.15s; background: #fff;
+    }
+    .pin-text-input:focus { border-color: #1e3a5f; }
+
+
+
+    /* ══ OVERFLOW MENU ══ */
+    #overflowMenu {
+      position: fixed; bottom: calc(var(--total-chrome) + 10px); right: 12px;
+      z-index: 600; background: #fff; border: 1.5px solid #ddd;
+      border-radius: 14px; box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+      padding: 12px; display: none; grid-template-columns: 1fr 1fr;
+      gap: 8px; width: 180px;
+      animation: popIn 0.15s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    #overflowMenu.open { display: grid; }
+    @keyframes popIn { from { opacity:0; transform:scale(0.92) translateY(6px); } to { opacity:1; transform:scale(1) translateY(0); } }
+    .overflow-item {
+      display: flex; flex-direction: column; align-items: center; gap:5px;
+      padding: 10px 6px; border: 1.5px solid #eee; border-radius: 10px;
+      background: #fafafa; cursor: pointer; font-family: 'DM Sans', sans-serif;
+      font-size: 11px; font-weight: 600; color: #555;
+      -webkit-tap-highlight-color: transparent; transition: all 0.12s;
+    }
+    .overflow-item:active { transform: scale(0.95); background: #f0f0f0; }
+    .overflow-item.active { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
+    .overflow-item.pin-active { border-color: #8b5cf6; background: #f5f3ff; color: #6d28d9; }
+    .overflow-item svg { flex-shrink: 0; }
+
+    /* ══ CALENDAR SHEET ══ */
+    #calendarSheet { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
+    #calendarSheet.open { transform:translateY(0); }
+    #calendarHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #calendarTitle { font-size:17px; font-weight:700; color:#111; }
+    #calendarSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    @media (min-width:768px) {
+      #calendarSheet { width:360px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(110%); }
+      #calendarSheet.open { transform:translateX(0); }
+      #calendarSheet::before { display:none; }
+    }
+    #calendarCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; }
+    .cal-filter-row { display:flex; gap:6px; padding:12px 20px; overflow-x:auto; flex-shrink:0; border-bottom:1px solid #f0f0f0; -webkit-overflow-scrolling:touch; }
+    .cal-filter-row::-webkit-scrollbar { display:none; }
+    .cal-chip { padding:6px 14px; border:1.5px solid #ddd; border-radius:20px; background:#fff; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; color:#666; cursor:pointer; white-space:nowrap; -webkit-tap-highlight-color:transparent; transition:all 0.12s; flex-shrink:0; }
+    .cal-chip.active { background:#1e3a5f; color:#fff; border-color:#1e3a5f; }
+    #calendarBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:16px 20px; display:flex; flex-direction:column; gap:10px; }
+    .cal-empty { text-align:center; padding:40px 20px; color:#aaa; font-size:13px; font-family:'DM Mono',monospace; }
+    .cal-card {
+      border: 1.5px solid #eee; border-radius: 12px; padding: 14px 16px;
+      cursor: pointer; transition: all 0.12s; background: #fff;
+      display: flex; gap: 14px; align-items: flex-start;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cal-card:active { background: #f9f9f9; transform: scale(0.99); }
+    .cal-card.overdue { border-color: #fca5a5; background: #fff8f8; }
+    .cal-card.today { border-color: #86efac; background: #f0fdf4; }
+    .cal-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+    .cal-card-main { flex:1; min-width:0; }
+    .cal-card-name { font-size:14px; font-weight:700; color:#111; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .cal-card-addr { font-size:12px; color:#888; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .cal-card-time { font-size:11px; font-family:'DM Mono',monospace; font-weight:600; display:flex; align-items:center; gap:5px; }
+    .cal-badge { font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; }
+    .cal-badge.overdue { background:#fee2e2; color:#dc2626; }
+    .cal-badge.today { background:#dcfce7; color:#15803d; }
+    .cal-badge.soon { background:#fef9c3; color:#854d0e; }
+
+    /* ══ PIN TYPE GRID ══ */
+    #pinTypeGrid { margin-bottom:2px; }
+    .pin-type-btn {
+      display:flex; flex-direction:column; align-items:center; gap:5px;
+      padding:10px 4px 9px; border:2px solid #e0e0e6; border-radius:10px;
+      background:#fff; cursor:pointer; font-family:'DM Sans',sans-serif;
+      font-size:10px; font-weight:600; color:#555; text-align:center;
+      -webkit-tap-highlight-color:transparent; transition:all 0.12s;
+      line-height:1.2;
+    }
+    .pin-type-btn:active { transform:scale(0.96); }
+    .pin-type-btn.active { border-color: currentColor; }
+    @keyframes fadeSlideIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+    .cb-label { font-size:11px; font-weight:700; color:#555; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:2px; }
+
+    /* ══ CUSTOM PIN FIELDS ══ */
+    #pinCustomFields {
+      background:#f8f8fc; border:1.5px solid #e0e0ee;
+      border-radius:12px; padding:14px;
+      display:none; flex-direction:column; gap:12px;
+      animation: fadeSlideIn 0.18s ease;
+    }
+    #pinCustomFields.open { display:flex; }
+
+    /* ══ CONTACT FIELDS ══ */
+    #pinContactFields { display:flex; flex-direction:column; gap:12px; }
+    .cb-contact-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .cb-contact-row .pin-text-input { min-width:0; width:100%; }
+
+    /* ══ CALLBACK FIELDS (legacy, keep for compatibility) ══ */
+    #callbackFields { display:none; }
+
+    /* ══ ADDRESS AUTOCOMPLETE ══ */
+    .addr-wrap { position:relative; }
+    #addrSuggestions {
+      display:none; position:absolute; bottom:100%; left:0; right:0; margin-bottom:4px;
+      background:#fff; border:1.5px solid #1e3a5f; border-radius:10px;
+      z-index:960; max-height:180px; overflow-y:auto;
+      box-shadow:0 -4px 16px rgba(0,0,0,0.12);
+    }
+    .addr-suggestion { padding:11px 14px; cursor:pointer; font-size:13px; color:#111; border-bottom:1px solid #f0f0f0; -webkit-tap-highlight-color:transparent; transition:background 0.08s; }
+    .addr-suggestion:last-child { border-bottom:none; }
+    .addr-suggestion:active { background:#f5f5f5; }
+
+    /* ══ CHANGELOG MODAL ══ */
+    #changelogBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9000; opacity:0; transition:opacity 0.25s; }
+    #changelogBackdrop.show { opacity:1; }
+    #changelogModal {
+      position:fixed; bottom:0; left:0; right:0; z-index:9001;
+      background:#fff; border-radius:20px 20px 0 0;
+      border-top:1.5px solid #ddd;
+      box-shadow:0 -8px 40px rgba(0,0,0,0.2);
+      max-height:80dvh; display:flex; flex-direction:column;
+      transform:translateY(110%);
+      transition:transform 0.32s cubic-bezier(0.32,0.72,0,1);
+      padding-bottom:env(safe-area-inset-bottom,0px);
+    }
+    #changelogModal.open { transform:translateY(0); }
+    #changelogModal::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #changelogModalHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #changelogModalTitle { font-size:17px; font-weight:700; color:#111; }
+    #changelogCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; }
+    #changelogBody { overflow-y:auto; -webkit-overflow-scrolling:touch; padding:20px; display:flex; flex-direction:column; gap:24px; }
+    .cl-version { display:flex; flex-direction:column; gap:8px; }
+    .cl-version-header { display:flex; align-items:center; gap:10px; }
+    .cl-version-badge { font-family:'DM Mono',monospace; font-size:12px; font-weight:700; background:#1e3a5f; color:#fff; padding:3px 9px; border-radius:6px; flex-shrink:0; }
+    .cl-version-badge.current { background:#8b5cf6; }
+    .cl-version-label { font-size:13px; font-weight:700; color:#111; }
+    .cl-items { display:flex; flex-direction:column; gap:5px; padding-left:4px; }
+    .cl-item { font-size:13px; color:#444; line-height:1.5; padding-left:14px; position:relative; }
+    .cl-item::before { content:'·'; position:absolute; left:0; color:#aaa; font-size:16px; line-height:1.3; }
+
+    /* ══ ADD CALLBACK FORM ══ */
+    #addCallbackSheet {
+      position:fixed; bottom:0; left:0; right:0; z-index:950;
+      max-height:calc(94dvh - var(--sab)); background:#fff;
+      border-top:1.5px solid #ddd; border-radius:20px 20px 0 0;
+      box-shadow:0 -8px 40px rgba(0,0,0,0.2);
+      display:flex; flex-direction:column;
+      transform:translateY(110%);
+      transition:transform 0.32s cubic-bezier(0.32,0.72,0,1);
+      padding-bottom:var(--sab); will-change:transform;
+    }
+    #addCallbackSheet.open { transform:translateY(0); }
+    #addCallbackSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    @media (min-width:768px) {
+      #addCallbackSheet { width:380px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(110%); }
+      #addCallbackSheet.open { transform:translateX(0); }
+      #addCallbackSheet::before { display:none; }
+    }
+    #addCallbackHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #addCallbackTitle { font-size:17px; font-weight:700; color:#111; }
+    #addCallbackCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; }
+    #addCallbackBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+    #addCallbackFooter { padding:14px 20px; border-top:1.5px solid #eee; display:flex; gap:10px; flex-shrink:0; background:#fff; }
+    .acb-contact-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .acb-contact-row .pin-text-input { min-width:0; width:100%; }
+    .acb-field-label { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; }
+
+    /* Add button in calendar header */
+    #calAddBtn {
+      background:#1e3a5f; border:none; border-radius:8px;
+      padding:7px 14px; font-family:'DM Sans',sans-serif;
+      font-size:13px; font-weight:600; color:#fff;
+      cursor:pointer; -webkit-tap-highlight-color:transparent;
+      display:flex; align-items:center; gap:5px;
+      transition:background 0.12s;
+    }
+    #calAddBtn:active { background:#152b47; }
+
+    /* Standalone callback card indicator */
+    .cal-card.standalone { border-left:3px solid #8b5cf6; }
+
+    /* ══ PIN FILTER PANEL ══ */
+    #pinFilterPanel {
+      position:fixed; z-index:400;
+      background:rgba(255,255,255,0.97);
+      backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+      border:1.5px solid #ddd; border-radius:14px;
+      box-shadow:0 4px 24px rgba(0,0,0,0.16);
+      width:240px; padding:16px;
+      opacity:0; pointer-events:none; transform:scale(0.96) translateY(6px);
+      transition:opacity 0.18s, transform 0.18s;
+      bottom: calc(var(--total-chrome) + 10px);
+      right: 12px;
+    }
+    #pinFilterPanel.open { opacity:1; pointer-events:all; transform:scale(1) translateY(0); }
+    @media (min-width:768px) { #pinFilterPanel { bottom:74px; right:12px; } }
+    #pinFilterPanel h4 { font-size:10px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:10px; }
+    .pin-filter-row { display:flex; align-items:center; justify-content:space-between; padding:5px 0; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .pin-filter-dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; margin-right:8px; }
+    .pin-filter-label { font-size:13px; color:#222; font-weight:500; flex:1; }
+    .pin-filter-check { width:18px; height:18px; border-radius:4px; border:1.5px solid #ddd; display:flex; align-items:center; justify-content:center; font-size:11px; color:#fff; flex-shrink:0; transition:background 0.12s,border-color 0.12s; }
+    .pin-filter-row.active .pin-filter-check { background:#1e3a5f; border-color:#1e3a5f; }
+    #pinFilterAll { margin-top:10px; padding-top:10px; border-top:1px solid #f0f0f0; display:flex; gap:6px; }
+    .pf-btn { flex:1; padding:7px; border:1.5px solid #ddd; border-radius:7px; background:#fff; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600; color:#666; cursor:pointer; text-align:center; -webkit-tap-highlight-color:transparent; }
+    .pf-btn:active { background:#f5f5f5; }
+
+    /* ══ PROSPECT FILTER SHEET ══ */
+    @media (min-width:768px) {
+    }
+    .pf-section-label { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:12px; }
+    .pf-preset-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:4px; }
+    .pf-preset-btn { padding:10px 8px; border:1.5px solid #ddd; border-radius:10px; background:#fff; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; color:#555; cursor:pointer; text-align:center; line-height:1.3; -webkit-tap-highlight-color:transparent; transition:all 0.12s; }
+    .pf-preset-btn:active { transform:scale(0.97); }
+    .pf-preset-btn.active { background:#1e3a5f; color:#fff; border-color:#1e3a5f; }
+    .pf-preset-icon { font-size:16px; display:block; margin-bottom:3px; }
+    .pf-slider-row { display:flex; flex-direction:column; gap:6px; }
+    .pf-slider-label { display:flex; justify-content:space-between; align-items:center; }
+    .pf-slider-name { font-size:13px; font-weight:600; color:#222; }
+    .pf-slider-val { font-size:12px; font-family:'DM Mono',monospace; color:#1e3a5f; font-weight:700; background:#e8eef5; padding:2px 8px; border-radius:6px; }
+    .pf-range-wrap { display:flex; gap:8px; align-items:center; }
+    .pf-range { flex:1; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; background:#ddd; outline:none; cursor:pointer; }
+    .pf-range::-webkit-slider-thumb { -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:#1e3a5f; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.2); }
+    .pf-range::-moz-range-thumb { width:18px; height:18px; border-radius:50%; background:#1e3a5f; cursor:pointer; border:none; }
+    .pf-toggle-row { display:flex; align-items:center; justify-content:space-between; padding:4px 0; }
+    .pf-toggle-label { font-size:13px; color:#444; }
+
+    /* ══ MUNI STATS POPUP ROW ══ */
+    .muni-stat-row { display:flex; align-items:center; justify-content:space-between; padding:6px 16px; border-bottom:1px solid #f5f5f5; }
+    .muni-stat-row:last-child { border-bottom:none; }
+    .muni-stat-label { font-size:10px; font-family:'DM Mono',monospace; color:#999; text-transform:uppercase; letter-spacing:0.06em; }
+    .muni-stat-value { font-size:13px; font-weight:700; color:#111; }
+    .muni-stat-bar { height:4px; border-radius:2px; margin-top:3px; }
+
+    /* ══ PIN LIST SHEET ══ */
+    #pinListSheet { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
+    #pinListSheet.open { transform:translateY(0); }
+    #pinListSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    @media (min-width:768px) {
+      #pinListSheet { width:380px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(110%); }
+      #pinListSheet.open { transform:translateX(0); }
+      #pinListSheet::before { display:none; }
+    }
+    #pinListHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #pinListTitle { font-size:17px; font-weight:700; color:#111; }
+    #pinListCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; }
+    #pinListSearch { margin:0; padding:10px 16px; border-bottom:1px solid #f0f0f0; flex-shrink:0; }
+    #pinListSearchInput { width:100%; padding:9px 14px; border:1.5px solid #e0e0e6; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:15px; color:#111; outline:none; background:#f4f4f6; transition:border-color 0.15s; }
+    #pinListSearchInput:focus { border-color:#1e3a5f; background:#fff; }
+    #pinListFilters { display:flex; gap:6px; padding:10px 16px; overflow-x:auto; flex-shrink:0; border-bottom:1px solid #f0f0f0; -webkit-overflow-scrolling:touch; }
+    #pinListFilters::-webkit-scrollbar { display:none; }
+    #pinListBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:12px 16px; display:flex; flex-direction:column; gap:8px; }
+    .pl-card { border:1.5px solid #eee; border-radius:12px; padding:13px 16px; cursor:pointer; transition:all 0.12s; background:#fff; display:flex; gap:12px; align-items:center; -webkit-tap-highlight-color:transparent; }
+    .pl-card:active { background:#f9f9f9; transform:scale(0.99); }
+    .pl-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+    .pl-card-main { flex:1; min-width:0; }
+    .pl-card-name { font-size:14px; font-weight:700; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; }
+    .pl-card-sub { font-size:11px; color:#888; font-family:'DM Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .pl-card-type { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:3px; }
+    .pl-card-arrow { color:#ccc; font-size:16px; flex-shrink:0; }
+    .pl-empty { text-align:center; padding:40px 20px; color:#aaa; font-size:13px; font-family:'DM Mono',monospace; }
+    #pinListCount { font-size:12px; color:#999; font-family:'DM Mono',monospace; padding:0 16px 8px; flex-shrink:0; }
+
+
+    /* ══ FEED SHEET ══ */
+    #feedSheet { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
+    #feedSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #feedSheet.open { transform:translateY(0); }
+    @media (min-width:768px) {
+      #feedSheet { width:400px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(110%); }
+      #feedSheet.open { transform:translateX(0); }
+      #feedSheet::before { display:none; }
+    }
+    #feedHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #feedTitle { font-size:17px; font-weight:700; color:#111; }
+    #feedCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    #feedComposer { padding:12px 16px; border-bottom:1px solid #f0f0f0; flex-shrink:0; display:none; }
+    #feedComposerInner { display:flex; gap:10px; align-items:flex-start; }
+    .feed-composer-avatar { width:36px; height:36px; border-radius:50%; flex-shrink:0; display:none; }
+    #feedTextarea { flex:1; border:1.5px solid #e0e0e6; border-radius:10px; padding:9px 12px; font-family:'DM Sans',sans-serif; font-size:14px; color:#111; resize:none; outline:none; min-height:60px; background:#f9f9f9; transition:border-color 0.15s; }
+    #feedTextarea:focus { border-color:#1e3a5f; background:#fff; }
+    #feedPostBtn { margin-top:8px; float:right; padding:7px 18px; background:#111; color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    #feedPostBtn:disabled { opacity:0.5; }
+    #feedNoUsername { display:none; padding:12px 16px; font-size:13px; color:#999; border-bottom:1px solid #f0f0f0; flex-shrink:0; }
+    #feedNoUsername a { color:#1e3a5f; cursor:pointer; text-decoration:underline; }
+    #feedBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:8px 0; display:flex; flex-direction:column; }
+    .feed-loading { color:#999; font-size:13px; text-align:center; padding:32px 0; }
+    .feed-post { display:flex; gap:10px; padding:12px 16px; border-bottom:1px solid #f5f5f5; }
+    .feed-post:last-child { border-bottom:none; }
+    .feed-avatar { width:38px; height:38px; border-radius:50%; flex-shrink:0; background:#f0f0f0; }
+    .feed-post-body { flex:1; min-width:0; }
+    .feed-post-header { display:flex; align-items:center; gap:6px; margin-bottom:4px; }
+    .feed-username { font-size:13px; font-weight:700; color:#111; }
+    .feed-time { font-size:11px; color:#bbb; font-family:'DM Mono',monospace; flex:1; }
+    .feed-delete-btn { background:none; border:none; color:#ccc; font-size:18px; cursor:pointer; line-height:1; padding:0 2px; flex-shrink:0; }
+    .feed-delete-btn:hover { color:#dc2626; }
+    .feed-post-content { font-size:14px; color:#333; line-height:1.5; word-break:break-word; white-space:pre-wrap; }
+    /* Profile sheet */
+
+    /* ── PASSWORD RESET SHEET ── */
+    #pwResetBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9998; opacity:0; transition:opacity 0.25s; }
+    #pwResetBackdrop.show { opacity:1; }
+    #pwResetSheet { position:fixed; bottom:0; left:0; right:0; z-index:9999; background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); padding:0 0 env(safe-area-inset-bottom,0px); transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); will-change:transform; }
+    #pwResetSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; }
+    #pwResetSheetInner { padding:20px 24px 28px; }
+    #pwResetSheet h2 { font-size:18px; font-weight:700; color:#111; margin:0 0 6px; }
+    #pwResetSheet p { font-size:13px; color:#888; margin:0 0 20px; }
+    #pwResetInput { width:100%; box-sizing:border-box; padding:12px 14px; border:1.5px solid #ddd; border-radius:10px; font-size:15px; font-family:'DM Sans',sans-serif; outline:none; margin-bottom:8px; }
+    #pwResetInput:focus { border-color:#111; }
+    #pwResetConfirm { width:100%; box-sizing:border-box; padding:12px 14px; border:1.5px solid #ddd; border-radius:10px; font-size:15px; font-family:'DM Sans',sans-serif; outline:none; margin-bottom:14px; }
+    #pwResetConfirm:focus { border-color:#111; }
+    #pwResetError { font-size:12px; color:#b91c1c; margin-bottom:12px; display:none; }
+    #pwResetBtn { width:100%; padding:13px; background:#111; color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    #pwResetBtn:disabled { opacity:0.5; }
+    /* ── END PASSWORD RESET SHEET ── */
+
+    /* ── PROFILE SHEET ── */
+    #profileSheet { position:fixed; bottom:0; left:0; right:0; z-index:1200; background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); padding-bottom:env(safe-area-inset-bottom,0px); transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); will-change:transform; max-height:92vh; display:flex; flex-direction:column; }
+    #profileSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #profileSheetHeader { padding:13px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #profileSheetTitle { font-size:17px; font-weight:700; color:#111; }
+    #profileCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; font-size:18px; color:#666; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    #profileBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+    /* current avatar hero */
+    #profileHero { display:flex; flex-direction:column; align-items:center; padding:20px 16px 16px; border-bottom:1px solid #f0f0f0; gap:10px; }
+    #profileCurrentAvatar { width:80px; height:80px; border-radius:50%; border:3px solid #111; background:#f5f5f5; }
+    #profileHeroName { font-size:15px; font-weight:700; color:#111; }
+    #profileHeroSub { font-size:12px; color:#aaa; font-family:'DM Mono',monospace; }
+    #profileShuffleBtn { padding:7px 16px; background:#f4f4f6; border:1.5px solid #e0e0e6; border-radius:8px; font-size:13px; font-weight:600; color:#555; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    #profileShuffleBtn:active { background:#e8e8ec; }
+    /* avatar picker */
+    #profileAvatarSection { padding:16px 16px 8px; border-bottom:1px solid #f0f0f0; }
+    .profile-section-label { font-size:11px; font-weight:700; color:#aaa; letter-spacing:0.07em; text-transform:uppercase; margin-bottom:12px; }
+    #avatarGrid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; }
+    .avatar-option { width:100%; aspect-ratio:1; border-radius:50%; border:2.5px solid transparent; cursor:pointer; transition:border-color 0.15s,transform 0.12s,box-shadow 0.12s; background:#f5f5f5; -webkit-tap-highlight-color:transparent; }
+    .avatar-option:active { transform:scale(0.9); }
+    .avatar-option.selected { border-color:#111; box-shadow:0 0 0 3px rgba(0,0,0,0.08); }
+    /* username section */
+    #profileUsernameSection { padding:16px; }
+    #usernameInput { width:100%; box-sizing:border-box; padding:11px 14px; border:1.5px solid #ddd; border-radius:10px; font-size:15px; font-family:'DM Sans',sans-serif; outline:none; margin-bottom:5px; }
+    #usernameInput:focus { border-color:#111; }
+    #usernameHint { font-size:11px; color:#bbb; margin-bottom:14px; }
+    #usernameStatus { font-size:12px; margin-bottom:12px; min-height:16px; }
+    .username-status.success { color:#15803d; }
+    .username-status.error { color:#b91c1c; }
+    #usernameSaveBtn { width:100%; padding:13px; background:#111; color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    #usernameSaveBtn:disabled { opacity:0.5; }
+    /* ── END PROFILE SHEET ── */
+    #usernameInput { width:100%; box-sizing:border-box; padding:11px 14px; border:1.5px solid #ddd; border-radius:10px; font-size:15px; font-family:'DM Sans',sans-serif; outline:none; margin-bottom:6px; }
+    #usernameInput:focus { border-color:#111; }
+    #usernameHint { font-size:11px; color:#aaa; margin-bottom:16px; }
+    #usernameStatus { font-size:12px; margin-bottom:12px; min-height:16px; }
+    .username-status.success { color:#15803d; }
+    .username-status.error { color:#b91c1c; }
+    #usernameSaveBtn { width:100%; padding:13px; background:#111; color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    #usernameSaveBtn:disabled { opacity:0.5; }
+
+    /* ══ BUILDERS SHEET ══ */
+    #buildersSheet { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
+    #buildersSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #buildersSheet.open { transform:translateY(0); }
+    @media (min-width:768px) {
+      #buildersSheet { width:400px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(110%); }
+      #buildersSheet.open { transform:translateX(0); }
+      #buildersSheet::before { display:none; }
+    }
+    #buildersHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #buildersTitle { font-size:17px; font-weight:700; color:#111; }
+    #buildersSearch { padding:10px 16px; border-bottom:1px solid #f0f0f0; flex-shrink:0; }
+    #builderSearchInput { width:100%; padding:9px 14px; border:1.5px solid #e0e0e6; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:15px; color:#111; outline:none; background:#f4f4f6; transition:border-color 0.15s; }
+    #builderSearchInput:focus { border-color:#1e3a5f; background:#fff; }
+    #buildersBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:12px 16px; display:flex; flex-direction:column; gap:8px; }
+    .builder-card { border:1.5px solid #eee; border-radius:12px; background:#fff; }
+    .builder-card-header { display:flex; align-items:center; gap:12px; padding:12px 14px; cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none; }
+    .builder-card-header:active { background:#f9f9f9; }
+    .builder-logo { width:38px; height:38px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:13px; font-weight:800; color:#fff; font-family:'DM Sans',sans-serif; letter-spacing:0.02em; }
+    .builder-info { flex:1; min-width:0; }
+    .builder-name { font-size:14px; font-weight:700; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .builder-meta { font-size:11px; color:#999; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .builder-chevron { color:#ccc; font-size:20px; flex-shrink:0; transition:transform 0.2s; line-height:1; }
+    .builder-card.open .builder-chevron { transform:rotate(90deg); }
+    .builder-actions { display:none; padding:12px 14px; border-top:1px solid #f0f0f0; flex-direction:column; gap:8px; }
+    .builder-card.open .builder-actions { display:flex; }
+    .builder-note { font-size:12px; color:#666; line-height:1.55; margin-bottom:4px; }
+    .builder-tags { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:8px; }
+    .builder-tag { font-size:10px; font-weight:600; padding:3px 8px; border-radius:8px; background:#f0f0f4; color:#555; white-space:nowrap; }
+    .builder-tag.green { background:#dcfce7; color:#15803d; }
+    .builder-tag.blue { background:#dbeafe; color:#1d4ed8; }
+    .builder-tag.amber { background:#fef9c3; color:#854d0e; }
+    .builder-btn { display:flex; align-items:center; gap:9px; padding:10px 14px; border-radius:9px; border:1.5px solid #e0e0e6; background:#fff; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; color:#333; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; transition:background 0.12s; width:100%; box-sizing:border-box; }
+    .builder-btn:active { background:#f4f4f6; }
+    .builder-btn svg { flex-shrink:0; stroke:#888; }
+    .builder-btn.primary { background:#1e3a5f; color:#fff; border-color:#1e3a5f; }
+    .builder-btn.primary svg { stroke:#fff; }
+
+    /* ══ LOG VISIT SHEET ══ */
+    #logVisitSheet {
+      position:fixed; bottom:0; left:0; right:0; z-index:950;
+      max-height:calc(80dvh - var(--sab)); background:#fff;
+      border-top:1.5px solid #ddd; border-radius:20px 20px 0 0;
+      box-shadow:0 -8px 40px rgba(0,0,0,0.2);
+      display:flex; flex-direction:column;
+      transform:translateY(110%);
+      transition:transform 0.32s cubic-bezier(0.32,0.72,0,1);
+      padding-bottom:var(--sab); will-change:transform;
+    }
+    #logVisitSheet.open { transform:translateY(0); }
+    #logVisitSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    @media (min-width:768px) {
+      #logVisitSheet { width:420px; left:50%; right:auto; transform:translate(-50%, 110%); border-radius:20px 20px 0 0; }
+      #logVisitSheet.open { transform:translate(-50%, 0); }
+    }
+    #logVisitHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #logVisitTitle { font-size:17px; font-weight:700; color:#111; }
+    #logVisitCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; }
+    #logVisitBody { overflow-y:auto; padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+    #logVisitFooter { padding:14px 20px; border-top:1.5px solid #eee; display:flex; gap:10px; flex-shrink:0; background:#fff; }
+    .lv-field-label { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; }
+
+    /* ══ AUTH GATE ══ */
+    #authGate { position:fixed; inset:0; z-index:9999; background:var(--bg); display:flex; align-items:center; justify-content:center; padding:max(20px,calc(var(--sat) + 16px)) 20px max(20px,calc(var(--sab) + 16px)); overflow-y:auto; }
+    #authGate.hidden { display:none; }
+    .auth-box { background:var(--surface); border:1.5px solid var(--border); border-radius:16px; padding:32px 28px; width:100%; max-width:380px; }
+    .auth-logo { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.15em; color:rgba(255,255,255,0.6); text-transform:uppercase; margin-bottom:24px; }
+    .auth-logo span { color:#fff; }
+    .auth-tabs { display:flex; margin-bottom:24px; border:1.5px solid var(--border); border-radius:10px; overflow:hidden; }
+    .auth-tab { flex:1; padding:11px; background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; color:rgba(255,255,255,0.6); transition:background 0.15s,color 0.15s; -webkit-tap-highlight-color:transparent; }
+    .auth-tab.active { background:var(--accent); color:#12121a; }
+    .auth-tab:not(.active):hover { background:#22222e; color:var(--text); }
+    .auth-panel { display:none; }
+    .auth-panel.active { display:block; }
+    .auth-heading { font-size:18px; font-weight:700; color:var(--text); margin-bottom:20px; }
+    .auth-label { font-size:11px; font-weight:600; color:#6b6b8a; text-transform:uppercase; letter-spacing:0.08em; display:block; margin-bottom:8px; }
+    .auth-input { width:100%; background:#12121a; border:1.5px solid var(--border); border-radius:10px; padding:13px 14px; font-family:'DM Mono',monospace; font-size:16px; color:var(--text); outline:none; letter-spacing:0.04em; transition:border-color 0.15s; margin-bottom:14px; }
+    .auth-input:focus { border-color:#fff; }
+    .auth-input::placeholder { color:#3a3a55; }
+    .auth-btn { width:100%; padding:15px; background:var(--accent); border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:700; color:#12121a; cursor:pointer; transition:background 0.15s; -webkit-tap-highlight-color:transparent; }
+    .auth-btn:hover { background:#fbbf24; }
+    .auth-btn:disabled { background:#7a5c10; color:#4a3a0a; cursor:not-allowed; }
+    .auth-btn-ghost { width:100%; padding:13px; background:transparent; border:1.5px solid var(--border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; color:#6b6b8a; cursor:pointer; transition:border-color 0.15s,color 0.15s; margin-top:10px; -webkit-tap-highlight-color:transparent; }
+    .auth-btn-ghost:hover { border-color:#fff; color:var(--text); }
+    .auth-error { font-size:12px; color:#fca5a5; font-family:'DM Mono',monospace; margin-bottom:14px; display:none; line-height:1.5; }
+    .auth-divider { display:flex; align-items:center; gap:10px; margin:18px 0; }
+    .auth-divider-line { flex:1; height:1px; background:var(--border); }
+    .auth-divider-text { font-size:11px; color:rgba(255,255,255,0.6); font-family:'DM Mono',monospace; white-space:nowrap; }
+    .auth-forgot { font-size:12px; color:rgba(255,255,255,0.6); font-family:'DM Mono',monospace; text-align:right; display:block; margin-top:-8px; margin-bottom:14px; cursor:pointer; background:none; border:none; width:100%; transition:color 0.15s; -webkit-tap-highlight-color:transparent; }
+    .auth-forgot:hover { color:#fff; }
+    .auth-success-box { background:#0d2d1a; border:1.5px solid #1a5c35; border-radius:10px; padding:16px 18px; margin-top:16px; display:none; }
+    .auth-success-icon { font-size:22px; margin-bottom:8px; }
+    .auth-success-title { font-size:14px; font-weight:600; color:var(--green); margin-bottom:4px; }
+    .auth-success-sub { font-size:12px; color:#6b8a7a; font-family:'DM Mono',monospace; line-height:1.6; }
+    .auth-note { font-size:11px; color:rgba(255,255,255,0.6); font-family:'DM Mono',monospace; line-height:1.6; margin-top:18px; }
+
+    /* ══ POPUP ══ */
+    .leaflet-popup-content-wrapper { border-radius:12px !important; border:none !important; box-shadow:0 8px 32px rgba(0,0,0,0.18) !important; padding:0 !important; overflow:hidden; font-family:'DM Sans',sans-serif !important; }
+    .leaflet-popup-content { margin:0 !important; width:auto !important; }
+    .leaflet-popup-tip-container { display:none; }
+    .popup-inner { width:260px; }
+    .popup-header { background:#1e3a5f; padding:12px 16px; }
+    .popup-name { font-size:15px; font-weight:700; color:#fff; line-height:1.2; }
+    .popup-table { width:100%; border-collapse:collapse; }
+    .popup-table tr { border-bottom:1px solid #f0f0f0; }
+    .popup-table tr:last-child { border-bottom:none; }
+    .popup-table td { padding:8px 16px; font-size:12px; vertical-align:middle; line-height:1.3; }
+    .popup-table td:first-child { color:#999; font-family:'DM Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.06em; width:42%; white-space:nowrap; }
+    .popup-table td:last-child { font-weight:600; color:#111; }
+    .popup-stars-sm { color:#f59e0b; font-size:13px; letter-spacing:1px; }
+    .popup-stars-sm .empty { color:#ddd; }
+    .popup-permit { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; font-family:'DM Mono',monospace; }
+    .popup-permit.none { background:#f3f4f6; color:#9ca3af; }
+    .popup-permit.no-permit { background:#dcfce7; color:#15803d; }
+    .popup-permit.required { background:#fee2e2; color:#dc2626; }
+    .popup-note-row td { color:#666 !important; font-weight:400 !important; font-size:11px !important; }
+    .popup-footer { padding:0; border-top:none; background:none; }
+    .popup-edit-link { font-size:13px; color:var(--blue); font-weight:600; text-decoration:none; display:flex; align-items:center; gap:5px; }
+    .popup-edit-link:hover { color:#1d4ed8; }
+
+    /* ══ TRANSFER SHEET ══ */
+    @media(min-width:768px){
+    }
+    .tf-field-label { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; }
+    .tf-input { width:100%; padding:10px 12px; border:1.5px solid #e0e0e6; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; color:#111; background:#fafafa; outline:none; transition:border-color 0.15s; }
+    .tf-input:focus { border-color:#1e3a5f; background:#fff; }
+    .tf-status-label { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px; }
+    .tf-status-btn { flex:1; min-width:100px; padding:9px 8px; border:2px solid #e0e0e6; border-radius:10px; background:#fff; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; color:#555; cursor:pointer; text-align:center; transition:all 0.15s; -webkit-tap-highlight-color:transparent; }
+    .tf-status-btn.active { border-color:var(--sc,#1e3a5f); background:rgba(0,0,0,0.04); color:#111; }
+    #tfStatus { font-size:12px; color:#ef4444; min-height:16px; text-align:center; }
+
+    /* ══ ANALYTICS SHEET ══ */
+    @media(min-width:768px){
+    }
+    .an-tabs { display:flex; gap:4px; overflow-x:auto; padding-bottom:10px; border-bottom:1.5px solid #eee; }
+    .an-tab { padding:6px 12px; border-radius:20px; border:1.5px solid #e0e0e6; background:#fff; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; color:#666; cursor:pointer; white-space:nowrap; -webkit-tap-highlight-color:transparent; transition:all 0.15s; flex-shrink:0; }
+    .an-tab.active { background:#1e3a5f; border-color:#1e3a5f; color:#fff; }
+    .an-section-label { font-size:10px; font-weight:700; color:#aaa; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:10px; display:block; }
+    .an-empty { text-align:center; color:#aaa; font-size:13px; padding:32px 16px; line-height:1.6; }
+    .an-funnel { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+    .an-funnel-step { display:flex; align-items:center; gap:10px; }
+    .an-funnel-bar { height:28px; border-radius:6px; transition:width 0.5s; min-width:4px; }
+    .an-funnel-meta { display:flex; align-items:center; gap:8px; min-width:160px; }
+    .an-funnel-emoji { font-size:18px; flex-shrink:0; }
+    .an-funnel-label { font-size:12px; color:#555; font-weight:600; }
+    .an-funnel-count { font-size:22px; font-weight:700; color:#111; line-height:1; }
+    .an-funnel-arrow { font-size:11px; color:#bbb; padding-left:8px; font-family:'DM Mono',monospace; }
+    .an-stat-grid { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; margin-bottom:20px; }
+    .an-stat-card { background:#f8f8fb; border-radius:10px; padding:12px 8px; text-align:center; }
+    .an-stat-num { font-size:22px; font-weight:700; line-height:1; margin-bottom:4px; }
+    .an-stat-lbl { font-size:10px; color:#aaa; font-weight:600; text-transform:uppercase; }
+    .an-muni-card { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid #f0f0f0; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .an-muni-card:active { opacity:0.7; }
+    .an-muni-rank { width:24px; font-size:13px; font-weight:700; color:#ccc; text-align:center; flex-shrink:0; }
+    .an-muni-info { flex:1; min-width:0; }
+    .an-muni-name { font-size:13px; font-weight:700; color:#111; }
+    .an-muni-county { font-size:11px; color:#aaa; margin-bottom:4px; }
+    .an-muni-bars { display:flex; flex-direction:column; gap:3px; }
+    .an-mini-bar-wrap { height:4px; background:#f0f0f4; border-radius:2px; overflow:hidden; }
+    .an-mini-bar { height:100%; border-radius:2px; transition:width 0.5s; }
+    .an-muni-nums { display:flex; gap:8px; flex-shrink:0; text-align:center; }
+    .an-muni-stat { display:flex; flex-direction:column; align-items:center; font-size:13px; font-weight:700; }
+    .an-muni-stat-lbl { font-size:9px; color:#bbb; font-weight:600; text-transform:uppercase; }
+    .an-rep-card { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid #f0f0f0; cursor:pointer; }
+    .an-rep-card:active { opacity:0.7; }
+    .an-rep-avatar { width:36px; height:36px; border-radius:50%; background:#e0e7ff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#4338ca; flex-shrink:0; }
+    .an-rep-info { flex:1; min-width:0; }
+    .an-rep-name { font-size:13px; font-weight:700; color:#111; }
+    .an-rep-sub { font-size:11px; color:#aaa; margin-bottom:4px; }
+    .an-rep-track { height:4px; background:#f0f0f4; border-radius:2px; overflow:hidden; }
+    .an-rep-fill { height:100%; border-radius:2px; transition:width 0.5s; }
+    .an-rep-big { font-size:20px; font-weight:700; flex-shrink:0; text-align:right; line-height:1.2; }
+    .an-fingerprint { background:#f5f3ff; border:1.5px solid #e0d9ff; border-radius:10px; padding:12px 14px; margin-bottom:14px; }
+    .an-fp-title { font-size:12px; font-weight:700; color:#6d28d9; margin-bottom:6px; }
+    .an-fp-stats { display:flex; gap:10px; flex-wrap:wrap; font-size:12px; color:#555; }
+    .an-heat-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #f0f0f0; }
+  </style>
+</head>
+<body>
+
+<!-- AUTH GATE -->
+<div id="authGate">
+  <div class="auth-box">
+    <div class="auth-logo">PA Territory Map <span>// Field Tool</span></div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('password')">Email &amp; Password</button>
+      <button class="auth-tab" onclick="switchAuthTab('magic')">Magic Link</button>
+    </div>
+    <div class="auth-panel active" id="panelPassword">
+      <div class="auth-heading">Sign in</div>
+      <div class="auth-error" id="pwError"></div>
+      <label class="auth-label">Email address</label>
+      <input class="auth-input" id="pwEmail" type="email" placeholder="you@example.com" autocomplete="email" inputmode="email" />
+      <label class="auth-label">Password</label>
+      <input class="auth-input" id="pwPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
+      <button class="auth-forgot" onclick="forgotPassword()">Forgot password?</button>
+      <button class="auth-btn" id="pwSignInBtn" onclick="signInWithPassword()">Sign in</button>
+      <div class="auth-divider"><div class="auth-divider-line"></div><span class="auth-divider-text">no account?</span><div class="auth-divider-line"></div></div>
+      <button class="auth-btn-ghost" onclick="signUpWithPassword()">Create account</button>
+      <div class="auth-note">Notes sync securely to your account across all devices.</div>
+    </div>
+    <div class="auth-panel" id="panelMagic">
+      <div class="auth-heading">Magic link</div>
+      <div class="auth-error" id="magicError"></div>
+      <label class="auth-label">Email address</label>
+      <input class="auth-input" id="magicEmail" type="email" placeholder="you@example.com" autocomplete="email" inputmode="email" />
+      <button class="auth-btn" id="magicLinkBtn" onclick="sendMagicLink()">Send magic link</button>
+      <div class="auth-success-box" id="successBox">
+        <div class="auth-success-icon">📩</div>
+        <div class="auth-success-title">Check your inbox</div>
+        <div class="auth-success-sub">Sent to <span id="sentToEmail" style="color:#86efac"></span>. Click the link to enter.</div>
+      </div>
+      <div class="auth-note">No password needed — one-click sign-in link.</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAP -->
+<div id="map"></div>
+
+<!-- GEAR BUTTON (mobile) -->
+<button id="gearBtn" onclick="openSettings()" title="Settings">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</button>
+
+<!-- SETTINGS SHEET (mobile) -->
+<div id="settingsBackdrop" onclick="closeSettings()"></div>
+<div id="settingsSheet">
+  <div id="settingsSheetHeader">
+    <div id="settingsSheetTitle">Settings</div>
+    <button id="settingsCloseBtn" onclick="closeSettings()" aria-label="Close">×</button>
+  </div>
+  <div id="settingsBody">
+    <div>
+      <div class="settings-section-label">Account</div>
+      <div id="settingsAccountRow">
+        <div id="settingsAvatar">?</div>
+        <div style="min-width:0;">
+          <div id="settingsEmail">—</div>
+          <div id="settingsEmailSub">signed in</div>
+        </div>
+      </div>
+      <button id="settingsSignOutBtn" onclick="logout()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign out
+      </button>
+      <div id="editProfileRow" style="display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-top:1px solid #f0f0f0;cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="openEditProfile()">
+        <span style="font-size:14px;color:#111;font-weight:500;">Edit profile</span>
+        <span style="color:#bbb;font-size:16px;">›</span>
+      </div>
+      <div id="adminSettingsRow" onclick="openAdminPanel()">
+        <span class="admin-settings-label">Admin panel</span>
+        <span class="admin-settings-chevron">›</span>
+      </div>
+    </div>
+    <div>
+      <div class="settings-section-label">App</div>
+      <div class="settings-info-row" style="cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="openChangelog()">
+        <span class="settings-info-label">Version</span>
+        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v91 · What's new ›</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PASSWORD RESET SHEET -->
+<div id="pwResetBackdrop"></div>
+<div id="pwResetSheet">
+  <div id="pwResetSheetInner">
+    <h2>Set new password</h2>
+    <p>Choose a new password for your account.</p>
+    <input id="pwResetInput" type="password" placeholder="New password" autocomplete="new-password">
+    <input id="pwResetConfirm" type="password" placeholder="Confirm password" autocomplete="new-password">
+    <div id="pwResetError"></div>
+    <button id="pwResetBtn" onclick="submitNewPassword()">Update password</button>
+  </div>
+</div>
+
+<!-- ADMIN SHEET -->
+<div id="adminBackdrop" onclick="closeAdminPanel()"></div>
+<div id="adminSheet">
+  <div id="adminSheetHeader">
+    <div id="adminSheetTitle">Admin</div>
+    <button id="adminSheetCloseBtn" onclick="closeAdminPanel()" aria-label="Close">×</button>
+  </div>
+  <div class="admin-tabs">
+    <button class="admin-tab-btn active" data-tab="users" onclick="switchAdminTab('users')">Users</button>
+    <button class="admin-tab-btn" data-tab="transfer" onclick="switchAdminTab('transfer')">Data Transfer</button>
+  </div>
+  <div id="adminBody">
+    <div id="adminTabUsers">
+      <div id="adminUserList"><div class="admin-loading">Loading…</div></div>
+    </div>
+    <div id="adminTabTransfer">
+      <div class="admin-transfer-label">From (source account email)</div>
+      <input id="adminFromEmail" class="admin-transfer-input" type="email" placeholder="source@example.com" autocomplete="off" autocapitalize="off">
+      <div class="admin-transfer-label">To (destination account email)</div>
+      <input id="adminToEmail" class="admin-transfer-input" type="email" placeholder="destination@example.com" autocomplete="off" autocapitalize="off">
+      <button id="adminTransferBtn" onclick="runDataTransfer()">Transfer data</button>
+      <div id="adminTransferStatus" class="admin-transfer-status"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGELOG MODAL -->
+<div id="changelogBackdrop" onclick="closeChangelog()"></div>
+<div id="changelogModal">
+  <div id="changelogModalHeader">
+    <div id="changelogModalTitle">What's New</div>
+    <button id="changelogCloseBtn" onclick="closeChangelog()">×</button>
+  </div>
+  <div id="changelogBody">
+
+        <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge current">v91</span>
+        <span class="cl-version-label">Password reset sheet</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Set new password via proper sheet instead of browser prompt</div>
+        <div class="cl-item">Confirms passwords match before submitting</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v90</span>
+        <span class="cl-version-label">Edit Profile redesign</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Avatar hero with current selection + shuffle button</div>
+        <div class="cl-item">6-column avatar grid, smaller tiles, clear selection state</div>
+        <div class="cl-item">Username section separated below avatar picker</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v89</span>
+        <span class="cl-version-label">Edit Profile — avatar picker + username</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Edit Profile button in Settings</div>
+        <div class="cl-item">Choose from diverse avatar set (DiceBear)</div>
+        <div class="cl-item">Unique username enforced at database level</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v88</span>
+        <span class="cl-version-label">Feed + username</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Feed tab — post updates, DiceBear avatars</div>
+        <div class="cl-item">Username claim in Settings</div>
+        <div class="cl-item">Admin and post owner can delete posts</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v87</span>
+        <span class="cl-version-label">Admin row fix + version label</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Fixed admin row placement inside settings body</div>
+        <div class="cl-item">Fixed version label showing v64 in settings</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v86</span>
+        <span class="cl-version-label">Settings on desktop + Admin panel</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Settings button in desktop nav — opens centered sheet</div>
+        <div class="cl-item">Admin panel visible in Settings for admin accounts</div>
+        <div class="cl-item">Fixed desktop CSS that was hiding the settings sheet</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v85</span>
+        <span class="cl-version-label">Admin panel fixes</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Settings button added to desktop nav</div>
+        <div class="cl-item">Fixed recursive RLS policy crash on profiles table</div>
+        <div class="cl-item">Admin role check now handles errors gracefully</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v84</span>
+        <span class="cl-version-label">Admin panel</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Role-based admin access via profiles table</div>
+        <div class="cl-item">User list with join date, pin and shape counts</div>
+        <div class="cl-item">Data transfer tool to move all data between accounts</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v83</span>
+        <span class="cl-version-label">Shape sidebar cleanup</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Removed redundant Log Visit and Schedule buttons from sidebar footer</div>
+        <div class="cl-item">Log Visit stays in popup (View / Log Visit / Edit) for quick one-tap access</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v81</span>
+        <span class="cl-version-label">Shape popup: View &amp; Edit only</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Shape popup now shows only View and Edit buttons</div>
+        <div class="cl-item">Log Visit and Schedule moved into the shape sidebar below the Save/Cancel/Delete row</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v80</span>
+        <span class="cl-version-label">Calendar layout simplified</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Single header row: title left, Add + close right</div>
+        <div class="cl-item">Tabs (Callbacks / Scheduled / History) live in the chip row — one row total, no sub-filters</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v79</span>
+        <span class="cl-version-label">Calendar: 3 tabs, shape visit history</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Calendar now has 3 compact scrollable tab chips: Callbacks, Scheduled, History</div>
+        <div class="cl-item">History tab shows all shapes with a last knocked date, sorted most recent first</div>
+        <div class="cl-item">History filters: All, This Week, This Month, Older</div>
+        <div class="cl-item">Each history card shows name, visit date, star rating, next scheduled date if set</div>
+        <div class="cl-item">Tapping any card flies map to that shape and opens popup</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v78</span>
+        <span class="cl-version-label">Fix: new shape draw crash</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Fixed TypeError — focusSchedule param shifted verts into wrong slot in openShapeSidebarFor</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v77</span>
+        <span class="cl-version-label">Shape scheduling &amp; visit logging</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Shape popup now has View / Schedule / Log Visit / Edit buttons</div>
+        <div class="cl-item">Log Visit sets last knocked to now and clears any scheduled date</div>
+        <div class="cl-item">Schedule button opens shape sidebar focused on the new Scheduled Visit date picker</div>
+        <div class="cl-item">Calendar now has two tabs: Callbacks and Shape Visits</div>
+        <div class="cl-item">Shape Visits tab shows all scheduled shapes with Overdue/Today/Week/Upcoming filters</div>
+        <div class="cl-item">Overdue badge counts overdue shape visits alongside overdue callbacks</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v76</span>
+        <span class="cl-version-label">Fix: shape hover cursor disabled in pin mode</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Shape layers are now individually disabled during pin placement, not just the pane</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v75</span>
+        <span class="cl-version-label">Fix: shapes dont intercept pin placement clicks</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Shapes are now non-interactive while in pin placement mode</div>
+        <div class="cl-item">Clicking on a shape to place a pin now works correctly</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v74</span>
+        <span class="cl-version-label">Fix: Prior Install shows in stage dropdown</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Prior Install now appears in the Funnel Stage dropdown when viewing an existing pin</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v73</span>
+        <span class="cl-version-label">Appointment Run back as funnel stage</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">5-stage funnel: Callback → Warm Transfer → Appointment Run → Contract Signed → Installed</div>
+        <div class="cl-item">Prior Install now shows in Stage mode (not Marker) when clicked</div>
+        <div class="cl-item">Analytics funnel updated with Appointment Run sat rate step</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v72</span>
+        <span class="cl-version-label">Fix: Marker dropdown now visible in pin sidebar</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Fixed Marker mode toggle — wrapper div was hidden, select was never shown</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v71</span>
+        <span class="cl-version-label">Fix: duplicate meta variable crash in pin sidebar</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Fixed SyntaxError — meta was declared twice in _populatePinSidebar</div>
+        <div class="cl-item">Fixed missing dateLabel declaration introduced by prior edit</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v70</span>
+        <span class="cl-version-label">Fix: Installed pins no longer convert to Prior Install</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Removed the auto-migration that was converting all Installed pins to Prior Install on load</div>
+        <div class="cl-item">New Installed pins you create will now stay as Installed correctly</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v69</span>
+        <span class="cl-version-label">Stage vs Marker pin mode</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Pin sidebar now has a Stage / Marker toggle at the top</div>
+        <div class="cl-item">Stage: Callback, Warm Transfer, Contract Signed, Installed — tracked in analytics</div>
+        <div class="cl-item">Marker: New Construction (and others in future) — reference only, not in funnel</div>
+        <div class="cl-item">Marker pins show a minimal form (no contact fields) since they track locations not people</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v68</span>
+        <span class="cl-version-label">New Construction pins → pink squares</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Existing New Construction pins are auto-converted to pink square shapes on load</div>
+        <div class="cl-item">The original pin is deleted from the database and replaced with a shape</div>
+        <div class="cl-item">One-time migration — runs automatically, no action needed</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v67</span>
+        <span class="cl-version-label">Prior Installs use standard purple pin</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Prior Install pins now render as normal purple teardrops, same style as Installed pins</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v66</span>
+        <span class="cl-version-label">All existing installs → Prior Install</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">All previously saved Installed pins now load as Prior Install (purple square) on the map</div>
+        <div class="cl-item">Prior Installs are purple squares; your Installed pins (from your funnel) are purple teardrops</div>
+        <div class="cl-item">Prior Installs remain excluded from funnel analytics</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v65</span>
+        <span class="cl-version-label">Pin stages redesign &amp; Prior Installs</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Removed New Construction pins — replaced with square Prior Install markers (pink)</div>
+        <div class="cl-item">New pin stages: Callback → Warm Transfer → Contract Signed → Installed</div>
+        <div class="cl-item">Prior Installs show as pink squares on map but are excluded from your funnel analytics</div>
+        <div class="cl-item">Analytics funnel updated to reflect 4-stage pipeline</div>
+        <div class="cl-item">Legacy pins auto-migrated on load (newconstruction→priorinstall, appointmentrun→contractsigned)</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v64</span>
+        <span class="cl-version-label">Fix: Electric utility lookup</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Fixed missing utilities.js causing map popups to crash on open</div>
+        <div class="cl-item">County electric utility data now loads correctly before map initializes</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v63</span>
+        <span class="cl-version-label">Warm Transfer tracking &amp; Analytics</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Log warm transfers with homeowner name, phone, address &amp; appointment time</div>
+        <div class="cl-item">3-stage funnel: Transferred → Appointment Ran → Signed</div>
+        <div class="cl-item">Analytics dashboard: funnel rates, top municipalities, rep board</div>
+        <div class="cl-item">Replication engine: finds unworked areas matching your best-converting demographics</div>
+        <div class="cl-item">Success heatmap overlay on municipality layer</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v62</span>
+        <span class="cl-version-label">Changelog &amp; contact fields</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Added this changelog — tap the version in Settings to view</div>
+        <div class="cl-item">Phone and email fields on Call Back pins</div>
+        <div class="cl-item">Native iOS wheel picker for callback date &amp; time</div>
+        <div class="cl-item">Phone &amp; email show as tappable links in pin popup</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v8</span>
+        <span class="cl-version-label">Date picker &amp; contact fields</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Native iOS wheel picker for callback date &amp; time</div>
+        <div class="cl-item">Phone and email fields added to Call Back pins</div>
+        <div class="cl-item">Phone &amp; email show as tappable links in pin popup</div>
+        <div class="cl-item">Phone number visible on calendar callback cards</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v7</span>
+        <span class="cl-version-label">Separate date &amp; time inputs</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Split date and time into two separate fields</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v6</span>
+        <span class="cl-version-label">Bug fixes</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Fixed crash when using pin mode from overflow menu on desktop</div>
+        <div class="cl-item">Removed leftover service worker code causing 404 errors</div>
+        <div class="cl-item">Draw and pin mode active states now sync with the ··· menu</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v5</span>
+        <span class="cl-version-label">Overflow menu, Calendar &amp; new pin UI</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">··· More button replaces Draw/Pins in nav bar</div>
+        <div class="cl-item">Calendar view for all Call Back pins with filter chips</div>
+        <div class="cl-item">Pin type selector changed from emoji grid to clean dropdown</div>
+        <div class="cl-item">Callback fields: name, address with autocomplete, date &amp; time</div>
+        <div class="cl-item">Map pins now show 2-letter initials instead of emojis</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v4</span>
+        <span class="cl-version-label">Auto-close on save</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Saving a note, shape, or pin now closes the panel automatically</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v3</span>
+        <span class="cl-version-label">Pin mode fixes &amp; exclusivity</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Fixed pin placement — municipality layer no longer intercepts taps</div>
+        <div class="cl-item">Legend, Layers, Draw, and Pins are now mutually exclusive</div>
+        <div class="cl-item">Improved mobile touch handling across all panels</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v2</span>
+        <span class="cl-version-label">Pin placement system</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Drop custom pins anywhere on the map</div>
+        <div class="cl-item">8 pin types: Call Back, Lead, Customer, No Answer, Not Interested, Competitor, Note, Other</div>
+        <div class="cl-item">Color picker, notes, and Supabase sync per pin</div>
+      </div>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v1</span>
+        <span class="cl-version-label">Initial release</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">PA municipality map with full GeoJSON coverage</div>
+        <div class="cl-item">Supabase auth — email/password and magic link</div>
+        <div class="cl-item">Municipality notes: color, permit status, utility providers, rating, notes</div>
+        <div class="cl-item">Address search with Photon + Nominatim autocomplete</div>
+        <div class="cl-item">Legend, Layers panel, live GPS location tracking</div>
+        <div class="cl-item">Custom shape drawing — polygons and lines</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- LAYERS PANEL -->
+<div id="layersPanel">
+  <div class="layers-section">
+    <div class="layers-section-title">Fill opacity</div>
+    <div class="opacity-presets">
+      <button class="opacity-btn" data-opacity="0" onclick="setOpacityPreset(this)">None</button>
+      <button class="opacity-btn" data-opacity="0.2" onclick="setOpacityPreset(this)">Light</button>
+      <button class="opacity-btn active" data-opacity="0.45" onclick="setOpacityPreset(this)">Med</button>
+      <button class="opacity-btn" data-opacity="0.75" onclick="setOpacityPreset(this)">Solid</button>
+    </div>
+  </div>
+  <div class="layers-section">
+    <div class="layers-section-title">Base map</div>
+    <div class="basemap-grid">
+      <button class="basemap-btn active" data-map="light" onclick="setBasemap(this)"><span class="bm-icon">☀️</span>Light</button>
+      <button class="basemap-btn" data-map="dark" onclick="setBasemap(this)"><span class="bm-icon">🌑</span>Dark</button>
+      <button class="basemap-btn" data-map="satellite" onclick="setBasemap(this)"><span class="bm-icon">🛰</span>Satellite</button>
+      <button class="basemap-btn" data-map="street" onclick="setBasemap(this)"><span class="bm-icon">🏠</span>Street</button>
+      <button class="basemap-btn" data-map="topo" onclick="setBasemap(this)"><span class="bm-icon">🗻</span>Topo</button>
+    </div>
+  </div>
+  <div class="layers-section">
+    <div class="toggle-row">
+      <span class="toggle-label">Borders</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggleBorders" checked onchange="applyBorderToggle()">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Labels</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggleLabels" checked onchange="applyLabelToggle()">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Custom shapes</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggleShapes" checked onchange="applyShapesToggle()">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Pins</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="togglePins" checked onchange="applyPinsToggle()">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+
+
+  </div>
+</div>
+
+<!-- DESKTOP ELEMENTS -->
+<div id="sessionBadge" class="hidden">
+  <span id="badgeVersion">v91</span>
+  <span id="badgeEmail">—</span>
+  <button id="badgeLogout" onclick="logout()">sign out</button>
+</div>
+<!-- Desktop nav toolbar -->
+<div id="desktopNav">
+  <button class="desk-nav-btn" id="deskLocBtn" onclick="toggleLocation()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7" stroke-width="1.5"/></svg>
+    Locate
+  </button>
+  <button class="desk-nav-btn" id="deskLegendBtn" onclick="toggleLegend()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="3" y="10" width="5" height="5" rx="1"/><rect x="3" y="17" width="5" height="5" rx="1"/><line x1="12" y1="5.5" x2="21" y2="5.5"/><line x1="12" y1="12.5" x2="21" y2="12.5"/><line x1="12" y1="19.5" x2="21" y2="19.5"/></svg>
+    Legend
+  </button>
+  <button class="desk-nav-btn" id="deskLayersBtn" onclick="toggleLayersPanel()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+    Layers
+  </button>
+  <button class="desk-nav-btn" id="deskCalBtn" onclick="toggleCalendar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Calendar
+  </button>
+
+  <button class="desk-nav-btn" id="deskPinListBtn" onclick="togglePinList()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+    Pin List
+  </button>
+  <button class="desk-nav-btn" id="deskPinBtn" onclick="togglePinMode()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    Pins
+  </button>
+  <button class="desk-nav-btn" id="deskDrawBtn" onclick="toggleDrawMode()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+    Draw
+  </button>
+  <button class="desk-nav-btn" id="deskFilterBtn" onclick="togglePinFilter()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    Filter
+  </button>
+  <button class="desk-nav-btn" id="deskFeedBtn" onclick="toggleFeed()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Feed
+  </button>
+  <button class="desk-nav-btn" id="deskBuildersBtn" onclick="toggleBuilders()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="18" height="11" rx="1"/><path d="M3 10l9-7 9 7"/><line x1="12" y1="10" x2="12" y2="21"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+    Builders
+  </button>
+  <button class="desk-nav-btn" id="deskSettingsBtn" onclick="openSettings()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </button>
+</div>
+<!-- Keep hidden stubs for JS refs -->
+<button id="locBtnDesktop" style="display:none!important"></button>
+<button id="pinBtnDesktop" style="display:none!important"></button>
+<button id="drawBtnDesktop" style="display:none!important"></button>
+<div id="legendBtnDesktop" style="display:none!important"></div>
+<div id="layersBtnDesktop" style="display:none!important"></div>
+<div id="calBtnDesktop" style="display:none!important"></div>
+<div id="desktopSearch">
+  <div class="suggestions-wrap">
+    <div id="searchWrap">
+      <span id="searchIcon">⌕</span>
+      <input id="search" type="search" placeholder="Search address, town, zip…" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" />
+      <button id="clearBtn" title="Clear">×</button>
+    </div>
+    <div id="suggestions"><div id="statusMsg"></div></div>
+  </div>
+</div>
+
+<!-- LEGEND -->
+<div id="legend" class="hidden">
+  <h4>Municipality Type</h4>
+  <div class="legend-row"><div class="legend-swatch" style="background:#cccccc"></div> Township</div>
+  <div class="legend-row"><div class="legend-swatch" style="background:#a8c66c"></div> Borough</div>
+  <div class="legend-row"><div class="legend-swatch" style="background:#c49a6c"></div> City / Other</div>
+
+
+</div>
+
+<!-- DRAW TOOLBAR -->
+<div id="drawToolbar">
+  <span id="drawVertexCount">0 pts</span>
+  <button class="draw-tb-btn primary" onclick="finishDrawing(false)">Save</button>
+  <button class="draw-tb-btn" onclick="undoLastVertex()">Undo</button>
+  <button class="draw-tb-btn danger" onclick="cancelDrawing()">Cancel</button>
+</div>
+
+<!-- PIN TOOLBAR -->
+<div id="pinToolbar">
+  <span id="pinToolbarLabel">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1e3a5f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    Tap map to place pin
+  </span>
+  <button class="pin-tb-btn danger" onclick="cancelPinMode()">Cancel</button>
+</div>
+
+<!-- OVERFLOW MENU -->
+<div id="overflowMenu">
+  <div class="overflow-item" id="ovfPinItem" onclick="overflowAction('pin')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    Pins
+  </div>
+  <div class="overflow-item" id="ovfDrawItem" onclick="overflowAction('draw')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+    Draw
+  </div>
+
+  <div class="overflow-item" id="ovfFilterItem" onclick="overflowAction('filter')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    Filter Pins
+  </div>
+
+  <div class="overflow-item" id="ovfLegendItem" onclick="overflowAction('legend')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="3" y="10" width="5" height="5" rx="1"/><rect x="3" y="17" width="5" height="5" rx="1"/><line x1="12" y1="5.5" x2="21" y2="5.5"/><line x1="12" y1="12.5" x2="21" y2="12.5"/><line x1="12" y1="19.5" x2="21" y2="19.5"/></svg>
+    Legend
+  </div>
+</div>
+
+<!-- CALENDAR SHEET -->
+<div id="calendarSheet">
+  <div id="calendarHeader">
+    <div id="calendarTitle">Schedule</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button id="calAddBtn" onclick="openAddCallback()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add
+      </button>
+      <button id="calendarCloseBtn" onclick="closeCalendar()">×</button>
+    </div>
+  </div>
+  <div class="cal-filter-row" id="calFilterRow">
+    <button class="cal-chip active" id="calTabCallbacks" onclick="setCalTab('callbacks')">Callbacks</button>
+    <button class="cal-chip" id="calTabShapes" onclick="setCalTab('shapes')">Scheduled</button>
+    <button class="cal-chip" id="calTabHistory" onclick="setCalTab('history')">History</button>
+  </div>
+  <div id="calendarBody"></div>
+</div>
+
+<!-- ADD CALLBACK FORM SHEET -->
+<div id="addCallbackSheet">
+  <div id="addCallbackHeader">
+    <div id="addCallbackTitle">New Callback</div>
+    <button id="addCallbackCloseBtn" onclick="closeAddCallback()">×</button>
+  </div>
+  <div id="addCallbackBody">
+    <div>
+      <div class="acb-field-label">Full name</div>
+      <input type="text" id="acbName" class="pin-text-input" placeholder="e.g. John Smith" autocomplete="name" />
+    </div>
+    <div>
+      <div class="acb-field-label">Contact</div>
+      <div class="acb-contact-row">
+        <input type="tel" id="acbPhone" class="pin-text-input" placeholder="Phone" inputmode="tel" />
+        <input type="email" id="acbEmail" class="pin-text-input" placeholder="Email" inputmode="email" />
+      </div>
+    </div>
+    <div>
+      <div class="acb-field-label">Callback date &amp; time</div>
+      <input type="datetime-local" id="acbDatetime" class="pin-text-input" style="font-family:'DM Mono',monospace;font-size:15px;" />
+    </div>
+    <div>
+      <div class="acb-field-label">Notes</div>
+      <textarea id="acbNotes" placeholder="Where you met, what they said…" rows="3" style="width:100%;min-height:80px;resize:vertical;border:1.5px solid #ddd;border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.5;color:#111;outline:none;transition:border-color 0.15s;background:#fff;"></textarea>
+    </div>
+    <div id="acbStatus" style="font-size:12px;color:#999;font-family:'DM Mono',monospace;min-height:16px;"></div>
+  </div>
+  <div id="addCallbackFooter">
+    <button class="btn btn-primary" onclick="saveStandaloneCallback()">Save</button>
+    <button class="btn btn-ghost" onclick="closeAddCallback()">Cancel</button>
+    <button class="btn btn-danger" id="acbDeleteBtn" onclick="deleteStandaloneCallback(currentAcbId)" style="display:none;">Delete</button>
+  </div>
+</div>
+
+<!-- PIN FILTER PANEL -->
+<div id="pinFilterPanel">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <h4 style="margin-bottom:0;">Filter Pins</h4>
+    <button onclick="closePinFilter()" style="background:#f0f0f0;border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:16px;color:#666;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;line-height:1;">×</button>
+  </div>
+  <div id="pinFilterTypes"></div>
+  <div id="pinFilterAll">
+    <button class="pf-btn" onclick="setPinFilterAll(true)">All on</button>
+    <button class="pf-btn" onclick="setPinFilterAll(false)">All off</button>
+  </div>
+</div>
+
+<!-- LOG VISIT SHEET -->
+<div id="logVisitSheet">
+  <div id="logVisitHeader">
+    <div id="logVisitTitle">Log Visit</div>
+    <button id="logVisitCloseBtn" onclick="closeLogVisit()">×</button>
+  </div>
+  <div id="logVisitBody">
+    <div id="logVisitPinName" style="font-size:15px;font-weight:700;color:#111;padding:2px 0 6px;border-bottom:1px solid #f0f0f0;margin-bottom:4px;"></div>
+    <div>
+      <div class="lv-field-label">Visit date &amp; time</div>
+      <input type="datetime-local" id="lvDatetime" class="pin-text-input" style="font-family:'DM Mono',monospace;font-size:15px;" />
+    </div>
+    <div>
+      <div class="lv-field-label">Notes</div>
+      <textarea id="lvNotes" placeholder="What happened? Result of the visit…" rows="4" style="width:100%;min-height:90px;resize:vertical;border:1.5px solid #ddd;border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.5;color:#111;outline:none;transition:border-color 0.15s;background:#fff;"></textarea>
+    </div>
+    <div id="lvStatus" style="font-size:12px;color:#999;font-family:'DM Mono',monospace;min-height:16px;"></div>
+  </div>
+  <div id="logVisitFooter">
+    <button class="btn btn-primary" onclick="saveLogVisit()" style="background:#00B8FD;border-color:#00B8FD;">Save Visit</button>
+    <button class="btn btn-ghost" onclick="closeLogVisit()">Cancel</button>
+    <button class="btn btn-danger" id="lvDeleteBtn" onclick="deleteVisit()" style="display:none;">Delete</button>
+  </div>
+</div>
+
+
+<!-- PIN LIST SHEET -->
+<div id="pinListSheet">
+  <div id="pinListHeader">
+    <div id="pinListTitle">Pin List</div>
+    <button id="pinListCloseBtn" onclick="closePinList()">×</button>
+  </div>
+  <div id="pinListSearch">
+    <input id="pinListSearchInput" type="search" placeholder="Search name, address, phone…" autocomplete="off" oninput="renderPinList()" />
+  </div>
+  <div id="pinListFilters">
+    <button class="cal-chip active" data-plfilter="all" onclick="setPinListFilter(this)">All</button>
+    <button class="cal-chip" data-plfilter="newconstruction" onclick="setPinListFilter(this)">🏗️ New Construction</button>
+    <button class="cal-chip" data-plfilter="callback" onclick="setPinListFilter(this)">📞 Callback</button>
+    <button class="cal-chip" data-plfilter="solar" onclick="setPinListFilter(this)">☀️ Solar</button>
+    <button class="cal-chip" data-plfilter="donotknock" onclick="setPinListFilter(this)">🚫 Do Not Knock</button>
+    <button class="cal-chip" data-plfilter="food" onclick="setPinListFilter(this)">🍔 Food</button>
+    <button class="cal-chip" data-plfilter="parking" onclick="setPinListFilter(this)">🅿️ Parking</button>
+    <button class="cal-chip" data-plfilter="gas" onclick="setPinListFilter(this)">⛽ Gas</button>
+    <button class="cal-chip" data-plfilter="apartment" onclick="setPinListFilter(this)">🏢 Apartment</button>
+    <button class="cal-chip" data-plfilter="landmark" onclick="setPinListFilter(this)">📍 Landmark</button>
+    <button class="cal-chip" data-plfilter="note" onclick="setPinListFilter(this)">📝 Note</button>
+    <button class="cal-chip" data-plfilter="custom" onclick="setPinListFilter(this)">✏️ Custom</button>
+  </div>
+  <div id="pinListCount"></div>
+  <div id="pinListBody"></div>
+</div>
+
+<!-- BUILDERS SHEET -->
+<!-- PROFILE SHEET -->
+<div id="profileSheet">
+  <div id="profileSheetHeader">
+    <div id="profileSheetTitle">Edit Profile</div>
+    <button id="profileCloseBtn" onclick="closeEditProfile()">×</button>
+  </div>
+  <div id="profileBody">
+    <div id="profileHero">
+      <img id="profileCurrentAvatar" src="" alt="Your avatar">
+      <div id="profileHeroName">—</div>
+      <div id="profileHeroSub">tap an avatar below to change</div>
+      <button id="profileShuffleBtn" onclick="shuffleAvatar()">Shuffle</button>
+    </div>
+    <div id="profileAvatarSection">
+      <div class="profile-section-label">Choose avatar</div>
+      <div id="avatarGrid"></div>
+    </div>
+    <div id="profileUsernameSection">
+      <div class="profile-section-label">Username</div>
+      <input id="usernameInput" type="text" placeholder="yourname" autocomplete="off" autocapitalize="off" maxlength="20">
+      <div id="usernameHint">Letters, numbers, underscores only. Must be unique.</div>
+      <div id="usernameStatus" class="username-status"></div>
+      <button id="usernameSaveBtn" onclick="saveProfile()">Save profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- FEED SHEET -->
+<div id="feedSheet">
+  <div id="feedHeader">
+    <div id="feedTitle">Feed</div>
+    <button id="feedCloseBtn" onclick="closeFeed()">×</button>
+  </div>
+  <div id="feedNoUsername">Set a <a onclick="closeFeed();openSettings()">username in Settings</a> to post.</div>
+  <div id="feedComposer">
+    <div id="feedComposerInner">
+      <img id="feedComposerAvatar" class="feed-composer-avatar" src="" alt="">
+      <textarea id="feedTextarea" placeholder="What's on your mind?" rows="3" maxlength="500"></textarea>
+    </div>
+    <button id="feedPostBtn" onclick="submitPost()">Post</button>
+    <div style="clear:both"></div>
+  </div>
+  <div id="feedBody"></div>
+</div>
+
+<div id="buildersSheet">
+  <div id="buildersHeader">
+    <div id="buildersTitle">Builders</div>
+    <button onclick="toggleBuilders()" style="background:#f0f0f0;border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:18px;color:#666;display:flex;align-items:center;justify-content:center;flex-shrink:0;">×</button>
+  </div>
+  <div id="buildersSearch">
+    <input id="builderSearchInput" type="search" placeholder="Search builders…" autocomplete="off" oninput="renderBuilderList()" />
+  </div>
+  <div id="buildersBody"></div>
+</div>
+
+<!-- SHEET BACKDROP -->
+<div id="sheetBackdrop" onclick="handleBackdropClick()"></div>
+
+<!-- NOTES SIDEBAR -->
+<div id="sidebar">
+  <div id="sidebarHeader">
+    <div>
+      <div id="sidebarTitle">—</div>
+      <div id="sidebarSub">—</div>
+    </div>
+    <button id="closeBtn" onclick="closeSidebar()" aria-label="Close">×</button>
+  </div>
+  <div id="sidebarBody">
+    <div>
+      <div class="section-label">Municipality Color</div>
+      <div id="colorSwatches"></div>
+      <div id="customColorRow">
+        <input type="color" id="customColorPicker" value="#cccccc" title="Custom color" />
+        <span id="customColorLabel">#cccccc</span>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Permit Required?</div>
+      <div class="permit-row">
+        <label class="check-radio-label"><input type="radio" name="checkedIn" id="checkedYes" value="false" /> No permit</label>
+        <label class="check-radio-label"><input type="radio" name="checkedIn" id="checkedNo" value="true" /> Permit req.</label>
+        <label class="check-radio-label"><input type="radio" name="checkedIn" id="checkedNone" value="" checked /> Unknown</label>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Utility Providers</div>
+      <div class="util-dropdown" id="utilDropdown">
+        <button type="button" class="util-trigger" id="utilTrigger" onclick="toggleUtilPanel()">
+          <span class="util-placeholder" id="utilPlaceholder">Select providers…</span>
+          <span class="util-trigger-arrow">▼</span>
+        </button>
+        <div class="util-panel" id="utilPanel">
+          <div class="util-group-label">⚡ Electric</div>
+          <div class="util-option" data-value="PPL Electric Utilities" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>PPL Electric Utilities</div>
+          <div class="util-option" data-value="PECO Energy" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>PECO Energy</div>
+          <div class="util-option" data-value="West Penn Power" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>West Penn Power (FirstEnergy)</div>
+          <div class="util-option" data-value="Duquesne Light" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Duquesne Light</div>
+          <div class="util-option" data-value="Penn Power" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Penn Power (FirstEnergy)</div>
+          <div class="util-option" data-value="Met-Ed" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Met-Ed (FirstEnergy)</div>
+          <div class="util-option" data-value="Penelec" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Penelec (FirstEnergy)</div>
+          <div class="util-option" data-value="UGI Electric" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>UGI Electric</div>
+          <div class="util-option" data-value="Pike Electric" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Pike Electric</div>
+          <div class="util-group-label">🔥 Gas</div>
+          <div class="util-option" data-value="UGI Gas" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>UGI Utilities (Gas)</div>
+          <div class="util-option" data-value="Peoples Natural Gas" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Peoples Natural Gas</div>
+          <div class="util-option" data-value="National Fuel Gas" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>National Fuel Gas</div>
+          <div class="util-option" data-value="Columbia Gas" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Columbia Gas of PA</div>
+          <div class="util-option" data-value="Equitable Gas" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Equitable Gas</div>
+          <div class="util-group-label">🏛 Other</div>
+          <div class="util-option" data-value="Municipal / Co-op" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Municipal / Co-op</div>
+          <div class="util-option" data-value="Unknown" onclick="toggleUtil(this)"><span class="util-check-icon">✓</span>Unknown</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Territory Rating</div>
+      <div id="starRating">
+        <span class="star" data-val="1">☆</span><span class="star" data-val="2">☆</span>
+        <span class="star" data-val="3">☆</span><span class="star" data-val="4">☆</span>
+        <span class="star" data-val="5">☆</span>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Notes</div>
+      <textarea id="noteTextarea" placeholder="Add notes about this municipality…" rows="4"></textarea>
+      <div id="saveStatus"><span id="statusDot"></span><span id="statusText">Unsaved</span></div>
+    </div>
+    <div id="sidebarCensus" style="display:none;margin-top:-6px;border-top:1.5px solid #f0f0f0;padding-top:4px;"></div>
+  </div>
+  <div id="sidebarFooter">
+    <button class="btn btn-primary" onclick="saveNote()">Save</button>
+    <button class="btn btn-ghost" onclick="closeSidebar()">Cancel</button>
+    <button class="btn btn-danger" onclick="clearNote()">Clear</button>
+  </div>
+</div>
+
+<!-- SHAPE SIDEBAR -->
+<div id="shapeSidebar">
+  <div id="shapeSidebarHeader">
+    <div>
+      <div id="shapeSidebarTitle">New Shape</div>
+      <div id="shapeSidebarSub">Custom territory</div>
+    </div>
+    <button id="shapeCloseBtn" onclick="closeShapeSidebar()" aria-label="Close">×</button>
+  </div>
+  <div id="shapeSidebarBody">
+    <div>
+      <div class="section-label">Name</div>
+      <input type="text" id="shapeName" placeholder="e.g. Walking route, Sales zone…" autocomplete="off" />
+    </div>
+    <div>
+      <div class="section-label">Color</div>
+      <div id="shapeColorSwatches"></div>
+      <div id="customColorRow2" style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+        <input type="color" id="shapeColorPicker" value="#3b82f6" title="Custom color" style="width:40px;height:40px;border:2px solid #ddd;border-radius:8px;cursor:pointer;padding:2px;background:none;" />
+        <span id="shapeColorLabel" style="font-size:12px;color:#666;font-family:'DM Mono',monospace;">#3b82f6</span>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Rating</div>
+      <div id="shapeStarRating" style="display:flex;gap:6px;">
+        <span class="star shape-star" data-val="1">☆</span>
+        <span class="star shape-star" data-val="2">☆</span>
+        <span class="star shape-star" data-val="3">☆</span>
+        <span class="star shape-star" data-val="4">☆</span>
+        <span class="star shape-star" data-val="5">☆</span>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Last Knocked</div>
+      <input type="datetime-local" id="shapeLastKnocked" class="pin-text-input" style="font-family:'DM Mono',monospace;font-size:15px;" />
+    </div>
+    <div>
+      <div class="section-label">Scheduled Visit</div>
+      <input type="datetime-local" id="shapeScheduledAt" class="pin-text-input" style="font-family:'DM Mono',monospace;font-size:15px;" />
+    </div>
+    <div>
+      <div class="section-label">Notes</div>
+      <textarea id="shapeNoteTextarea" placeholder="Notes about this shape…" rows="4" style="width:100%;min-height:90px;resize:vertical;border:1.5px solid #ddd;border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.5;color:#111;outline:none;transition:border-color 0.15s;background:#fff;"></textarea>
+      <div id="shapeSaveStatus" style="display:flex;align-items:center;gap:7px;margin-top:8px;">
+        <span id="shapeStatusDot" style="width:8px;height:8px;border-radius:50%;background:#ddd;flex-shrink:0;transition:background 0.3s;"></span>
+        <span id="shapeStatusText" style="font-size:12px;color:#999;font-family:'DM Mono',monospace;">Unsaved</span>
+      </div>
+    </div>
+  </div>
+  <div id="shapeSidebarFooter">
+    <button class="btn btn-primary" onclick="saveShape()">Save</button>
+    <button class="btn btn-ghost" onclick="closeShapeSidebar()">Cancel</button>
+    <button class="btn btn-danger" onclick="deleteShape()">Delete</button>
+  </div>
+</div>
+
+<!-- PIN SIDEBAR -->
+<div id="pinSidebar">
+  <div id="pinSidebarHeader">
+    <div>
+      <div id="pinSidebarTitle">New Pin</div>
+      <div id="pinSidebarSub"></div>
+    </div>
+    <button id="pinCloseBtn" onclick="closePinSidebar()" aria-label="Close">×</button>
+  </div>
+  <div id="pinSidebarBody">
+
+    <!-- PIN TYPE GRID -->
+    <div>
+      <div class="section-label">Pin Type</div>
+      <div id="pinTypeGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;"></div>
+    </div>
+
+    <!-- CUSTOM FIELDS -->
+    <div id="pinCustomFields" style="display:none;background:#f8f8fc;border:1.5px solid #e0e0ee;border-radius:12px;padding:14px;display:none;flex-direction:column;gap:12px;">
+      <div class="cb-label">Custom Pin Name</div>
+      <input type="text" id="pinCustomName" class="pin-text-input" placeholder="e.g. Coffee Shop" autocomplete="off" />
+      <div class="cb-label">Color</div>
+      <div id="pinCustomColorSwatches" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+      <input type="color" id="pinCustomColor" value="#3b82f6" style="width:100%;height:36px;border:1.5px solid #ddd;border-radius:8px;padding:2px 4px;cursor:pointer;background:#fff;" oninput="currentPinColor=this.value;renderCustomColorSwatches(this.value);updatePendingMarker();" />
+    </div>
+
+    <!-- CONTACT FIELDS -->
+    <div id="pinContactFields" style="display:flex;flex-direction:column;gap:12px;">
+      <div class="section-label">Details <span style="font-size:10px;font-weight:400;color:#aaa;">(optional)</span></div>
+      <input type="text" id="cbFullName" class="pin-text-input" placeholder="Full name" autocomplete="name" />
+      <div class="cb-contact-row">
+        <input type="tel" id="cbPhone" class="pin-text-input" placeholder="Phone" autocomplete="tel" inputmode="tel" />
+        <input type="email" id="cbEmail" class="pin-text-input" placeholder="Email" autocomplete="email" inputmode="email" />
+      </div>
+      <div class="addr-wrap">
+        <input type="text" id="cbAddress" class="pin-text-input" placeholder="Address" autocomplete="off" />
+        <div id="addrSuggestions"></div>
+      </div>
+    </div>
+
+    <!-- NOTES -->
+    <div>
+      <div class="section-label">Notes</div>
+      <textarea id="pinNoteTextarea" placeholder="Add notes…" rows="3" style="width:100%;min-height:80px;resize:vertical;border:1.5px solid #ddd;border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.5;color:#111;outline:none;transition:border-color 0.15s;background:#fff;"></textarea>
+    </div>
+
+    <div id="pinSaveStatus" style="display:flex;align-items:center;gap:7px;">
+      <span id="pinStatusDot" style="width:8px;height:8px;border-radius:50%;background:#ddd;flex-shrink:0;transition:background 0.3s;"></span>
+      <span id="pinStatusText" style="font-size:12px;color:#999;font-family:'DM Mono',monospace;">Unsaved</span>
+    </div>
+
+    <!-- VISIT HISTORY -->
+    <div id="pinVisitHistory" style="display:none;">
+      <div class="section-label">Visit History</div>
+      <div id="pinVisitHistoryList" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+  </div>
+  <div id="pinSidebarFooter">
+    <button class="btn btn-primary" onclick="savePin()">Save</button>
+    <button class="btn btn-ghost" onclick="closePinSidebar()">Cancel</button>
+    <button class="btn btn-danger" onclick="deletePin()">Delete</button>
+  </div>
+</div>
+
+<div id="bottomChrome">
+  <div id="searchRow">
+    <div id="searchWrapMobile" style="flex:1;display:flex;align-items:center;background:#f4f4f6;border:1.5px solid #e0e0e6;border-radius:12px;overflow:visible;position:relative;transition:border-color 0.15s,box-shadow 0.15s;">
+      <span style="padding:0 8px 0 12px;color:#888;font-size:17px;line-height:1;user-select:none;flex-shrink:0;">⌕</span>
+      <input id="searchMobile" type="search" placeholder="Search address, town, zip…" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" inputmode="search" style="flex:1;border:none;outline:none;padding:11px 4px;font-family:'DM Sans',sans-serif;font-size:16px;color:#111;background:transparent;min-width:0;" />
+      <button id="clearBtnMobile" title="Clear" style="display:none;background:none;border:none;cursor:pointer;padding:0 12px;color:#bbb;font-size:20px;line-height:1;flex-shrink:0;-webkit-tap-highlight-color:transparent;">×</button>
+    </div>
+  </div>
+  <div id="navRow">
+    <button class="nav-btn" id="mobLocBtn" onclick="toggleLocation()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7" stroke-width="1.5"/>
+      </svg>
+      Locate
+    </button>
+    <button class="nav-btn" id="mobCalBtn" onclick="toggleCalendar()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobCalIcon">
+        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      Calendar
+    </button>
+    <button class="nav-btn" id="mobPinListBtn" onclick="togglePinList()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobPinListIcon">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+        <line x1="23" y1="21" x2="23" y2="15"/><line x1="20" y1="18" x2="26" y2="18"/>
+      </svg>
+      Pin List
+    </button>
+    <button class="nav-btn" id="mobLayersBtn" onclick="toggleLayersPanel()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+      </svg>
+      Layers
+    </button>
+    <button class="nav-btn" id="mobFeedBtn" onclick="toggleFeed()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Feed
+    </button>
+    <button class="nav-btn" id="mobBuildersBtn" onclick="toggleBuilders()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="18" height="11" rx="1"/><path d="M3 10l9-7 9 7"/><line x1="12" y1="10" x2="12" y2="21"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      Builders
+    </button>
+    <button class="nav-btn" id="mobMoreBtn" onclick="toggleOverflowMenu()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobMoreIcon">
+        <circle cx="5" cy="12" r="1.5" fill="#999" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="#999" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="#999" stroke="none"/>
+      </svg>
+      More
+    </button>
+    <!-- Hidden stubs kept for JS refs -->
+    <button class="nav-btn" id="mobLegendBtn" onclick="toggleLegend()" style="display:none!important"></button>
+    <button class="nav-btn" id="mobSignBtn" onclick="handleMobSignBtn()" style="display:none!important">
+      <span id="mobSignLabel">Sign In</span>
+      <svg id="mobSignIcon" width="1" height="1" viewBox="0 0 1 1"></svg>
+    </button>
+  </div>
+</div>
+
+<!-- Mobile suggestions -->
+<div id="suggestionsMobile" style="display:none;position:fixed;left:12px;right:12px;background:#fff;border:1.5px solid #1e3a5f;border-radius:14px;z-index:600;max-height:50vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 -8px 32px rgba(0,0,0,0.18);">
+  <div id="statusMsgMobile" style="display:none;padding:14px 16px;font-size:13px;color:#888;font-family:'DM Mono',monospace;text-align:center;"></div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     JAVASCRIPT — split into modules
+     Load order matters: auth → map → search → notes → shapes → pins → calendar → ui
+     ═══════════════════════════════════════ -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/auth.js"></script>
+<script src="js/utilities.js"></script>
+<script src="js/map.js"></script>
+<script src="js/search.js"></script>
+<script src="js/notes.js"></script>
+<script src="js/shapes.js"></script>
+<script src="js/pins.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/builders.js"></script>
+<script src="js/feed.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/ui.js"></script>
+
+
+</body>
+</html>
