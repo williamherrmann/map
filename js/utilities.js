@@ -1,4 +1,54 @@
 // ═══════════════════════════════════════
+//  APP CONFIRM MODAL
+//  Replaces native confirm() / alert(), which can silently fail to
+//  display inside an iOS "Add to Home Screen" standalone PWA.
+//  Usage: const ok = await appConfirm('Delete this pin?', {confirmLabel:'Delete', danger:true});
+// ═══════════════════════════════════════
+let _confirmResolver = null;
+
+function appConfirm(message, opts) {
+  opts = opts || {};
+  return new Promise(resolve => {
+    _confirmResolver = resolve;
+    document.getElementById('confirmTitle').textContent = opts.title || 'Are you sure?';
+    document.getElementById('confirmMessage').textContent = message || '';
+    const okBtn = document.getElementById('confirmOkBtn');
+    okBtn.textContent = opts.confirmLabel || 'Confirm';
+    okBtn.className = opts.danger ? 'danger' : '';
+    document.getElementById('confirmCancelBtn').textContent = opts.cancelLabel || 'Cancel';
+
+    const backdrop = document.getElementById('confirmBackdrop');
+    const modal = document.getElementById('confirmModal');
+    backdrop.style.display = 'block';
+    modal.style.display = 'block';
+    requestAnimationFrame(() => {
+      backdrop.style.opacity = '1';
+      modal.style.opacity = '1';
+      modal.style.transform = 'translate(-50%, -50%) scale(1)';
+    });
+  });
+}
+
+function _closeConfirmModal() {
+  const backdrop = document.getElementById('confirmBackdrop');
+  const modal = document.getElementById('confirmModal');
+  backdrop.style.opacity = '0';
+  modal.style.opacity = '0';
+  modal.style.transform = 'translate(-50%, -50%) scale(0.95)';
+  setTimeout(() => { backdrop.style.display = 'none'; modal.style.display = 'none'; }, 200);
+}
+
+function _confirmResolve() {
+  _closeConfirmModal();
+  if (_confirmResolver) { _confirmResolver(true); _confirmResolver = null; }
+}
+
+function _confirmReject() {
+  _closeConfirmModal();
+  if (_confirmResolver) { _confirmResolver(false); _confirmResolver = null; }
+}
+
+// ═══════════════════════════════════════
 //  PA ELECTRIC UTILITY COUNTY LOOKUP
 //  Sources: PA PUC, EIA Form 861 service territories, utility websites
 //  Data values match the util-option data-value strings in the sidebar dropdown.

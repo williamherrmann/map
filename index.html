@@ -59,7 +59,7 @@
 
     /* ── ADMIN PANEL ── */
     #adminBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1100; opacity:0; transition:opacity 0.3s; }
-    #adminSheet { position:fixed; bottom:0; left:0; right:0; z-index:1101; background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); padding-bottom:env(safe-area-inset-bottom,0px); transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); will-change:transform; max-height:85vh; display:flex; flex-direction:column; }
+    #adminSheet { position:fixed; bottom:0; left:0; right:0; z-index:1101; background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); padding-bottom:env(safe-area-inset-bottom,0px); transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); will-change:transform; max-height:85dvh; display:flex; flex-direction:column; }
     #adminSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
     #adminSheetHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
     #adminSheetTitle { font-size:17px; font-weight:700; color:#111; }
@@ -259,6 +259,18 @@
       .leaflet-control-zoom { display:none !important; }
     }
 
+    /* ══ APP CONFIRM MODAL (replaces native confirm(), unreliable in iOS standalone PWA) ══ */
+    #confirmBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9500; opacity:0; transition:opacity 0.2s; }
+    #confirmModal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.95); opacity:0; z-index:9501; background:#fff; border-radius:16px; box-shadow:0 12px 48px rgba(0,0,0,0.3); width:min(320px, calc(100vw - 48px)); padding:20px; transition:opacity 0.2s, transform 0.2s; }
+    #confirmModal.show { display:block; }
+    #confirmTitle { font-size:16px; font-weight:700; color:#111; margin-bottom:6px; }
+    #confirmMessage { font-size:13px; color:#555; line-height:1.5; white-space:pre-wrap; margin-bottom:18px; }
+    #confirmActions { display:flex; gap:10px; }
+    #confirmCancelBtn, #confirmOkBtn { flex:1; padding:11px; border-radius:10px; font-size:14px; font-weight:700; font-family:'DM Sans',sans-serif; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    #confirmCancelBtn { background:#f0f0f0; border:none; color:#333; }
+    #confirmOkBtn { background:#111; border:none; color:#fff; }
+    #confirmOkBtn.danger { background:#dc2626; }
+
     #desktopSearch { display:none; }
     #locBtnDesktop { display:none; }
     #sessionBadge { display:none; }
@@ -340,7 +352,6 @@
       bottom: calc(var(--total-chrome) + 10px);
     }
     #pinToolbar.visible { display: flex; }
-    @media (min-width:768px) { #pinToolbar { bottom: 30px; } }
     #pinToolbarLabel {
       font-family: 'DM Mono', monospace; font-size: 12px;
       color: #1e3a5f; display:flex; align-items:center; gap:6px;
@@ -468,7 +479,6 @@
       bottom: calc(var(--total-chrome) + 10px);
     }
     #drawToolbar.visible { display: flex; }
-    @media (min-width: 768px) { #drawToolbar { bottom: 30px; } }
     #drawVertexCount {
       font-family: 'DM Mono', monospace; font-size: 11px;
       color: #666; min-width: 60px;
@@ -793,30 +803,75 @@
     .feed-delete-btn { background:none; border:none; color:#ccc; font-size:18px; cursor:pointer; line-height:1; padding:0 2px; flex-shrink:0; }
     .feed-delete-btn:hover { color:#dc2626; }
     .feed-post-content { font-size:14px; color:#333; line-height:1.5; word-break:break-word; white-space:pre-wrap; }
+    .feed-votes { display:flex; align-items:center; gap:7px; margin-top:8px; }
+    .feed-vote-btn { background:#f4f4f6; border:1.5px solid #e5e7eb; border-radius:6px; width:26px; height:22px; display:flex; align-items:center; justify-content:center; font-size:10px; line-height:1; color:#999; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:background 0.12s,border-color 0.12s,color 0.12s; }
+    .feed-vote-btn:active { transform:scale(0.92); }
+    .feed-vote-btn.up.active { background:#dcfce7; border-color:#15803d; color:#15803d; }
+    .feed-vote-btn.down.active { background:#fee2e2; border-color:#dc2626; color:#dc2626; }
+    .feed-vote-score { font-size:12px; font-weight:700; color:#666; min-width:16px; text-align:center; font-family:'DM Mono',monospace; }
     /* Profile sheet */
+
+    /* ── PASSWORD RESET SHEET ── */
+    #pwResetBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9998; opacity:0; transition:opacity 0.25s; }
+    #pwResetBackdrop.show { opacity:1; }
+    #pwResetSheet { position:fixed; bottom:0; left:0; right:0; z-index:9999; background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); padding:0 0 env(safe-area-inset-bottom,0px); transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); will-change:transform; }
+    #pwResetSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; }
+    #pwResetSheetInner { padding:20px 24px 28px; }
+    #pwResetSheet h2 { font-size:18px; font-weight:700; color:#111; margin:0 0 6px; }
+    #pwResetSheet p { font-size:13px; color:#888; margin:0 0 20px; }
+    #pwResetInput { width:100%; box-sizing:border-box; padding:12px 14px; border:1.5px solid #ddd; border-radius:10px; font-size:15px; font-family:'DM Sans',sans-serif; outline:none; margin-bottom:8px; }
+    #pwResetInput:focus { border-color:#111; }
+    #pwResetConfirm { width:100%; box-sizing:border-box; padding:12px 14px; border:1.5px solid #ddd; border-radius:10px; font-size:15px; font-family:'DM Sans',sans-serif; outline:none; margin-bottom:14px; }
+    #pwResetConfirm:focus { border-color:#111; }
+    #pwResetError { font-size:12px; color:#b91c1c; margin-bottom:12px; display:none; }
+    #pwResetBtn { width:100%; padding:13px; background:#111; color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    #pwResetBtn:disabled { opacity:0.5; }
+    /* ── END PASSWORD RESET SHEET ── */
+
     /* ── PROFILE SHEET ── */
-    #profileSheet { position:fixed; bottom:0; left:0; right:0; z-index:1200; background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); padding-bottom:env(safe-area-inset-bottom,0px); transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); will-change:transform; max-height:92vh; display:flex; flex-direction:column; }
+    #profileBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1199; opacity:0; transition:opacity 0.3s; }
+    #profileSheet { position:fixed; bottom:0; left:0; right:0; z-index:1200; background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); padding-bottom:env(safe-area-inset-bottom,0px); transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); will-change:transform; max-height:92dvh; display:flex; flex-direction:column; }
     #profileSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
     #profileSheetHeader { padding:13px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
     #profileSheetTitle { font-size:17px; font-weight:700; color:#111; }
     #profileCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; font-size:18px; color:#666; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
     #profileBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
     /* current avatar hero */
-    #profileHero { display:flex; flex-direction:column; align-items:center; padding:20px 16px 16px; border-bottom:1px solid #f0f0f0; gap:10px; }
-    #profileCurrentAvatar { width:80px; height:80px; border-radius:50%; border:3px solid #111; background:#f5f5f5; }
+    #profileHero { display:flex; flex-direction:column; align-items:center; padding:24px 16px 18px; border-bottom:1px solid #f0f0f0; gap:10px; }
+    #profileCurrentAvatar { width:96px; height:96px; border-radius:50%; border:3px solid #111; background:#f5f5f5; }
     #profileHeroName { font-size:15px; font-weight:700; color:#111; }
-    #profileHeroSub { font-size:12px; color:#aaa; font-family:'DM Mono',monospace; }
-    #profileShuffleBtn { padding:7px 16px; background:#f4f4f6; border:1.5px solid #e0e0e6; border-radius:8px; font-size:13px; font-weight:600; color:#555; cursor:pointer; font-family:'DM Sans',sans-serif; }
-    #profileShuffleBtn:active { background:#e8e8ec; }
-    /* avatar picker */
-    #profileAvatarSection { padding:16px 16px 8px; border-bottom:1px solid #f0f0f0; }
-    .profile-section-label { font-size:11px; font-weight:700; color:#aaa; letter-spacing:0.07em; text-transform:uppercase; margin-bottom:12px; }
-    #avatarGrid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; }
-    .avatar-option { width:100%; aspect-ratio:1; border-radius:50%; border:2.5px solid transparent; cursor:pointer; transition:border-color 0.15s,transform 0.12s,box-shadow 0.12s; background:#f5f5f5; -webkit-tap-highlight-color:transparent; }
-    .avatar-option:active { transform:scale(0.9); }
-    .avatar-option.selected { border-color:#111; box-shadow:0 0 0 3px rgba(0,0,0,0.08); }
+    #profileCustomizeBtn { padding:9px 20px; background:#111; color:#fff; border:none; border-radius:9px; font-size:13px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; margin-top:4px; }
+    #profileCustomizeBtn:active { background:#333; }
     /* username section */
     #profileUsernameSection { padding:16px; }
+    .profile-section-label { font-size:11px; font-weight:700; color:#aaa; letter-spacing:0.07em; text-transform:uppercase; margin-bottom:12px; }
+    /* ══ CHARACTER BUILDER SHEET ══ */
+    #ccBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1300; opacity:0; transition:opacity 0.25s; }
+    #ccBackdrop.show { opacity:1; }
+    #ccSheet { position:fixed; bottom:0; left:0; right:0; z-index:1301; background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.25); padding-bottom:env(safe-area-inset-bottom,0px); transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); will-change:transform; max-height:94vh; display:flex; flex-direction:column; }
+    #ccSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #ccHeader { padding:12px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #ccTitle { font-size:17px; font-weight:700; color:#111; }
+    #ccCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; font-size:18px; color:#666; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    #ccPreviewWrap { display:flex; justify-content:center; padding:18px 16px 14px; border-bottom:1px solid #f0f0f0; flex-shrink:0; }
+    #ccPreview { width:110px; height:110px; border-radius:50%; border:3px solid #111; background:#f5f5f5; }
+    #ccTabs { display:flex; gap:6px; padding:10px 12px; overflow-x:auto; -webkit-overflow-scrolling:touch; flex-shrink:0; border-bottom:1px solid #f0f0f0; scrollbar-width:none; }
+    #ccTabs::-webkit-scrollbar { display:none; }
+    .cc-tab-btn { flex-shrink:0; padding:7px 14px; border:1.5px solid #e5e7eb; background:#fff; border-radius:20px; font-size:12px; font-weight:600; color:#666; cursor:pointer; white-space:nowrap; font-family:'DM Sans',sans-serif; }
+    .cc-tab-btn.active { background:#111; color:#fff; border-color:#111; }
+    #ccBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px; }
+    #ccOptionGrid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+    .cc-option { aspect-ratio:1; border-radius:12px; border:2px solid #eee; cursor:pointer; background:#f8f8f8; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; transition:border-color 0.12s,transform 0.1s; overflow:hidden; }
+    .cc-option:active { transform:scale(0.94); }
+    .cc-option.selected { border-color:#111; box-shadow:0 0 0 2px rgba(0,0,0,0.06); }
+    .cc-option img { width:85%; height:85%; object-fit:contain; }
+    .cc-option.cc-swatch { padding:0; }
+    .cc-swatch-fill { width:100%; height:100%; border-radius:10px; }
+    #ccFooter { padding:14px 16px; border-top:1px solid #f0f0f0; flex-shrink:0; display:flex; gap:10px; }
+    #ccRandomizeBtn { flex:1; padding:13px; background:#fff; color:#111; border:1.5px solid #111; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    #ccRandomizeBtn:active { background:#f5f5f5; }
+    #ccSaveBtn { flex:1; padding:13px; background:#111; color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    /* ══ END CHARACTER BUILDER ══ */
     #usernameInput { width:100%; box-sizing:border-box; padding:11px 14px; border:1.5px solid #ddd; border-radius:10px; font-size:15px; font-family:'DM Sans',sans-serif; outline:none; margin-bottom:5px; }
     #usernameInput:focus { border-color:#111; }
     #usernameHint { font-size:11px; color:#bbb; margin-bottom:14px; }
@@ -1097,9 +1152,22 @@
       <div class="settings-section-label">App</div>
       <div class="settings-info-row" style="cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="openChangelog()">
         <span class="settings-info-label">Version</span>
-        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v90 · What's new ›</span>
+        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v99 · What's new ›</span>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- PASSWORD RESET SHEET -->
+<div id="pwResetBackdrop"></div>
+<div id="pwResetSheet">
+  <div id="pwResetSheetInner">
+    <h2>Set new password</h2>
+    <p>Choose a new password for your account.</p>
+    <input id="pwResetInput" type="password" placeholder="New password" autocomplete="new-password">
+    <input id="pwResetConfirm" type="password" placeholder="Confirm password" autocomplete="new-password">
+    <div id="pwResetError"></div>
+    <button id="pwResetBtn" onclick="submitNewPassword()">Update password</button>
   </div>
 </div>
 
@@ -1140,7 +1208,100 @@
 
         <div class="cl-version">
       <div class="cl-version-header">
-        <span class="cl-version-badge current">v90</span>
+        <span class="cl-version-badge current">v99</span>
+        <span class="cl-version-label">Fixed confirm dialogs on mobile + toolbar overlap</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Replaced the browser's native confirm popup everywhere (admin data transfer, sign out, deleting pins/shapes/visits/callbacks/posts/notes) with an in-app confirm dialog — the native one could silently fail to appear when the app is installed to your home screen</div>
+        <div class="cl-item">Fixed the "Tap map to place pin" and draw toolbar overlapping the desktop nav bar</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v98</span>
+        <span class="cl-version-label">Reorganized mobile nav bar</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Main bar is now Locate, Layers, Draw, Pins, More</div>
+        <div class="cl-item">Calendar, Pin List, Feed, and Builders moved into the More menu alongside Filter Pins and Legend</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v97</span>
+        <span class="cl-version-label">Feed upvotes + live avatars</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Upvote / downvote buttons on every post — purely a sentiment indicator, never reorders the feed</div>
+        <div class="cl-item">One vote per person per post; tapping the same arrow again removes your vote</div>
+        <div class="cl-item">Feed avatars and usernames now pull live from each person's profile, so changing your character or username updates your past posts too</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v96</span>
+        <span class="cl-version-label">Fixed Edit Profile / Admin panel on mobile</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Edit Profile sheet no longer waits on the avatar library before showing — fixes blank/transparent overlay on mobile</div>
+        <div class="cl-item">Added a proper dark backdrop behind Edit Profile so it can be tapped to dismiss</div>
+        <div class="cl-item">Admin panel user list now fails gracefully with a retry message instead of hanging on slow connections</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v95</span>
+        <span class="cl-version-label">Randomize button in character creator</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Black-outline Randomize button next to Use this avatar</div>
+        <div class="cl-item">Randomizes every category at once for a quick new look</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v94</span>
+        <span class="cl-version-label">Live timestamps + more avatar options</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Feed timestamps auto-update without refreshing (10s, then 1min, then 1hr cadence)</div>
+        <div class="cl-item">Added Background, Accessory Color, Facial Hair Color, Hat Color, and Shirt Graphic to character creator</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v93</span>
+        <span class="cl-version-label">Character creator: real DiceBear library</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Avatars now render via the actual DiceBear JS library, not a guessed URL</div>
+        <div class="cl-item">Fixes broken previews across all customize tabs</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v92</span>
+        <span class="cl-version-label">Full character creator (fixed)</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Customize Profile Picture button replaces the avatar grid</div>
+        <div class="cl-item">Choose skin tone, hair, facial hair, eyes, clothes, accessories by category tabs</div>
+        <div class="cl-item">Fixed DiceBear API params so previews actually render</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v91</span>
+        <span class="cl-version-label">Password reset sheet</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Set new password via proper sheet instead of browser prompt</div>
+        <div class="cl-item">Confirms passwords match before submitting</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v90</span>
         <span class="cl-version-label">Edit Profile redesign</span>
       </div>
       <div class="cl-items">
@@ -1600,7 +1761,7 @@
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v90</span>
+  <span id="badgeVersion">v99</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
@@ -1702,20 +1863,26 @@
 
 <!-- OVERFLOW MENU -->
 <div id="overflowMenu">
-  <div class="overflow-item" id="ovfPinItem" onclick="overflowAction('pin')">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-    Pins
+  <div class="overflow-item" id="mobCalBtn" onclick="closeOverflowMenu();toggleCalendar()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobCalIcon"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Calendar
   </div>
-  <div class="overflow-item" id="ovfDrawItem" onclick="overflowAction('draw')">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-    Draw
+  <div class="overflow-item" id="mobPinListBtn" onclick="closeOverflowMenu();togglePinList()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobPinListIcon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="21" x2="23" y2="15"/><line x1="20" y1="18" x2="26" y2="18"/></svg>
+    Pin List
   </div>
-
+  <div class="overflow-item" id="mobFeedBtn" onclick="closeOverflowMenu();toggleFeed()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Feed
+  </div>
+  <div class="overflow-item" id="mobBuildersBtn" onclick="closeOverflowMenu();toggleBuilders()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="18" height="11" rx="1"/><path d="M3 10l9-7 9 7"/><line x1="12" y1="10" x2="12" y2="21"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+    Builders
+  </div>
   <div class="overflow-item" id="ovfFilterItem" onclick="overflowAction('filter')">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
     Filter Pins
   </div>
-
   <div class="overflow-item" id="ovfLegendItem" onclick="overflowAction('legend')">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="3" y="10" width="5" height="5" rx="1"/><rect x="3" y="17" width="5" height="5" rx="1"/><line x1="12" y1="5.5" x2="21" y2="5.5"/><line x1="12" y1="12.5" x2="21" y2="12.5"/><line x1="12" y1="19.5" x2="21" y2="19.5"/></svg>
     Legend
@@ -1845,6 +2012,8 @@
 
 <!-- BUILDERS SHEET -->
 <!-- PROFILE SHEET -->
+<!-- PROFILE SHEET -->
+<div id="profileBackdrop" onclick="closeEditProfile()"></div>
 <div id="profileSheet">
   <div id="profileSheetHeader">
     <div id="profileSheetTitle">Edit Profile</div>
@@ -1854,12 +2023,7 @@
     <div id="profileHero">
       <img id="profileCurrentAvatar" src="" alt="Your avatar">
       <div id="profileHeroName">—</div>
-      <div id="profileHeroSub">tap an avatar below to change</div>
-      <button id="profileShuffleBtn" onclick="shuffleAvatar()">Shuffle</button>
-    </div>
-    <div id="profileAvatarSection">
-      <div class="profile-section-label">Choose avatar</div>
-      <div id="avatarGrid"></div>
+      <button id="profileCustomizeBtn" onclick="openCharacterCreator()">Customize Profile Picture</button>
     </div>
     <div id="profileUsernameSection">
       <div class="profile-section-label">Username</div>
@@ -1868,6 +2032,26 @@
       <div id="usernameStatus" class="username-status"></div>
       <button id="usernameSaveBtn" onclick="saveProfile()">Save profile</button>
     </div>
+  </div>
+</div>
+
+<!-- CHARACTER CREATOR SHEET -->
+<div id="ccBackdrop" onclick="closeCharacterCreator()"></div>
+<div id="ccSheet">
+  <div id="ccHeader">
+    <div id="ccTitle">Customize Avatar</div>
+    <button id="ccCloseBtn" onclick="closeCharacterCreator()">×</button>
+  </div>
+  <div id="ccPreviewWrap">
+    <img id="ccPreview" src="" alt="Preview">
+  </div>
+  <div id="ccTabs"></div>
+  <div id="ccBody">
+    <div id="ccOptionGrid"></div>
+  </div>
+  <div id="ccFooter">
+    <button id="ccRandomizeBtn" onclick="randomizeCharacter()">Randomize</button>
+    <button id="ccSaveBtn" onclick="saveCharacterToProfile()">Use this avatar</button>
   </div>
 </div>
 
@@ -2116,32 +2300,23 @@
       </svg>
       Locate
     </button>
-    <button class="nav-btn" id="mobCalBtn" onclick="toggleCalendar()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobCalIcon">
-        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-      </svg>
-      Calendar
-    </button>
-    <button class="nav-btn" id="mobPinListBtn" onclick="togglePinList()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobPinListIcon">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-        <line x1="23" y1="21" x2="23" y2="15"/><line x1="20" y1="18" x2="26" y2="18"/>
-      </svg>
-      Pin List
-    </button>
     <button class="nav-btn" id="mobLayersBtn" onclick="toggleLayersPanel()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
       </svg>
       Layers
     </button>
-    <button class="nav-btn" id="mobFeedBtn" onclick="toggleFeed()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      Feed
+    <button class="nav-btn" id="mobDrawBtn" onclick="toggleDrawMode()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+      </svg>
+      Draw
     </button>
-    <button class="nav-btn" id="mobBuildersBtn" onclick="toggleBuilders()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="18" height="11" rx="1"/><path d="M3 10l9-7 9 7"/><line x1="12" y1="10" x2="12" y2="21"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-      Builders
+    <button class="nav-btn" id="mobPinBtn" onclick="togglePinMode()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+      </svg>
+      Pins
     </button>
     <button class="nav-btn" id="mobMoreBtn" onclick="toggleOverflowMenu()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mobMoreIcon">
@@ -2155,6 +2330,17 @@
       <span id="mobSignLabel">Sign In</span>
       <svg id="mobSignIcon" width="1" height="1" viewBox="0 0 1 1"></svg>
     </button>
+  </div>
+</div>
+
+<!-- APP CONFIRM MODAL -->
+<div id="confirmBackdrop" onclick="_confirmReject()"></div>
+<div id="confirmModal">
+  <div id="confirmTitle">Are you sure?</div>
+  <div id="confirmMessage"></div>
+  <div id="confirmActions">
+    <button id="confirmCancelBtn" onclick="_confirmReject()">Cancel</button>
+    <button id="confirmOkBtn" onclick="_confirmResolve()">Confirm</button>
   </div>
 </div>
 
@@ -2179,6 +2365,14 @@
 <script src="js/pins.js"></script>
 <script src="js/calendar.js"></script>
 <script src="js/builders.js"></script>
+<script type="module">
+  import { createAvatar } from 'https://esm.sh/@dicebear/core@9';
+  import * as avataaars from 'https://esm.sh/@dicebear/avataaars@9';
+  window.__dicebearCreateAvatar = createAvatar;
+  window.__dicebearAvataaars = avataaars;
+  window.__dicebearReady = true;
+  window.dispatchEvent(new Event('dicebear-ready'));
+</script>
 <script src="js/feed.js"></script>
 <script src="js/admin.js"></script>
 <script src="js/ui.js"></script>

@@ -377,7 +377,7 @@ async function saveShape(){
 
 async function deleteShape(){
   if(!currentShapeId){closeShapeSidebar();return;}
-  if(!confirm('Delete this shape?'))return;
+  if(!(await appConfirm('Delete this shape?', { confirmLabel: 'Delete', danger: true })))return;
   try{await deleteShapeFromDB(currentShapeId);delete shapesCache[currentShapeId];reRenderAllShapes();closeShapeSidebar();}
   catch(e){alert('Delete failed — check connection.');}
 }

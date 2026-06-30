@@ -374,7 +374,7 @@ async function saveStandaloneCallback(){
 
 async function deleteStandaloneCallback(id){
   if(!id)return;
-  if(!confirm('Delete this callback?'))return;
+  if(!(await appConfirm('Delete this callback?', { confirmLabel: 'Delete', danger: true })))return;
   const{error}=await sb.from('standalone_callbacks').delete().eq('user_id',currentUser.id).eq('id',id);
   if(error){alert('Delete failed.');return;}
   delete standaloneCache[id];

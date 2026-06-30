@@ -446,7 +446,7 @@ async function savePin() {
 
 async function deletePin() {
   if(!currentPinId) { closePinSidebar(); return; }
-  if(!confirm('Delete this pin?')) return;
+  if(!(await appConfirm('Delete this pin?', { confirmLabel: 'Delete', danger: true }))) return;
   try {
     await deletePinFromDB(currentPinId);
     delete pinsCache[currentPinId];
@@ -689,7 +689,7 @@ function openEditVisit(pinId, visitId, visitData) {
 
 async function deleteVisit() {
   if(!_editingVisitId||!_logVisitPinId)return;
-  if(!confirm('Delete this visit?'))return;
+  if(!(await appConfirm('Delete this visit?', { confirmLabel: 'Delete', danger: true })))return;
   document.getElementById('lvStatus').textContent='Deleting…';
   const{error}=await sb.from('pin_visits').delete().eq('user_id',currentUser.id).eq('id',_editingVisitId);
   if(error){document.getElementById('lvStatus').textContent='Delete failed.';return;}

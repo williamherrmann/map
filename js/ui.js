@@ -5,10 +5,6 @@ async function openSettings() {
   const email=currentUser?currentUser.email:'—';
   document.getElementById('settingsEmail').textContent=email;
   document.getElementById('settingsAvatar').textContent=(email&&email!=='—')?email.slice(0,2).toUpperCase():'?';
-  if(currentUser){
-    const{data}=await sb.from('profiles').select('role').eq('id',currentUser.id).single();
-    if(data&&data.role==='admin'){adminRole='admin';const r=document.getElementById('adminSettingsRow');if(r)r.style.display='flex';}
-  }
   const sheet=document.getElementById('settingsSheet'), backdrop=document.getElementById('settingsBackdrop');
   const desktop=window.innerWidth>=768;
   backdrop.style.display='block';
@@ -17,6 +13,12 @@ async function openSettings() {
     if(desktop){sheet.style.transform='translateX(-50%) translateY(0)';}
     else{sheet.style.transform='translateY(0)';}
   });
+  if(currentUser){
+    try{
+      const{data}=await sb.from('profiles').select('role').eq('id',currentUser.id).single();
+      if(data&&data.role==='admin'){adminRole='admin';const r=document.getElementById('adminSettingsRow');if(r)r.style.display='flex';}
+    }catch(e){console.warn('Role check failed:',e);}
+  }
 }
 function closeSettings() {
   const sheet=document.getElementById('settingsSheet'), backdrop=document.getElementById('settingsBackdrop');
@@ -76,13 +78,10 @@ function closeOverflowMenu(){
   document.getElementById('mobMoreBtn').classList.remove('active');
 }
 function syncOverflowActiveStates(){
-  document.getElementById('ovfDrawItem').classList.toggle('active',drawMode);
-  document.getElementById('ovfPinItem').classList.toggle('pin-active',pinMode);
+  // Draw / Pins now live in the main nav bar and manage their own active state.
 }
 function overflowAction(action){
   closeOverflowMenu();
-  if(action==='draw')toggleDrawMode();
-  if(action==='pin')togglePinMode();
   if(action==='pinlist')togglePinList();
   if(action==='filter')togglePinFilter();
   if(action==='legend')toggleLegend();

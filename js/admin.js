@@ -63,35 +63,43 @@ async function loadAdminUsers() {
   const container = document.getElementById('adminUserList');
   container.innerHTML = '<div class="admin-loading">Loading users…</div>';
 
-  const { data: profiles, error: profErr } = await sb.from('profiles').select('id, email, role, created_at').order('created_at', { ascending: false });
-  if (profErr || !profiles) {
-    container.innerHTML = '<div class="admin-loading">Failed to load users.</div>';
-    return;
+  try {
+    const profilesPromise = sb.from('profiles').select('id, email, role, created_at').order('created_at', { ascending: false });
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000));
+    const { data: profiles, error: profErr } = await Promise.race([profilesPromise, timeout]);
+
+    if (profErr || !profiles) {
+      container.innerHTML = '<div class="admin-loading">Failed to load users. Check your connection and try again.</div>';
+      return;
+    }
+
+    const { data: shapeCounts } = await sb.from('custom_shapes').select('user_id');
+    const shapeMap = {};
+    (shapeCounts || []).forEach(s => { shapeMap[s.user_id] = (shapeMap[s.user_id] || 0) + 1; });
+
+    if (!profiles.length) {
+      container.innerHTML = '<div class="admin-loading">No users found.</div>';
+      return;
+    }
+
+    container.innerHTML = profiles.map(p => {
+      const joined = p.created_at ? new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+      const shapes = shapeMap[p.id] || 0;
+      const isAdmin = p.role === 'admin';
+      return `
+        <div class="admin-user-card">
+          <div class="admin-user-avatar">${p.email ? p.email.slice(0,2).toUpperCase() : '?'}</div>
+          <div class="admin-user-info">
+            <div class="admin-user-email">${escHtml(p.email || '—')}</div>
+            <div class="admin-user-meta">Joined ${joined} · ${shapes} shape${shapes !== 1 ? 's' : ''}</div>
+          </div>
+          ${isAdmin ? '<div class="admin-role-badge">admin</div>' : ''}
+        </div>`;
+    }).join('');
+  } catch (e) {
+    console.warn('loadAdminUsers failed:', e);
+    container.innerHTML = '<div class="admin-loading">Failed to load users. Check your connection and try again.</div>';
   }
-
-  const { data: shapeCounts } = await sb.from('custom_shapes').select('user_id');
-  const shapeMap = {};
-  (shapeCounts || []).forEach(s => { shapeMap[s.user_id] = (shapeMap[s.user_id] || 0) + 1; });
-
-  if (!profiles.length) {
-    container.innerHTML = '<div class="admin-loading">No users found.</div>';
-    return;
-  }
-
-  container.innerHTML = profiles.map(p => {
-    const joined = p.created_at ? new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
-    const shapes = shapeMap[p.id] || 0;
-    const isAdmin = p.role === 'admin';
-    return `
-      <div class="admin-user-card">
-        <div class="admin-user-avatar">${p.email ? p.email.slice(0,2).toUpperCase() : '?'}</div>
-        <div class="admin-user-info">
-          <div class="admin-user-email">${escHtml(p.email || '—')}</div>
-          <div class="admin-user-meta">Joined ${joined} · ${shapes} shape${shapes !== 1 ? 's' : ''}</div>
-        </div>
-        ${isAdmin ? '<div class="admin-role-badge">admin</div>' : ''}
-      </div>`;
-  }).join('');
 }
 
 // ═══════════════════════════════════════
@@ -118,7 +126,7 @@ async function runDataTransfer() {
   if (!fromEmail || !toEmail) { setAdminTransferStatus('Both emails are required.', 'error'); return; }
   if (fromEmail === toEmail) { setAdminTransferStatus('Source and destination must be different.', 'error'); return; }
 
-  const confirmed = confirm(`Transfer ALL data from\n${fromEmail}\nto\n${toEmail}\n\nThis cannot be undone.`);
+  const confirmed = await appConfirm(`Transfer ALL data from ${fromEmail} to ${toEmail}.\n\nThis cannot be undone.`, { confirmLabel: 'Transfer', danger: true });
   if (!confirmed) return;
 
   const btn = document.getElementById('adminTransferBtn');

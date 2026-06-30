@@ -76,6 +76,72 @@ document.getElementById('pwPassword').addEventListener('keydown',e=>{if(e.key===
 document.getElementById('magicEmail').addEventListener('keydown',e=>{if(e.key==='Enter')sendMagicLink();});
 
 // ═══════════════════════════════════════
+//  PASSWORD RESET SHEET
+// ═══════════════════════════════════════
+function openPwResetSheet() {
+  document.getElementById('pwResetInput').value = '';
+  document.getElementById('pwResetConfirm').value = '';
+  document.getElementById('pwResetError').style.display = 'none';
+  document.getElementById('pwResetError').textContent = '';
+  document.getElementById('pwResetBtn').disabled = false;
+  document.getElementById('pwResetBtn').textContent = 'Update password';
+  const backdrop = document.getElementById('pwResetBackdrop');
+  const sheet = document.getElementById('pwResetSheet');
+  backdrop.style.display = 'block';
+  requestAnimationFrame(() => {
+    backdrop.classList.add('show');
+    sheet.style.transform = 'translateY(0)';
+  });
+  setTimeout(() => document.getElementById('pwResetInput').focus(), 350);
+}
+
+function closePwResetSheet() {
+  const backdrop = document.getElementById('pwResetBackdrop');
+  const sheet = document.getElementById('pwResetSheet');
+  sheet.style.transform = 'translateY(110%)';
+  backdrop.classList.remove('show');
+  setTimeout(() => { backdrop.style.display = 'none'; }, 300);
+}
+
+async function submitNewPassword() {
+  const pass = document.getElementById('pwResetInput').value;
+  const confirm = document.getElementById('pwResetConfirm').value;
+  const errEl = document.getElementById('pwResetError');
+  const btn = document.getElementById('pwResetBtn');
+
+  errEl.style.display = 'none';
+
+  if (pass.length < 6) {
+    errEl.textContent = 'Password must be at least 6 characters.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (pass !== confirm) {
+    errEl.textContent = 'Passwords do not match.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Updating…';
+
+  const { error } = await sb.auth.updateUser({ password: pass });
+
+  if (error) {
+    errEl.textContent = error.message || 'Failed to update password.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Update password';
+  } else {
+    btn.textContent = 'Password updated!';
+    setTimeout(() => {
+      closePwResetSheet();
+      if (currentUser) startSession(currentUser);
+    }, 1000);
+  }
+}
+
+// ═══════════════════════════════════════
 //  SESSION
 // ═══════════════════════════════════════
 function startSession(user) {
@@ -104,7 +170,7 @@ function resetAuthUI() {
 }
 
 async function logout() {
-  if(!confirm('Sign out?'))return;
+  if(!(await appConfirm('Sign out?', { confirmLabel: 'Sign out', danger: true })))return;
   await sb.auth.signOut();
   currentUser=null; noteCache={}; adminRole=null;
   if(document.getElementById('adminSettingsRow')) document.getElementById('adminSettingsRow').style.display='none';
@@ -128,7 +194,22 @@ async function logout() {
 }
 
 function handleMobSignBtn(){if(currentUser)logout();else document.getElementById('authGate').classList.remove('hidden');}
-sb.auth.onAuthStateChange(async(event,session)=>{if(session&&session.user)startSession(session.user);});
+
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    openPwResetSheet();
+    return;
+  }
+  if (session && session.user) startSession(session.user);
+});
+
+// Refresh session when app comes back to foreground (PWA background fix)
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible') {
+    const { data } = await sb.auth.getSession();
+    if (data?.session) sb.auth.setSession(data.session);
+  }
+});
 
 // ═══════════════════════════════════════
 //  SUPABASE DATA (notes)

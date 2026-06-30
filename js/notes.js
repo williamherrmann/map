@@ -94,7 +94,7 @@ async function saveNote() {
 
 async function clearNote() {
   if(!currentMuni)return;
-  if(!confirm(`Remove all data for "${currentMuni.name}"?`))return;
+  if(!(await appConfirm(`Remove all data for "${currentMuni.name}"?`, { confirmLabel: 'Remove', danger: true })))return;
   try{await deleteNote(currentMuni.name);refreshLayerStyle(currentMuni.name);closeSidebar();}
   catch(e){alert('Delete failed — check connection.');}
 }
