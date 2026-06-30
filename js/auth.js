@@ -90,6 +90,7 @@ function startSession(user) {
   }
   if(isMobile()){document.getElementById('gearBtn').style.display='flex';document.getElementById('mobSignBtn').style.display='none';}
   loadAllNotesFromSupabase();
+  if (typeof checkAdminRole === 'function') checkAdminRole();
 }
 
 function resetAuthUI() {
@@ -105,7 +106,8 @@ function resetAuthUI() {
 async function logout() {
   if(!confirm('Sign out?'))return;
   await sb.auth.signOut();
-  currentUser=null; noteCache={};
+  currentUser=null; noteCache={}; adminRole=null;
+  if(document.getElementById('adminSettingsRow')) document.getElementById('adminSettingsRow').style.display='none';
   closeSidebar(); closeSettings(); closeLayersPanel();
   cancelDrawing(); cancelPinMode();
   shapesLayerGroup.clearLayers(); shapesCache={};

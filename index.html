@@ -57,6 +57,39 @@
     #gearBtn { display:none; position:fixed; top:calc(12px + env(safe-area-inset-top,0px)); right:12px; z-index:400; width:36px; height:36px; background:rgba(255,255,255,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1.5px solid #ddd; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.12); cursor:pointer; color:#444; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; transition:background 0.15s; }
     #gearBtn:active { background:#f0f0f0; }
 
+    /* ── ADMIN PANEL ── */
+    #adminBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1100; opacity:0; transition:opacity 0.3s; }
+    #adminSheet { position:fixed; bottom:0; left:0; right:0; z-index:1101; background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); padding-bottom:env(safe-area-inset-bottom,0px); transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); will-change:transform; max-height:85vh; display:flex; flex-direction:column; }
+    #adminSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #adminSheetHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #adminSheetTitle { font-size:17px; font-weight:700; color:#111; }
+    #adminSheetCloseBtn { background:none; border:none; font-size:22px; color:#999; cursor:pointer; padding:0 4px; line-height:1; }
+    .admin-tabs { display:flex; gap:8px; padding:14px 16px 0; flex-shrink:0; }
+    .admin-tab-btn { flex:1; padding:8px 0; border:1.5px solid #e5e7eb; background:#fff; border-radius:8px; font-size:13px; font-weight:600; color:#555; cursor:pointer; }
+    .admin-tab-btn.active { background:#111; color:#fff; border-color:#111; }
+    #adminBody { flex:1; overflow-y:auto; padding:16px; }
+    #adminTabTransfer { display:none; }
+    .admin-loading { color:#999; font-size:13px; text-align:center; padding:24px 0; }
+    .admin-user-card { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #f0f0f0; }
+    .admin-user-card:last-child { border-bottom:none; }
+    .admin-user-avatar { width:36px; height:36px; border-radius:50%; background:#1e3a5f; color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; }
+    .admin-user-info { flex:1; min-width:0; }
+    .admin-user-email { font-size:13px; font-weight:600; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .admin-user-meta { font-size:11px; color:#999; margin-top:2px; }
+    .admin-role-badge { font-size:10px; font-weight:700; background:#7c3aed; color:#fff; padding:2px 7px; border-radius:4px; flex-shrink:0; }
+    .admin-transfer-label { font-size:12px; font-weight:600; color:#555; margin-bottom:5px; margin-top:14px; }
+    .admin-transfer-label:first-child { margin-top:0; }
+    .admin-transfer-input { width:100%; box-sizing:border-box; padding:10px 12px; border:1.5px solid #ddd; border-radius:8px; font-size:14px; font-family:inherit; outline:none; }
+    .admin-transfer-input:focus { border-color:#111; }
+    #adminTransferBtn { width:100%; margin-top:16px; padding:12px; background:#111; color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
+    #adminTransferBtn:disabled { opacity:0.5; cursor:not-allowed; }
+    .admin-transfer-status { font-size:12px; padding:10px 12px; border-radius:8px; margin-top:10px; white-space:pre-wrap; display:none; }
+    .admin-transfer-status.success { background:#dcfce7; color:#15803d; }
+    .admin-transfer-status.error { background:#fee2e2; color:#b91c1c; }
+    #adminSettingsRow { display:none; align-items:center; justify-content:space-between; padding:13px 0; border-top:1px solid #f0f0f0; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .admin-settings-label { font-size:14px; color:#111; font-weight:500; }
+    .admin-settings-chevron { color:#bbb; font-size:16px; }
+    /* ── END ADMIN ── */
     /* ══ SETTINGS SHEET ══ */
     #settingsBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:800; opacity:0; transition:opacity 0.3s; }
     #settingsSheet { position:fixed; bottom:0; left:0; right:0; z-index:900; background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); padding-bottom:env(safe-area-inset-bottom,0px); transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); will-change:transform; }
@@ -156,8 +189,9 @@
     @media (min-width:768px) {
       #bottomChrome { display:none; }
       #gearBtn { display:none !important; }
-      #settingsBackdrop { display:none !important; }
-      #settingsSheet { display:none !important; }
+
+      #settingsSheet { left:50%; right:auto; transform:translateX(-50%) translateY(110%); width:420px; border-radius:16px; bottom:20px; }
+      #settingsSheet.open-desktop { transform:translateX(-50%) translateY(0); }
       #suggestions { position:absolute; bottom:auto; left:auto; right:auto; top:100%; width:100%; max-height:300px; border-top:none; border-radius:0 0 10px 10px; box-shadow:0 4px 12px rgba(0,0,0,0.12); }
       #desktopSearch { display:block; position:absolute; top:14px; left:14px; z-index:500; width:320px; }
       #desktopSearch #searchWrap { background:#fff; border:2px solid #1e3a5f; border-radius:8px; box-shadow:3px 3px 0 rgba(30,58,95,0.25); }
@@ -725,6 +759,82 @@
     .pl-empty { text-align:center; padding:40px 20px; color:#aaa; font-size:13px; font-family:'DM Mono',monospace; }
     #pinListCount { font-size:12px; color:#999; font-family:'DM Mono',monospace; padding:0 16px 8px; flex-shrink:0; }
 
+
+    /* ══ FEED SHEET ══ */
+    #feedSheet { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
+    #feedSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #feedSheet.open { transform:translateY(0); }
+    @media (min-width:768px) {
+      #feedSheet { width:400px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(110%); }
+      #feedSheet.open { transform:translateX(0); }
+      #feedSheet::before { display:none; }
+    }
+    #feedHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #feedTitle { font-size:17px; font-weight:700; color:#111; }
+    #feedCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    #feedComposer { padding:12px 16px; border-bottom:1px solid #f0f0f0; flex-shrink:0; display:none; }
+    #feedComposerInner { display:flex; gap:10px; align-items:flex-start; }
+    .feed-composer-avatar { width:36px; height:36px; border-radius:50%; flex-shrink:0; display:none; }
+    #feedTextarea { flex:1; border:1.5px solid #e0e0e6; border-radius:10px; padding:9px 12px; font-family:'DM Sans',sans-serif; font-size:14px; color:#111; resize:none; outline:none; min-height:60px; background:#f9f9f9; transition:border-color 0.15s; }
+    #feedTextarea:focus { border-color:#1e3a5f; background:#fff; }
+    #feedPostBtn { margin-top:8px; float:right; padding:7px 18px; background:#111; color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    #feedPostBtn:disabled { opacity:0.5; }
+    #feedNoUsername { display:none; padding:12px 16px; font-size:13px; color:#999; border-bottom:1px solid #f0f0f0; flex-shrink:0; }
+    #feedNoUsername a { color:#1e3a5f; cursor:pointer; text-decoration:underline; }
+    #feedBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:8px 0; display:flex; flex-direction:column; }
+    .feed-loading { color:#999; font-size:13px; text-align:center; padding:32px 0; }
+    .feed-post { display:flex; gap:10px; padding:12px 16px; border-bottom:1px solid #f5f5f5; }
+    .feed-post:last-child { border-bottom:none; }
+    .feed-avatar { width:38px; height:38px; border-radius:50%; flex-shrink:0; background:#f0f0f0; }
+    .feed-post-body { flex:1; min-width:0; }
+    .feed-post-header { display:flex; align-items:center; gap:6px; margin-bottom:4px; }
+    .feed-username { font-size:13px; font-weight:700; color:#111; }
+    .feed-time { font-size:11px; color:#bbb; font-family:'DM Mono',monospace; flex:1; }
+    .feed-delete-btn { background:none; border:none; color:#ccc; font-size:18px; cursor:pointer; line-height:1; padding:0 2px; flex-shrink:0; }
+    .feed-delete-btn:hover { color:#dc2626; }
+    .feed-post-content { font-size:14px; color:#333; line-height:1.5; word-break:break-word; white-space:pre-wrap; }
+    /* Profile sheet */
+    /* ── PROFILE SHEET ── */
+    #profileSheet { position:fixed; bottom:0; left:0; right:0; z-index:1200; background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); padding-bottom:env(safe-area-inset-bottom,0px); transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); will-change:transform; max-height:92vh; display:flex; flex-direction:column; }
+    #profileSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #profileSheetHeader { padding:13px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #profileSheetTitle { font-size:17px; font-weight:700; color:#111; }
+    #profileCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; font-size:18px; color:#666; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    #profileBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+    /* current avatar hero */
+    #profileHero { display:flex; flex-direction:column; align-items:center; padding:20px 16px 16px; border-bottom:1px solid #f0f0f0; gap:10px; }
+    #profileCurrentAvatar { width:80px; height:80px; border-radius:50%; border:3px solid #111; background:#f5f5f5; }
+    #profileHeroName { font-size:15px; font-weight:700; color:#111; }
+    #profileHeroSub { font-size:12px; color:#aaa; font-family:'DM Mono',monospace; }
+    #profileShuffleBtn { padding:7px 16px; background:#f4f4f6; border:1.5px solid #e0e0e6; border-radius:8px; font-size:13px; font-weight:600; color:#555; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    #profileShuffleBtn:active { background:#e8e8ec; }
+    /* avatar picker */
+    #profileAvatarSection { padding:16px 16px 8px; border-bottom:1px solid #f0f0f0; }
+    .profile-section-label { font-size:11px; font-weight:700; color:#aaa; letter-spacing:0.07em; text-transform:uppercase; margin-bottom:12px; }
+    #avatarGrid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; }
+    .avatar-option { width:100%; aspect-ratio:1; border-radius:50%; border:2.5px solid transparent; cursor:pointer; transition:border-color 0.15s,transform 0.12s,box-shadow 0.12s; background:#f5f5f5; -webkit-tap-highlight-color:transparent; }
+    .avatar-option:active { transform:scale(0.9); }
+    .avatar-option.selected { border-color:#111; box-shadow:0 0 0 3px rgba(0,0,0,0.08); }
+    /* username section */
+    #profileUsernameSection { padding:16px; }
+    #usernameInput { width:100%; box-sizing:border-box; padding:11px 14px; border:1.5px solid #ddd; border-radius:10px; font-size:15px; font-family:'DM Sans',sans-serif; outline:none; margin-bottom:5px; }
+    #usernameInput:focus { border-color:#111; }
+    #usernameHint { font-size:11px; color:#bbb; margin-bottom:14px; }
+    #usernameStatus { font-size:12px; margin-bottom:12px; min-height:16px; }
+    .username-status.success { color:#15803d; }
+    .username-status.error { color:#b91c1c; }
+    #usernameSaveBtn { width:100%; padding:13px; background:#111; color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    #usernameSaveBtn:disabled { opacity:0.5; }
+    /* ── END PROFILE SHEET ── */
+    #usernameInput { width:100%; box-sizing:border-box; padding:11px 14px; border:1.5px solid #ddd; border-radius:10px; font-size:15px; font-family:'DM Sans',sans-serif; outline:none; margin-bottom:6px; }
+    #usernameInput:focus { border-color:#111; }
+    #usernameHint { font-size:11px; color:#aaa; margin-bottom:16px; }
+    #usernameStatus { font-size:12px; margin-bottom:12px; min-height:16px; }
+    .username-status.success { color:#15803d; }
+    .username-status.error { color:#b91c1c; }
+    #usernameSaveBtn { width:100%; padding:13px; background:#111; color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    #usernameSaveBtn:disabled { opacity:0.5; }
+
     /* ══ BUILDERS SHEET ══ */
     #buildersSheet { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
     #buildersSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
@@ -974,13 +1084,47 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         Sign out
       </button>
+      <div id="editProfileRow" style="display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-top:1px solid #f0f0f0;cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="openEditProfile()">
+        <span style="font-size:14px;color:#111;font-weight:500;">Edit profile</span>
+        <span style="color:#bbb;font-size:16px;">›</span>
+      </div>
+      <div id="adminSettingsRow" onclick="openAdminPanel()">
+        <span class="admin-settings-label">Admin panel</span>
+        <span class="admin-settings-chevron">›</span>
+      </div>
     </div>
     <div>
       <div class="settings-section-label">App</div>
       <div class="settings-info-row" style="cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="openChangelog()">
         <span class="settings-info-label">Version</span>
-        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v64 · What's new ›</span>
+        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v90 · What's new ›</span>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN SHEET -->
+<div id="adminBackdrop" onclick="closeAdminPanel()"></div>
+<div id="adminSheet">
+  <div id="adminSheetHeader">
+    <div id="adminSheetTitle">Admin</div>
+    <button id="adminSheetCloseBtn" onclick="closeAdminPanel()" aria-label="Close">×</button>
+  </div>
+  <div class="admin-tabs">
+    <button class="admin-tab-btn active" data-tab="users" onclick="switchAdminTab('users')">Users</button>
+    <button class="admin-tab-btn" data-tab="transfer" onclick="switchAdminTab('transfer')">Data Transfer</button>
+  </div>
+  <div id="adminBody">
+    <div id="adminTabUsers">
+      <div id="adminUserList"><div class="admin-loading">Loading…</div></div>
+    </div>
+    <div id="adminTabTransfer">
+      <div class="admin-transfer-label">From (source account email)</div>
+      <input id="adminFromEmail" class="admin-transfer-input" type="email" placeholder="source@example.com" autocomplete="off" autocapitalize="off">
+      <div class="admin-transfer-label">To (destination account email)</div>
+      <input id="adminToEmail" class="admin-transfer-input" type="email" placeholder="destination@example.com" autocomplete="off" autocapitalize="off">
+      <button id="adminTransferBtn" onclick="runDataTransfer()">Transfer data</button>
+      <div id="adminTransferStatus" class="admin-transfer-status"></div>
     </div>
   </div>
 </div>
@@ -996,7 +1140,83 @@
 
         <div class="cl-version">
       <div class="cl-version-header">
-        <span class="cl-version-badge current">v83</span>
+        <span class="cl-version-badge current">v90</span>
+        <span class="cl-version-label">Edit Profile redesign</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Avatar hero with current selection + shuffle button</div>
+        <div class="cl-item">6-column avatar grid, smaller tiles, clear selection state</div>
+        <div class="cl-item">Username section separated below avatar picker</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v89</span>
+        <span class="cl-version-label">Edit Profile — avatar picker + username</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Edit Profile button in Settings</div>
+        <div class="cl-item">Choose from diverse avatar set (DiceBear)</div>
+        <div class="cl-item">Unique username enforced at database level</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v88</span>
+        <span class="cl-version-label">Feed + username</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Feed tab — post updates, DiceBear avatars</div>
+        <div class="cl-item">Username claim in Settings</div>
+        <div class="cl-item">Admin and post owner can delete posts</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v87</span>
+        <span class="cl-version-label">Admin row fix + version label</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Fixed admin row placement inside settings body</div>
+        <div class="cl-item">Fixed version label showing v64 in settings</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v86</span>
+        <span class="cl-version-label">Settings on desktop + Admin panel</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Settings button in desktop nav — opens centered sheet</div>
+        <div class="cl-item">Admin panel visible in Settings for admin accounts</div>
+        <div class="cl-item">Fixed desktop CSS that was hiding the settings sheet</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v85</span>
+        <span class="cl-version-label">Admin panel fixes</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Settings button added to desktop nav</div>
+        <div class="cl-item">Fixed recursive RLS policy crash on profiles table</div>
+        <div class="cl-item">Admin role check now handles errors gracefully</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v84</span>
+        <span class="cl-version-label">Admin panel</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Role-based admin access via profiles table</div>
+        <div class="cl-item">User list with join date, pin and shape counts</div>
+        <div class="cl-item">Data transfer tool to move all data between accounts</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v83</span>
         <span class="cl-version-label">Shape sidebar cleanup</span>
       </div>
       <div class="cl-items">
@@ -1380,7 +1600,7 @@
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v83</span>
+  <span id="badgeVersion">v90</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
@@ -1422,9 +1642,17 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
     Filter
   </button>
+  <button class="desk-nav-btn" id="deskFeedBtn" onclick="toggleFeed()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Feed
+  </button>
   <button class="desk-nav-btn" id="deskBuildersBtn" onclick="toggleBuilders()">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="18" height="11" rx="1"/><path d="M3 10l9-7 9 7"/><line x1="12" y1="10" x2="12" y2="21"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
     Builders
+  </button>
+  <button class="desk-nav-btn" id="deskSettingsBtn" onclick="openSettings()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
   </button>
 </div>
 <!-- Keep hidden stubs for JS refs -->
@@ -1616,6 +1844,51 @@
 </div>
 
 <!-- BUILDERS SHEET -->
+<!-- PROFILE SHEET -->
+<div id="profileSheet">
+  <div id="profileSheetHeader">
+    <div id="profileSheetTitle">Edit Profile</div>
+    <button id="profileCloseBtn" onclick="closeEditProfile()">×</button>
+  </div>
+  <div id="profileBody">
+    <div id="profileHero">
+      <img id="profileCurrentAvatar" src="" alt="Your avatar">
+      <div id="profileHeroName">—</div>
+      <div id="profileHeroSub">tap an avatar below to change</div>
+      <button id="profileShuffleBtn" onclick="shuffleAvatar()">Shuffle</button>
+    </div>
+    <div id="profileAvatarSection">
+      <div class="profile-section-label">Choose avatar</div>
+      <div id="avatarGrid"></div>
+    </div>
+    <div id="profileUsernameSection">
+      <div class="profile-section-label">Username</div>
+      <input id="usernameInput" type="text" placeholder="yourname" autocomplete="off" autocapitalize="off" maxlength="20">
+      <div id="usernameHint">Letters, numbers, underscores only. Must be unique.</div>
+      <div id="usernameStatus" class="username-status"></div>
+      <button id="usernameSaveBtn" onclick="saveProfile()">Save profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- FEED SHEET -->
+<div id="feedSheet">
+  <div id="feedHeader">
+    <div id="feedTitle">Feed</div>
+    <button id="feedCloseBtn" onclick="closeFeed()">×</button>
+  </div>
+  <div id="feedNoUsername">Set a <a onclick="closeFeed();openSettings()">username in Settings</a> to post.</div>
+  <div id="feedComposer">
+    <div id="feedComposerInner">
+      <img id="feedComposerAvatar" class="feed-composer-avatar" src="" alt="">
+      <textarea id="feedTextarea" placeholder="What's on your mind?" rows="3" maxlength="500"></textarea>
+    </div>
+    <button id="feedPostBtn" onclick="submitPost()">Post</button>
+    <div style="clear:both"></div>
+  </div>
+  <div id="feedBody"></div>
+</div>
+
 <div id="buildersSheet">
   <div id="buildersHeader">
     <div id="buildersTitle">Builders</div>
@@ -1862,6 +2135,10 @@
       </svg>
       Layers
     </button>
+    <button class="nav-btn" id="mobFeedBtn" onclick="toggleFeed()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Feed
+    </button>
     <button class="nav-btn" id="mobBuildersBtn" onclick="toggleBuilders()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="18" height="11" rx="1"/><path d="M3 10l9-7 9 7"/><line x1="12" y1="10" x2="12" y2="21"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
       Builders
@@ -1902,6 +2179,8 @@
 <script src="js/pins.js"></script>
 <script src="js/calendar.js"></script>
 <script src="js/builders.js"></script>
+<script src="js/feed.js"></script>
+<script src="js/admin.js"></script>
 <script src="js/ui.js"></script>
 
 

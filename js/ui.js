@@ -1,17 +1,29 @@
 // ═══════════════════════════════════════
 //  SETTINGS SHEET
 // ═══════════════════════════════════════
-function openSettings() {
+async function openSettings() {
   const email=currentUser?currentUser.email:'—';
   document.getElementById('settingsEmail').textContent=email;
   document.getElementById('settingsAvatar').textContent=(email&&email!=='—')?email.slice(0,2).toUpperCase():'?';
+  if(currentUser){
+    const{data}=await sb.from('profiles').select('role').eq('id',currentUser.id).single();
+    if(data&&data.role==='admin'){adminRole='admin';const r=document.getElementById('adminSettingsRow');if(r)r.style.display='flex';}
+  }
   const sheet=document.getElementById('settingsSheet'), backdrop=document.getElementById('settingsBackdrop');
+  const desktop=window.innerWidth>=768;
   backdrop.style.display='block';
-  requestAnimationFrame(()=>{backdrop.style.opacity='1';sheet.style.transform='translateY(0)';});
+  requestAnimationFrame(()=>{
+    backdrop.style.opacity='1';
+    if(desktop){sheet.style.transform='translateX(-50%) translateY(0)';}
+    else{sheet.style.transform='translateY(0)';}
+  });
 }
 function closeSettings() {
   const sheet=document.getElementById('settingsSheet'), backdrop=document.getElementById('settingsBackdrop');
-  sheet.style.transform='translateY(110%)'; backdrop.style.opacity='0';
+  const desktop=window.innerWidth>=768;
+  if(desktop){sheet.style.transform='translateX(-50%) translateY(110%)';}
+  else{sheet.style.transform='translateY(110%)';}
+  backdrop.style.opacity='0';
   setTimeout(()=>{backdrop.style.display='none';},300);
 }
 (function(){
