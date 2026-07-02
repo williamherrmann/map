@@ -444,6 +444,9 @@ async function saveShape(){
     if(newShapePreviewLayer){map.removeLayer(newShapePreviewLayer);newShapePreviewLayer=null;}
     clearEditHandles();currentShapeId=saved.id;closeShapeSidebar();
     updateOverdueBadge();
+    // Saving may have added/removed/changed a scheduled_at — re-sync
+    // "Share Today's Schedule" for any friend it's turned on for.
+    if(!existing || !existing._shared){ if(typeof syncAllScheduleShares==='function') syncAllScheduleShares(); }
   }catch(e){shapeMarkStatus('','Save failed');alert('Save failed — check connection.');}
 }
 
@@ -452,7 +455,10 @@ async function deleteShape(){
   const existing = shapesCache[currentShapeId];
   if (existing && existing._shared) { return; } // delete is always owner-only
   if(!(await appConfirm('Delete this shape?', { confirmLabel: 'Delete', danger: true })))return;
-  try{await deleteShapeFromDB(currentShapeId);delete shapesCache[currentShapeId];reRenderAllShapes();closeShapeSidebar();}
+  try{
+    await deleteShapeFromDB(currentShapeId);delete shapesCache[currentShapeId];reRenderAllShapes();closeShapeSidebar();
+    if(typeof syncAllScheduleShares==='function') syncAllScheduleShares();
+  }
   catch(e){alert('Delete failed — check connection.');}
 }
 

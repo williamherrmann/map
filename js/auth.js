@@ -179,6 +179,7 @@ async function logout() {
   closeSidebar(); closeSettings(); closeLayersPanel();
   if(typeof closeFriendsSheet==='function')closeFriendsSheet();
   if(typeof closeSharePicker==='function')closeSharePicker();
+  if(typeof closeFriendDetail==='function')closeFriendDetail();
   cancelDrawing(); cancelPinMode();
   shapesLayerGroup.clearLayers(); shapesCache={};
   pinsLayerGroup.clearLayers(); pinsCache={};
@@ -246,6 +247,7 @@ async function loadAllNotesFromSupabase(){
   await loadStandaloneCallbacks();
   updateOverdueBadge();
   if (typeof refreshFriendsBadge === 'function') refreshFriendsBadge();
+  if (typeof syncAllScheduleShares === 'function') syncAllScheduleShares();
 }
 
 // ═══════════════════════════════════════

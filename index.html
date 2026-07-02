@@ -1174,6 +1174,35 @@
     .perm-chip.edit { background:#dcfce7; color:#15803d; }
     .shared-with-remove { width:22px; height:22px; border-radius:50%; border:none; background:#f0f0f0; color:#999; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
     .shared-with-remove:hover { background:#fee2e2; color:#dc2626; }
+
+    /* ══ FRIEND DETAIL SHEET ══ */
+    #friendDetailSheet { position:fixed; bottom:0; left:0; right:0; z-index:950; max-height:calc(90dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); opacity:1; pointer-events:none; transition:transform 0.32s cubic-bezier(0.32,0.72,0,1), opacity 0.2s; padding-bottom:var(--sab); will-change:transform; }
+    #friendDetailSheet.open { transform:translateY(0); pointer-events:all; }
+    #friendDetailSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #friendDetailHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:10px; }
+    #friendDetailIdentity { display:flex; align-items:center; gap:10px; min-width:0; }
+    #friendDetailAvatar img { display:block; }
+    #friendDetailName { font-size:15px; font-weight:700; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #friendDetailCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; flex-shrink:0; }
+    #friendDetailBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px 20px; }
+    #friendDetailFooter { display:flex; gap:10px; padding:14px 20px; border-top:1.5px solid #eee; flex-shrink:0; }
+    @media (min-width:768px) {
+      /* Same floating-card fade+scale hide as the Share Picker sheet — a
+         percentage translateY never reliably clears a short card anchored
+         by fixed bottom/right offsets. */
+      #friendDetailSheet { width:380px; height:auto; max-height:80dvh; top:auto; bottom:40px; right:40px; left:auto; border-radius:20px; border:1.5px solid #eee; box-shadow:0 8px 40px rgba(0,0,0,0.25); transform:translateY(16px) scale(0.97); opacity:0; pointer-events:none; transition:transform 0.2s cubic-bezier(0.32,0.72,0,1), opacity 0.2s; }
+      #friendDetailSheet.open { transform:translateY(0) scale(1); opacity:1; pointer-events:all; }
+      #friendDetailSheet::before { display:none; }
+    }
+    .friend-detail-row { display:flex; align-items:flex-start; gap:14px; }
+    .friend-detail-row-text { flex:1; min-width:0; }
+    .friend-detail-row-label { font-size:13px; font-weight:700; color:#111; margin-bottom:4px; }
+    .friend-detail-row-desc { font-size:12px; color:#888; line-height:1.5; }
+
+    .friend-row-clickable { cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .friend-row-clickable:active { background:#f9f9f9; }
+    .friend-row-actions { display:flex; gap:6px; flex-shrink:0; align-items:center; }
+    .schedule-share-badge { display:inline-flex; align-items:center; justify-content:center; margin-left:6px; color:#3b82f6; vertical-align:middle; }
   </style>
 </head>
 <body>
@@ -1263,7 +1292,7 @@
         <div class="so-card">
           <button class="so-row so-row-nav" onclick="openChangelog()">
             <span class="so-row-label">Version</span>
-            <span class="so-row-value" style="color:#7c3aed;">v111</span>
+            <span class="so-row-value" style="color:#7c3aed;">v112</span>
             <span class="so-row-chevron">›</span>
           </button>
         </div>
@@ -1352,7 +1381,14 @@
 
         <div class="cl-version">
       <div class="cl-version-header">
-        <span class="cl-version-badge current">v111</span>
+        <span class="cl-version-badge current">v112</span>
+        <span class="cl-version-label">Share Today's Schedule</span>
+      </div>
+      <div class="cl-item">Tap a friend in the Friends tab to open their settings and flip on "Share Today's Schedule" — instead of sharing shapes one at a time, this keeps whichever shapes you have scheduled_at set to today automatically shared with that friend, view-only. It stays in sync: saving a shape, unscheduling one, or opening the app re-checks what's "today" and adds/removes shares to match. Turning it off removes those auto-shared shapes immediately; it never touches anything shared manually from a pin/shape's own Share button. Friends with it turned on show a small calendar icon next to their name in the Friends list.</div>
+    </div>
+        <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v111</span>
         <span class="cl-version-label">Fixed 403 error saving pins/shapes</span>
       </div>
       <div class="cl-item">Saving an existing pin or shape (including just updating Scheduled Visit) could fail with a 403. The save code intentionally stopped sending user_id on updates so an edit-access friend saving a shared item couldn't accidentally steal ownership — but under RLS, Supabase's upsert() checks the INSERT policy against that same payload first, and with no user_id present that check always fails. Switched pin/shape saves to a plain UPDATE for existing items and a plain INSERT for new ones, which only ever evaluates the correct policy and avoids this entirely.</div>
@@ -2000,7 +2036,7 @@
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v111</span>
+  <span id="badgeVersion">v112</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
@@ -2572,6 +2608,33 @@
   </div>
 </div>
 
+<!-- FRIEND DETAIL SHEET -->
+<div id="friendDetailSheet">
+  <div id="friendDetailHeader">
+    <div id="friendDetailIdentity">
+      <span id="friendDetailAvatar"></span>
+      <span id="friendDetailName">@username</span>
+    </div>
+    <button id="friendDetailCloseBtn" onclick="closeFriendDetail()" aria-label="Close">×</button>
+  </div>
+  <div id="friendDetailBody">
+    <div class="friend-detail-row">
+      <div class="friend-detail-row-text">
+        <div class="friend-detail-row-label">Share Today's Schedule</div>
+        <div class="friend-detail-row-desc">Automatically shares any shapes you've scheduled for today with this friend, view-only. Stays in sync whenever you save a shape or open the app.</div>
+      </div>
+      <label class="share-toggle">
+        <input type="checkbox" id="friendDetailScheduleToggle" onchange="onScheduleShareToggle(this.checked)">
+        <span class="share-toggle-track"><span class="share-toggle-thumb"></span></span>
+      </label>
+    </div>
+  </div>
+  <div id="friendDetailFooter">
+    <button class="btn btn-danger" id="friendDetailRemoveBtn">Remove Friend</button>
+    <button class="btn btn-ghost" onclick="closeFriendDetail()">Close</button>
+  </div>
+</div>
+
 <div id="bottomChrome">
   <div id="searchRow">
     <div id="searchWrapMobile" style="flex:1;display:flex;align-items:center;background:#f4f4f6;border:1.5px solid #e0e0e6;border-radius:12px;overflow:visible;position:relative;transition:border-color 0.15s,box-shadow 0.15s;">
@@ -2643,15 +2706,15 @@
      ═══════════════════════════════════════ -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/auth.js?v=111"></script>
-<script src="js/utilities.js?v=111"></script>
-<script src="js/map.js?v=111"></script>
-<script src="js/search.js?v=111"></script>
-<script src="js/notes.js?v=111"></script>
-<script src="js/shapes.js?v=111"></script>
-<script src="js/pins.js?v=111"></script>
-<script src="js/calendar.js?v=111"></script>
-<script src="js/builders.js?v=111"></script>
+<script src="js/auth.js?v=112"></script>
+<script src="js/utilities.js?v=112"></script>
+<script src="js/map.js?v=112"></script>
+<script src="js/search.js?v=112"></script>
+<script src="js/notes.js?v=112"></script>
+<script src="js/shapes.js?v=112"></script>
+<script src="js/pins.js?v=112"></script>
+<script src="js/calendar.js?v=112"></script>
+<script src="js/builders.js?v=112"></script>
 <script type="module">
   import { createAvatar } from 'https://esm.sh/@dicebear/core@9';
   import * as avataaars from 'https://esm.sh/@dicebear/avataaars@9';
@@ -2660,10 +2723,10 @@
   window.__dicebearReady = true;
   window.dispatchEvent(new Event('dicebear-ready'));
 </script>
-<script src="js/feed.js?v=111"></script>
-<script src="js/friends.js?v=111"></script>
-<script src="js/admin.js?v=111"></script>
-<script src="js/ui.js?v=111"></script>
+<script src="js/feed.js?v=112"></script>
+<script src="js/friends.js?v=112"></script>
+<script src="js/admin.js?v=112"></script>
+<script src="js/ui.js?v=112"></script>
 
 
 </body>

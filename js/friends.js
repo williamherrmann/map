@@ -156,13 +156,17 @@ function _friendActionHtml(profile) {
   </span>`;
 }
 
-function _friendRowHtml(profile) {
-  return `<div class="friend-row" data-uid="${escHtml(profile.id)}">
+function _friendRowHtml(profile, clickable, scheduleEnabled) {
+  const openAttr = clickable ? ` onclick="openFriendDetail('${escJs(profile.id)}')"` : '';
+  const badge = scheduleEnabled ? `<span class="schedule-share-badge" title="Sharing today's schedule">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    </span>` : '';
+  return `<div class="friend-row${clickable ? ' friend-row-clickable' : ''}" data-uid="${escHtml(profile.id)}"${openAttr}>
     ${friendAvatarImg(profile)}
     <div class="friend-info">
-      <div class="friend-name">@${escHtml(profile.username || 'unknown')}</div>
+      <div class="friend-name">@${escHtml(profile.username || 'unknown')}${badge}</div>
     </div>
-    ${_friendActionHtml(profile)}
+    <div class="friend-row-actions" onclick="event.stopPropagation()">${_friendActionHtml(profile)}</div>
   </div>`;
 }
 
@@ -221,7 +225,8 @@ async function renderFriendsListTab() {
   await loadFriendsList();
   await waitForDicebear();
   if (!friendsListCache.length) { body.innerHTML = '<div class="friends-empty">No friends yet — find someone in the Find tab.</div>'; return; }
-  body.innerHTML = friendsListCache.map(p => _friendRowHtml(p)).join('');
+  const scheduleMap = await loadScheduleShareMap(friendsListCache.map(p => p.id));
+  body.innerHTML = friendsListCache.map(p => _friendRowHtml(p, true, !!scheduleMap[p.id])).join('');
 }
 
 // ═══════════════════════════════════════
@@ -482,4 +487,182 @@ async function renderSharedWithSection(itemType, itemId, sectionElId, listElId) 
 
 async function _removeSharedWithRow(shareId, itemType, itemId, sectionElId, listElId) {
   await removeShare(shareId, () => renderSharedWithSection(itemType, itemId, sectionElId, listElId));
+}
+
+
+// ═══════════════════════════════════════
+//  FRIEND DETAIL SHEET
+//  Opened by tapping a friend in the Friends tab. Currently just holds
+//  the "Share Today's Schedule" toggle and Remove Friend, but is a
+//  natural home for future per-friend settings.
+// ═══════════════════════════════════════
+let _friendDetailId = null;
+
+async function openFriendDetail(friendId) {
+  if (!currentUser) return;
+  let profile = friendsListCache.find(p => p.id === friendId);
+  if (!profile) {
+    const map = await fetchProfilesMap([friendId]);
+    profile = map[friendId];
+  }
+  if (!profile) return;
+
+  _friendDetailId = friendId;
+  await waitForDicebear();
+
+  document.getElementById('friendDetailAvatar').innerHTML = friendAvatarImg(profile, 40);
+  document.getElementById('friendDetailName').textContent = '@' + (profile.username || 'unknown');
+
+  const toggle = document.getElementById('friendDetailScheduleToggle');
+  toggle.checked = false;
+  toggle.disabled = true;
+
+  const removeBtn = document.getElementById('friendDetailRemoveBtn');
+  removeBtn.onclick = () => {
+    const state = friendStatusMap[friendId];
+    if (!state) return;
+    closeFriendDetail();
+    removeFriend(state.friendshipId, profile.username || '');
+  };
+
+  document.getElementById('friendDetailSheet').classList.add('open');
+  const backdrop = document.getElementById('sheetBackdrop');
+  backdrop.classList.add('visible');
+  requestAnimationFrame(() => backdrop.classList.add('show'));
+
+  const { data, error } = await sb.from('schedule_share_settings')
+    .select('enabled').eq('owner_id', currentUser.id).eq('friend_id', friendId).maybeSingle();
+  if (!error) toggle.checked = !!(data && data.enabled);
+  toggle.disabled = false;
+}
+
+function closeFriendDetail() {
+  document.getElementById('friendDetailSheet').classList.remove('open');
+  const anyOtherOpen = ['pinSidebar', 'shapeSidebar', 'friendsSheet', 'sharePickerSheet'].some(id => document.getElementById(id)?.classList.contains('open'));
+  if (!anyOtherOpen) {
+    const backdrop = document.getElementById('sheetBackdrop');
+    backdrop.classList.remove('show');
+    setTimeout(() => backdrop.classList.remove('visible'), 300);
+  }
+  _friendDetailId = null;
+}
+
+async function onScheduleShareToggle(checked) {
+  if (!_friendDetailId || !currentUser) return;
+  const friendId = _friendDetailId;
+  const toggle = document.getElementById('friendDetailScheduleToggle');
+  toggle.disabled = true;
+  const { error } = await sb.from('schedule_share_settings')
+    .upsert({ owner_id: currentUser.id, friend_id: friendId, enabled: checked }, { onConflict: 'owner_id,friend_id' });
+  toggle.disabled = false;
+  if (error) {
+    console.error('onScheduleShareToggle error:', error);
+    toggle.checked = !checked;
+    alert('Could not update — check connection.');
+    return;
+  }
+  await syncScheduleShareForFriend(friendId);
+}
+
+// swipe to dismiss
+(function () {
+  const sheet = document.getElementById('friendDetailSheet');
+  if (!sheet) return;
+  let startY = 0, dragging = false;
+  sheet.addEventListener('touchstart', e => {
+    if (e.target.closest('#friendDetailBody') && sheet.querySelector('#friendDetailBody').scrollTop > 0) return;
+    startY = e.touches[0].clientY; dragging = true; sheet.style.transition = 'none';
+  }, { passive: true });
+  sheet.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy < 0) return;
+    sheet.style.transform = `translateY(${dy}px)`;
+  }, { passive: true });
+  sheet.addEventListener('touchend', e => {
+    if (!dragging) return;
+    dragging = false; sheet.style.transition = '';
+    const dy = e.changedTouches[0].clientY - startY;
+    if (dy > 100) { closeFriendDetail(); sheet.style.transform = ''; } else { sheet.style.transform = ''; }
+  });
+})();
+
+
+// ═══════════════════════════════════════
+//  SCHEDULE SHARE SYNC
+//  "Today" is always the device's local calendar date, compared against
+//  each shape's scheduled_at (stored UTC). Sync runs: on toggle change,
+//  on every shape save, and once on app load — so it stays reasonably
+//  current without needing a background job. It only ever touches
+//  item_shares rows it created itself (source='schedule'), never a share
+//  added manually from a pin/shape's Share button.
+// ═══════════════════════════════════════
+async function loadScheduleShareMap(friendIds) {
+  const ids = [...new Set((friendIds || []).filter(Boolean))];
+  if (!currentUser || !ids.length) return {};
+  const { data, error } = await sb.from('schedule_share_settings')
+    .select('friend_id, enabled').eq('owner_id', currentUser.id).in('friend_id', ids);
+  if (error) { console.error('loadScheduleShareMap error:', error); return {}; }
+  const map = {};
+  (data || []).forEach(r => { map[r.friend_id] = r.enabled; });
+  return map;
+}
+
+function _localDateStr(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function _isScheduledToday(iso) {
+  if (!iso) return false;
+  return _localDateStr(new Date(iso)) === _localDateStr(new Date());
+}
+
+// Recomputes today's scheduled shapes and reconciles item_shares (source
+// = 'schedule') for one friend so it matches exactly. Safe to call
+// whether the toggle is on or off — off means the wanted set is empty,
+// which naturally removes any previously auto-shared shapes.
+async function syncScheduleShareForFriend(friendId) {
+  if (!currentUser || typeof shapesCache === 'undefined') return;
+
+  const { data: setting } = await sb.from('schedule_share_settings')
+    .select('enabled').eq('owner_id', currentUser.id).eq('friend_id', friendId).maybeSingle();
+  const enabled = !!(setting && setting.enabled);
+
+  const todaysShapeIds = enabled
+    ? Object.values(shapesCache).filter(s => !s._shared && _isScheduledToday(s.scheduled_at)).map(s => s.id)
+    : [];
+
+  const { data: existing, error } = await sb.from('item_shares')
+    .select('id, item_id').eq('owner_id', currentUser.id).eq('shared_with_id', friendId)
+    .eq('item_type', 'shape').eq('source', 'schedule');
+  if (error) { console.error('syncScheduleShareForFriend fetch error:', error); return; }
+
+  const existingIds = new Set((existing || []).map(r => r.item_id));
+  const wantedIds = new Set(todaysShapeIds);
+
+  const toAdd = todaysShapeIds.filter(id => !existingIds.has(id));
+  const toRemove = (existing || []).filter(r => !wantedIds.has(r.item_id));
+
+  if (toAdd.length) {
+    const rows = toAdd.map(item_id => ({ item_type: 'shape', item_id, owner_id: currentUser.id, shared_with_id: friendId, permission: 'view', source: 'schedule' }));
+    const { error: insErr } = await sb.from('item_shares').insert(rows);
+    if (insErr) console.error('syncScheduleShareForFriend add error:', insErr);
+  }
+  for (const row of toRemove) {
+    const { error: delErr } = await sb.from('item_shares').delete().eq('id', row.id);
+    if (delErr) console.error('syncScheduleShareForFriend remove error:', delErr);
+  }
+}
+
+// Runs the sync above for every friend the person currently has
+// "Share Today's Schedule" turned on for. Called after loading shapes on
+// app start and after saving any shape.
+async function syncAllScheduleShares() {
+  if (!currentUser) return;
+  const { data, error } = await sb.from('schedule_share_settings')
+    .select('friend_id').eq('owner_id', currentUser.id).eq('enabled', true);
+  if (error) { console.error('syncAllScheduleShares error:', error); return; }
+  for (const row of (data || [])) {
+    await syncScheduleShareForFriend(row.friend_id);
+  }
 }

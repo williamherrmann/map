@@ -117,7 +117,8 @@ document.getElementById('noteTextarea').addEventListener('input',markUnsaved);
 //  BACKDROP CLICK HANDLER
 // ═══════════════════════════════════════
 function handleBackdropClick() {
-  if(document.getElementById('sharePickerSheet').classList.contains('open'))closeSharePicker();
+  if(document.getElementById('friendDetailSheet').classList.contains('open'))closeFriendDetail();
+  else if(document.getElementById('sharePickerSheet').classList.contains('open'))closeSharePicker();
   else if(document.getElementById('friendsSheet').classList.contains('open'))closeFriendsSheet();
   else if(document.getElementById('pinListSheet').classList.contains('open'))closePinList();
   else if(document.getElementById('logVisitSheet').classList.contains('open'))closeLogVisit();
