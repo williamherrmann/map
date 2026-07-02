@@ -1263,7 +1263,7 @@
         <div class="so-card">
           <button class="so-row so-row-nav" onclick="openChangelog()">
             <span class="so-row-label">Version</span>
-            <span class="so-row-value" style="color:#7c3aed;">v109</span>
+            <span class="so-row-value" style="color:#7c3aed;">v111</span>
             <span class="so-row-chevron">›</span>
           </button>
         </div>
@@ -1352,7 +1352,14 @@
 
         <div class="cl-version">
       <div class="cl-version-header">
-        <span class="cl-version-badge current">v109</span>
+        <span class="cl-version-badge current">v111</span>
+        <span class="cl-version-label">Fixed 403 error saving pins/shapes</span>
+      </div>
+      <div class="cl-item">Saving an existing pin or shape (including just updating Scheduled Visit) could fail with a 403. The save code intentionally stopped sending user_id on updates so an edit-access friend saving a shared item couldn't accidentally steal ownership — but under RLS, Supabase's upsert() checks the INSERT policy against that same payload first, and with no user_id present that check always fails. Switched pin/shape saves to a plain UPDATE for existing items and a plain INSERT for new ones, which only ever evaluates the correct policy and avoids this entirely.</div>
+    </div>
+        <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v109</span>
         <span class="cl-version-label">Fixed Share sheet peeking on desktop</span>
       </div>
       <div class="cl-item">The Share picker's desktop floating-card layout was using the same percentage-based slide-away transform as the full-width mobile sheet. For a short card anchored by fixed bottom/right offsets, that math doesn't always travel far enough to fully clear the viewport, so it could stay visibly peeking in the bottom-right corner even when "closed." Switched it to a fade + scale hide with pointer-events disabled while closed, which is reliably fully hidden regardless of content height.</div>
@@ -1993,7 +2000,7 @@
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v109</span>
+  <span id="badgeVersion">v111</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
@@ -2636,15 +2643,15 @@
      ═══════════════════════════════════════ -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/auth.js?v=109"></script>
-<script src="js/utilities.js?v=109"></script>
-<script src="js/map.js?v=109"></script>
-<script src="js/search.js?v=109"></script>
-<script src="js/notes.js?v=109"></script>
-<script src="js/shapes.js?v=109"></script>
-<script src="js/pins.js?v=109"></script>
-<script src="js/calendar.js?v=109"></script>
-<script src="js/builders.js?v=109"></script>
+<script src="js/auth.js?v=111"></script>
+<script src="js/utilities.js?v=111"></script>
+<script src="js/map.js?v=111"></script>
+<script src="js/search.js?v=111"></script>
+<script src="js/notes.js?v=111"></script>
+<script src="js/shapes.js?v=111"></script>
+<script src="js/pins.js?v=111"></script>
+<script src="js/calendar.js?v=111"></script>
+<script src="js/builders.js?v=111"></script>
 <script type="module">
   import { createAvatar } from 'https://esm.sh/@dicebear/core@9';
   import * as avataaars from 'https://esm.sh/@dicebear/avataaars@9';
@@ -2653,10 +2660,10 @@
   window.__dicebearReady = true;
   window.dispatchEvent(new Event('dicebear-ready'));
 </script>
-<script src="js/feed.js?v=109"></script>
-<script src="js/friends.js?v=109"></script>
-<script src="js/admin.js?v=109"></script>
-<script src="js/ui.js?v=109"></script>
+<script src="js/feed.js?v=111"></script>
+<script src="js/friends.js?v=111"></script>
+<script src="js/admin.js?v=111"></script>
+<script src="js/ui.js?v=111"></script>
 
 
 </body>

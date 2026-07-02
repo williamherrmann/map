@@ -98,15 +98,20 @@ async function upsertPinDB(pinData) {
     address:pinData.address||null, phone:pinData.phone||null, email:pinData.email||null,
     updated_at:new Date().toISOString()
   };
+  let data, error;
   if(pinData.id){
-    // Updating an existing pin — never touch user_id here. Doing so would
-    // reassign ownership away from the original owner when an edit-access
-    // friend saves changes to a pin shared with them.
-    payload.id=pinData.id;
+    // Updating an existing pin — use a real UPDATE, not upsert(). With RLS,
+    // an INSERT ... ON CONFLICT DO UPDATE is checked against the INSERT
+    // policy's WITH CHECK first (using whatever row would be "inserted"),
+    // and since we intentionally don't send user_id here, that check sees
+    // user_id=NULL and fails with a 403 — even though this is really just
+    // an update to a row the caller already has access to. A plain UPDATE
+    // only ever evaluates the UPDATE policy, which is what we actually want.
+    ({data,error} = await sb.from('custom_pins').update(payload).eq('id',pinData.id).select().single());
   } else {
     payload.user_id=currentUser.id;
+    ({data,error} = await sb.from('custom_pins').insert(payload).select().single());
   }
-  const{data,error}=await sb.from('custom_pins').upsert(payload,{onConflict:'id'}).select().single();
   if(error){console.error('Pin save error:',error);throw error;}
   return data;
 }

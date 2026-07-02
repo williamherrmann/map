@@ -33,14 +33,20 @@ async function loadShapesFromSupabase() {
 async function upsertShape(shapeData) {
   if(!currentUser)return;
   const payload={name:shapeData.name,color:shapeData.color,vertices:shapeData.vertices,is_polygon:shapeData.is_polygon,rating:shapeData.rating,notes:shapeData.notes,last_knocked:shapeData.last_knocked||null,scheduled_at:shapeData.scheduled_at||null,updated_at:new Date().toISOString()};
+  let data, error;
   if(shapeData.id){
-    // Updating an existing shape — never touch user_id here, so edit-access
-    // friends can save changes without stealing ownership of the shape.
-    payload.id=shapeData.id;
+    // Updating an existing shape — use a real UPDATE, not upsert(). With RLS,
+    // an INSERT ... ON CONFLICT DO UPDATE is checked against the INSERT
+    // policy's WITH CHECK first (using whatever row would be "inserted"),
+    // and since we intentionally don't send user_id here, that check sees
+    // user_id=NULL and fails with a 403 — even though this is really just
+    // an update to a row the caller already has access to. A plain UPDATE
+    // only ever evaluates the UPDATE policy, which is what we actually want.
+    ({data,error} = await sb.from('custom_shapes').update(payload).eq('id',shapeData.id).select().single());
   } else {
     payload.user_id=currentUser.id;
+    ({data,error} = await sb.from('custom_shapes').insert(payload).select().single());
   }
-  const{data,error}=await sb.from('custom_shapes').upsert(payload,{onConflict:'id'}).select().single();
   if(error){console.error('Shape save error:',error);throw error;}
   return data;
 }

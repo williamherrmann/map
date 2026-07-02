@@ -9,7 +9,9 @@ function openSettings() {
   // Populate account info
   const email = currentUser ? currentUser.email : '—';
   document.getElementById('settingsEmail').textContent = email;
-  document.getElementById('settingsAvatar').textContent = (email && email !== '—') ? email.slice(0,2).toUpperCase() : '?';
+  const initialsEl = document.getElementById('settingsAvatarInitials');
+  if (initialsEl) initialsEl.textContent = (email && email !== '—') ? email.slice(0,2).toUpperCase() : '?';
+  updateSettingsAvatar();
   // Start on main page
   soGoTo('soMain');
   // Show sheet + shared backdrop
@@ -28,6 +30,23 @@ function openSettings() {
         }
       }).catch(() => {});
   }
+}
+
+// Loads the user's saved character-creator avatar (same one shown in
+// Edit Profile) into the Account row circle. Falls back silently to
+// initials if no avatar has been set yet or the profile hasn't loaded.
+function updateSettingsAvatar() {
+  const imgEl = document.getElementById('settingsAvatarImg');
+  if (!imgEl) return;
+  imgEl.style.display = 'none';
+  if (!currentUser || typeof getMyProfile !== 'function') return;
+  getMyProfile().then(profile => {
+    if (!profile || (!profile.avatar_options && !profile.avatar_seed)) return;
+    imgEl.onload = () => { imgEl.style.display = 'block'; };
+    if (typeof _setAvatarSrcWhenReady === 'function' && typeof resolveAvatarUrl === 'function') {
+      _setAvatarSrcWhenReady(imgEl, () => resolveAvatarUrl(profile));
+    }
+  }).catch(() => {});
 }
 
 function closeSettings() {

@@ -589,6 +589,7 @@ async function saveProfile() {
     _profileCache = { username: raw, avatar_seed: raw, avatar_options: JSON.stringify(_currentAvatarOptions) };
     input.value = raw;
     _updateProfileHero(raw);
+    if (typeof updateSettingsAvatar === 'function') updateSettingsAvatar();
     status.textContent = 'Saved!';
     status.className = 'username-status success';
     setTimeout(closeEditProfile, 700);
