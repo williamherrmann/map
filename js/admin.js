@@ -24,28 +24,9 @@ async function checkAdminRole() {
 }
 
 // ═══════════════════════════════════════
-//  OPEN / CLOSE
+//  OPEN / CLOSE — defined in ui.js, stubs here for call-site compatibility
 // ═══════════════════════════════════════
-function openAdminPanel() {
-  closeSettings();
-  const sheet = document.getElementById('adminSheet');
-  const backdrop = document.getElementById('adminBackdrop');
-  backdrop.style.display = 'block';
-  requestAnimationFrame(() => {
-    backdrop.style.opacity = '1';
-    sheet.style.transform = 'translateY(0)';
-  });
-  loadAdminUsers();
-}
-
-function closeAdminPanel() {
-  const sheet = document.getElementById('adminSheet');
-  const backdrop = document.getElementById('adminBackdrop');
-  sheet.style.transform = 'translateY(110%)';
-  backdrop.style.opacity = '0';
-  setTimeout(() => { backdrop.style.display = 'none'; }, 300);
-  clearAdminTransferForm();
-}
+// openAdminPanel() and closeAdminPanel() live in ui.js
 
 // ═══════════════════════════════════════
 //  TAB SWITCHING
@@ -167,16 +148,4 @@ async function runDataTransfer() {
   btn.textContent = 'Transfer data';
 }
 
-// ═══════════════════════════════════════
-//  DRAG TO DISMISS
-// ═══════════════════════════════════════
-(function () {
-  window.addEventListener('load', () => {
-    const sheet = document.getElementById('adminSheet');
-    if (!sheet) return;
-    let startY = 0, dragging = false;
-    sheet.addEventListener('touchstart', e => { startY = e.touches[0].clientY; dragging = true; sheet.style.transition = 'none'; }, { passive: true });
-    sheet.addEventListener('touchmove', e => { if (!dragging) return; const dy = e.touches[0].clientY - startY; if (dy < 0) return; sheet.style.transform = `translateY(${dy}px)`; }, { passive: true });
-    sheet.addEventListener('touchend', e => { if (!dragging) return; dragging = false; sheet.style.transition = ''; const dy = e.changedTouches[0].clientY - startY; if (dy > 80) { closeAdminPanel(); sheet.style.transform = ''; } else { sheet.style.transform = ''; } });
-  });
-})();
+// (drag-to-dismiss handled by settingsSheet in ui.js)

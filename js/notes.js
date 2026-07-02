@@ -117,11 +117,14 @@ document.getElementById('noteTextarea').addEventListener('input',markUnsaved);
 //  BACKDROP CLICK HANDLER
 // ═══════════════════════════════════════
 function handleBackdropClick() {
-  if(document.getElementById('pinListSheet').classList.contains('open'))closePinList();
+  if(document.getElementById('sharePickerSheet').classList.contains('open'))closeSharePicker();
+  else if(document.getElementById('friendsSheet').classList.contains('open'))closeFriendsSheet();
+  else if(document.getElementById('pinListSheet').classList.contains('open'))closePinList();
   else if(document.getElementById('logVisitSheet').classList.contains('open'))closeLogVisit();
   else if(document.getElementById('pinSidebar').classList.contains('open'))closePinSidebar();
   else if(document.getElementById('shapeSidebar').classList.contains('open'))closeShapeSidebar();
   else if(document.getElementById('sidebar').classList.contains('open'))closeSidebar();
   else if(document.getElementById('buildersSheet').classList.contains('open'))closeBuilders();
+  else if(document.getElementById('settingsOverlay').classList.contains('open'))closeSettings();
   else if(calendarOpen)closeCalendar();
 }

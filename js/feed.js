@@ -438,48 +438,15 @@ async function getMyProfile() {
 // ═══════════════════════════════════════
 let _currentAvatarOptions = null;
 
-async function openEditProfile() {
-  closeSettings();
-
-  // Show the sheet immediately — never block visibility on network/library loads.
-  const sheet = document.getElementById('profileSheet');
-  const backdrop = document.getElementById('profileBackdrop');
-  _currentAvatarOptions = { ...CC_DEFAULTS };
-  document.getElementById('usernameInput').value = '';
-  document.getElementById('usernameStatus').textContent = '';
-  document.getElementById('usernameStatus').className = 'username-status';
-  document.getElementById('profileHeroName').textContent = 'Loading…';
-  if (backdrop) {
-    backdrop.style.display = 'block';
-    requestAnimationFrame(() => { backdrop.style.opacity = '1'; });
-  }
-  requestAnimationFrame(() => { sheet.style.transform = 'translateY(0)'; });
-
-  try {
-    await waitForDicebear();
-    const profile = await getMyProfile();
-    _currentAvatarOptions = profile?.avatar_options ? JSON.parse(profile.avatar_options) : { ...CC_DEFAULTS };
-    _updateProfileHero(profile?.username || '');
-    document.getElementById('usernameInput').value = profile?.username || '';
-  } catch (e) {
-    console.warn('Edit profile load failed:', e);
-    document.getElementById('profileHeroName').textContent = 'Could not load profile';
-  }
-}
-
+// openEditProfile / closeEditProfile / _updateProfileHero live in ui.js.
+// Stubs here so window assignments below and internal call sites don't break.
+function openEditProfile()  { if (typeof soGoTo === 'function') { openSettings(); soGoTo('soProfile'); } }
+function closeEditProfile() { if (typeof closeSettings === 'function') closeSettings(); }
 function _updateProfileHero(username) {
   const img = document.getElementById('profileCurrentAvatar');
-  _setAvatarSrcWhenReady(img, () => buildAvatarUri(_currentAvatarOptions));
-  document.getElementById('profileHeroName').textContent = username ? '@' + username : 'No username set';
-}
-
-function closeEditProfile() {
-  document.getElementById('profileSheet').style.transform = 'translateY(110%)';
-  const backdrop = document.getElementById('profileBackdrop');
-  if (backdrop) {
-    backdrop.style.opacity = '0';
-    setTimeout(() => { backdrop.style.display = 'none'; }, 300);
-  }
+  if (img && typeof _setAvatarSrcWhenReady === 'function') _setAvatarSrcWhenReady(img, () => buildAvatarUri(_currentAvatarOptions));
+  const el = document.getElementById('profileHeroName');
+  if (el) el.textContent = username ? '@' + username : 'No username set';
 }
 
 // ═══════════════════════════════════════

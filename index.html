@@ -58,12 +58,7 @@
     #gearBtn:active { background:#f0f0f0; }
 
     /* ── ADMIN PANEL ── */
-    #adminBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1100; opacity:0; transition:opacity 0.3s; }
-    #adminSheet { position:fixed; bottom:0; left:0; right:0; z-index:1101; background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); padding-bottom:env(safe-area-inset-bottom,0px); transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); will-change:transform; max-height:85dvh; display:flex; flex-direction:column; }
-    #adminSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
-    #adminSheetHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
-    #adminSheetTitle { font-size:17px; font-weight:700; color:#111; }
-    #adminSheetCloseBtn { background:none; border:none; font-size:22px; color:#999; cursor:pointer; padding:0 4px; line-height:1; }
+    /* adminSheet merged into settingsSheet pages */
     .admin-tabs { display:flex; gap:8px; padding:14px 16px 0; flex-shrink:0; }
     .admin-tab-btn { flex:1; padding:8px 0; border:1.5px solid #e5e7eb; background:#fff; border-radius:8px; font-size:13px; font-weight:600; color:#555; cursor:pointer; }
     .admin-tab-btn.active { background:#111; color:#fff; border-color:#111; }
@@ -90,24 +85,53 @@
     .admin-settings-label { font-size:14px; color:#111; font-weight:500; }
     .admin-settings-chevron { color:#bbb; font-size:16px; }
     /* ── END ADMIN ── */
-    /* ══ SETTINGS SHEET ══ */
-    #settingsBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:800; opacity:0; transition:opacity 0.3s; }
-    #settingsSheet { position:fixed; bottom:0; left:0; right:0; z-index:900; background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); padding-bottom:env(safe-area-inset-bottom,0px); transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); will-change:transform; }
-    #settingsSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; }
-    #settingsSheetHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; }
-    #settingsSheetTitle { font-size:17px; font-weight:700; color:#111; }
-    #settingsCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; flex-shrink:0; -webkit-tap-highlight-color:transparent; line-height:1; }
-    #settingsBody { padding:18px 20px; display:flex; flex-direction:column; gap:16px; }
-    .settings-section-label { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:10px; }
-    #settingsAccountRow { display:flex; align-items:center; gap:12px; padding:10px 14px; background:#f5f5f8; border-radius:10px; margin-bottom:10px; }
-    #settingsAvatar { width:36px; height:36px; border-radius:50%; background:#e0e7ff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:#4338ca; flex-shrink:0; }
-    #settingsEmail { font-size:14px; font-weight:600; color:#111; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    #settingsEmailSub { font-size:11px; color:#888; font-family:'DM Mono',monospace; }
-    #settingsSignOutBtn { width:100%; padding:13px 16px; background:#fff0f1; border:1.5px solid #fca5a5; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; color:#dc2626; cursor:pointer; display:flex; align-items:center; gap:10px; -webkit-tap-highlight-color:transparent; transition:background 0.15s; }
-    #settingsSignOutBtn:active { background:#ffe4e6; }
-    .settings-info-row { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-radius:10px; }
-    .settings-info-label { font-size:14px; color:#111; }
-    .settings-info-value { font-family:'DM Mono',monospace; font-size:12px; color:#888; background:#f0f0f3; padding:3px 8px; border-radius:6px; }
+    /* ══ SETTINGS SHEET (matches sidebar/buildersSheet/ccSheet pattern) ══ */
+    #settingsOverlay { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#f5f5f7; border-top:1.5px solid #ddd; border-radius:var(--sheet-radius) var(--sheet-radius) 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; overflow:hidden; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
+    #settingsOverlay::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #settingsOverlay.open { transform:translateY(0); }
+    @media (min-width:768px) {
+      #settingsOverlay { width:400px; height:100dvh; max-height:none; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(110%); }
+      #settingsOverlay.open { transform:translateX(0); }
+      #settingsOverlay::before { display:none; }
+    }
+    .so-page { display:none; flex-direction:column; flex:1; min-height:0; }
+    .so-page.active { display:flex; }
+    .so-header { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 16px; border-bottom:1.5px solid #eee; flex-shrink:0; }
+    .so-header-left { display:flex; align-items:center; gap:10px; min-width:0; }
+    .so-header-title { font-size:17px; font-weight:700; color:#111; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .so-back-btn { background:none; border:none; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; color:#3b82f6; cursor:pointer; padding:4px 0; -webkit-tap-highlight-color:transparent; flex-shrink:0; }
+    .so-close-btn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; font-size:18px; color:#666; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
+    .so-body { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+    .so-section { margin:24px 16px 0; }
+    .so-section:last-child { margin-bottom:24px; }
+    .so-section-label { font-size:12px; font-weight:600; color:#888; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; padding-left:4px; }
+    .so-card { background:#fff; border-radius:12px; overflow:hidden; }
+    .so-row { display:flex; align-items:center; padding:13px 16px; border-bottom:1px solid #f0f0f0; min-height:50px; }
+    .so-row:last-child { border-bottom:none; }
+    .so-row-nav { cursor:pointer; -webkit-tap-highlight-color:transparent; background:#fff; border:none; width:100%; font-family:'DM Sans',sans-serif; text-align:left; justify-content:space-between; }
+    .so-row-label { font-size:15px; color:#111; flex:1; }
+    .so-row-value { font-size:14px; color:#888; margin-right:6px; }
+    .so-row-chevron { color:#bbb; font-size:18px; flex-shrink:0; }
+    .so-avatar { width:40px; height:40px; border-radius:50%; background:#e0e7ff; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; color:#4338ca; flex-shrink:0; margin-right:12px; }
+    .so-email { font-size:14px; font-weight:600; color:#111; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .so-email-sub { font-size:12px; color:#888; font-family:'DM Mono',monospace; }
+    .so-danger-btn { display:block; width:100%; margin:16px 0; padding:13px; background:#fff0f1; border:1.5px solid #fca5a5; border-radius:12px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; color:#dc2626; cursor:pointer; -webkit-tap-highlight-color:transparent; text-align:center; }
+    /* profile sub-page */
+    #profileHero { display:flex; flex-direction:column; align-items:center; gap:10px; padding:24px 20px 16px; border-bottom:1px solid #f0f0f0; }
+    #profileCurrentAvatar { width:80px; height:80px; border-radius:50%; object-fit:cover; background:#f0f0f0; }
+    #profileHeroName { font-size:15px; font-weight:600; color:#111; }
+    #profileCustomizeBtn { padding:8px 18px; background:#f0f0f3; border:1.5px solid #ddd; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; color:#333; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    #profileUsernameSection { padding:20px; }
+    .profile-section-label { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:8px; }
+    #usernameInput { width:100%; box-sizing:border-box; padding:11px 13px; border:1.5px solid #ddd; border-radius:9px; font-size:15px; font-family:'DM Sans',sans-serif; outline:none; }
+    #usernameInput:focus { border-color:#111; }
+    #usernameHint { font-size:12px; color:#aaa; margin-top:6px; }
+    .username-status { font-size:12px; margin-top:5px; min-height:16px; }
+    .username-status.ok { color:#15803d; }
+    .username-status.err { color:#dc2626; }
+    #usernameSaveBtn { margin-top:14px; width:100%; padding:13px; background:#111; border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:700; color:#fff; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    #usernameSaveBtn:active { background:#333; }
+
 
     /* ══ LAYERS PANEL ══ */
     #layersPanel {
@@ -189,9 +213,6 @@
     @media (min-width:768px) {
       #bottomChrome { display:none; }
       #gearBtn { display:none !important; }
-
-      #settingsSheet { left:50%; right:auto; transform:translateX(-50%) translateY(110%); width:420px; border-radius:16px; bottom:20px; }
-      #settingsSheet.open-desktop { transform:translateX(-50%) translateY(0); }
       #suggestions { position:absolute; bottom:auto; left:auto; right:auto; top:100%; width:100%; max-height:300px; border-top:none; border-radius:0 0 10px 10px; box-shadow:0 4px 12px rgba(0,0,0,0.12); }
       #desktopSearch { display:block; position:absolute; top:14px; left:14px; z-index:500; width:320px; }
       #desktopSearch #searchWrap { background:#fff; border:2px solid #1e3a5f; border-radius:8px; box-shadow:3px 3px 0 rgba(30,58,95,0.25); }
@@ -829,13 +850,7 @@
     /* ── END PASSWORD RESET SHEET ── */
 
     /* ── PROFILE SHEET ── */
-    #profileBackdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1199; opacity:0; transition:opacity 0.3s; }
-    #profileSheet { position:fixed; bottom:0; left:0; right:0; z-index:1200; background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); padding-bottom:env(safe-area-inset-bottom,0px); transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); will-change:transform; max-height:92dvh; display:flex; flex-direction:column; }
-    #profileSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
-    #profileSheetHeader { padding:13px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
-    #profileSheetTitle { font-size:17px; font-weight:700; color:#111; }
-    #profileCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; font-size:18px; color:#666; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-    #profileBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+    /* profileSheet merged into settingsSheet pages */
     /* current avatar hero */
     #profileHero { display:flex; flex-direction:column; align-items:center; padding:24px 16px 18px; border-bottom:1px solid #f0f0f0; gap:10px; }
     #profileCurrentAvatar { width:96px; height:96px; border-radius:50%; border:3px solid #111; background:#f5f5f5; }
@@ -1066,6 +1081,99 @@
     .an-fp-title { font-size:12px; font-weight:700; color:#6d28d9; margin-bottom:6px; }
     .an-fp-stats { display:flex; gap:10px; flex-wrap:wrap; font-size:12px; color:#555; }
     .an-heat-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #f0f0f0; }
+    /* ══ FRIENDS + SHARING ══ */
+    .nav-btn, .desk-nav-btn { position:relative; }
+    .friends-req-badge {
+      display:none; align-items:center; justify-content:center;
+      min-width:16px; height:16px; padding:0 4px; border-radius:8px;
+      background:#ef4444; color:#fff; font-size:10px; font-weight:700;
+      font-family:'DM Mono',monospace; line-height:1; margin-left:5px; flex-shrink:0;
+    }
+    .friends-req-badge.ovf-badge { position:absolute; top:4px; right:10px; margin-left:0; border:2px solid #fff; }
+
+    .shared-banner { background:#eff6ff; border:1.5px solid #bfdbfe; color:#1d4ed8; font-size:12px; font-weight:600; border-radius:10px; padding:10px 12px; display:flex; align-items:center; gap:6px; }
+    .popup-shared-banner { background:#eff6ff; color:#1d4ed8; font-size:11px; font-weight:600; padding:6px 12px; border-bottom:1px solid #dbeafe; }
+
+    #pinSidebarBody.sidebar-readonly, #shapeSidebarBody.sidebar-readonly { opacity:0.88; }
+    #pinSidebarBody.sidebar-readonly input, #pinSidebarBody.sidebar-readonly textarea,
+    #shapeSidebarBody.sidebar-readonly input, #shapeSidebarBody.sidebar-readonly textarea { background:#f5f5f7; cursor:not-allowed; }
+
+    .btn-share { background:#fff; color:#3b82f6; border-color:#3b82f6; }
+    .btn-share:hover { background:#eff6ff; }
+
+    .map-pin-wrapper { position:relative; }
+    .shared-badge {
+      position:absolute; top:-3px; right:2px; width:14px; height:14px; border-radius:50%;
+      background:#3b82f6; border:2px solid #fff; display:flex; align-items:center; justify-content:center;
+      box-shadow:0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    /* ══ FRIENDS SHEET ══ */
+    #friendsSheet { position:fixed; bottom:0; left:0; right:0; z-index:900; max-height:calc(94dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); padding-bottom:var(--sab); will-change:transform; }
+    #friendsSheet.open { transform:translateY(0); }
+    #friendsSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #friendsHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    #friendsTitle { font-size:17px; font-weight:700; color:#111; }
+    #friendsCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; flex-shrink:0; }
+    @media (min-width:768px) {
+      #friendsSheet { width:380px; height:100dvh; top:0; right:0; bottom:auto; left:auto; border-radius:0; border-top:none; border-left:1px solid #eee; transform:translateX(110%); }
+      #friendsSheet.open { transform:translateX(0); }
+      #friendsSheet::before { display:none; }
+    }
+    .friends-body-scroll { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:16px 20px; display:flex; flex-direction:column; gap:12px; }
+    #friendsSearchWrap { display:flex; align-items:center; background:#f4f4f6; border:1.5px solid #e0e0e6; border-radius:12px; }
+    .friends-search-icon { padding:0 8px 0 12px; color:#888; font-size:17px; line-height:1; }
+    #friendsSearchInput { flex:1; border:none; outline:none; padding:11px 12px 11px 4px; font-family:'DM Sans',sans-serif; font-size:15px; background:transparent; min-width:0; }
+    .friends-list { display:flex; flex-direction:column; gap:8px; }
+    .friends-empty { text-align:center; padding:30px 10px; color:#aaa; font-size:13px; font-family:'DM Mono',monospace; }
+    .friends-subheading { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.06em; margin:6px 0 -2px; }
+    .friend-row { display:flex; align-items:center; gap:10px; padding:8px; border:1.5px solid #f0f0f0; border-radius:12px; }
+    .friend-info { flex:1; min-width:0; }
+    .friend-name { font-size:13px; font-weight:700; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .friend-action-btn { padding:7px 12px; border-radius:8px; border:1.5px solid #1e3a5f; background:#1e3a5f; color:#fff; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; -webkit-tap-highlight-color:transparent; flex-shrink:0; }
+    .friend-action-btn.friends { background:#fff; color:#555; border-color:#ddd; }
+    .friend-action-btn.pending { background:#fff; color:#999; border-color:#ddd; }
+    .friend-action-btn.accept { background:#10b981; border-color:#10b981; }
+    .friend-action-btn.decline { background:#fff; color:#ef4444; border-color:#fca5a5; }
+    .friend-action-group { display:flex; gap:6px; flex-shrink:0; }
+
+    /* ══ SHARE PICKER SHEET ══ */
+    #sharePickerSheet { position:fixed; bottom:0; left:0; right:0; z-index:950; max-height:calc(90dvh - var(--sab)); background:#fff; border-top:1.5px solid #ddd; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; transform:translateY(110%); opacity:1; pointer-events:none; transition:transform 0.32s cubic-bezier(0.32,0.72,0,1), opacity 0.2s; padding-bottom:var(--sab); will-change:transform; }
+    #sharePickerSheet.open { transform:translateY(0); pointer-events:all; }
+    #sharePickerSheet::before { content:''; display:block; width:36px; height:4px; background:#ddd; border-radius:2px; margin:10px auto 0; flex-shrink:0; }
+    #sharePickerHeader { padding:14px 20px; border-bottom:1.5px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:10px; }
+    #sharePickerTitle { font-size:16px; font-weight:700; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #sharePickerCloseBtn { background:#f0f0f0; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:18px; color:#666; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; flex-shrink:0; }
+    #sharePickerBody { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px 20px; }
+    #sharePickerStatus { padding:0 20px; font-size:12px; color:#999; font-family:'DM Mono',monospace; min-height:16px; }
+    #sharePickerFooter { display:flex; gap:10px; padding:14px 20px; border-top:1.5px solid #eee; flex-shrink:0; }
+    @media (min-width:768px) {
+      /* This is a floating card, not a screen-edge sheet, so it can't rely on a
+         percentage-based translateY to clear the viewport (a short card anchored
+         by bottom/right offsets never travels far enough with that math — this
+         is what caused the sheet to visibly peek in the bottom-right corner
+         when "closed"). Fade + scale is used here instead, which is always
+         fully hidden regardless of content height. */
+      #sharePickerSheet { width:380px; height:auto; max-height:80dvh; top:auto; bottom:40px; right:40px; left:auto; border-radius:20px; border:1.5px solid #eee; box-shadow:0 8px 40px rgba(0,0,0,0.25); transform:translateY(16px) scale(0.97); opacity:0; pointer-events:none; transition:transform 0.2s cubic-bezier(0.32,0.72,0,1), opacity 0.2s; }
+      #sharePickerSheet.open { transform:translateY(0) scale(1); opacity:1; pointer-events:all; }
+      #sharePickerSheet::before { display:none; }
+    }
+    .share-friend-row { display:flex; align-items:center; gap:10px; padding:8px; border:1.5px solid #f0f0f0; border-radius:12px; margin-bottom:8px; }
+    .share-permission-select { font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; color:#555; border:1.5px solid #ddd; border-radius:8px; padding:6px 8px; background:#fff; flex-shrink:0; }
+    .share-permission-select:disabled { opacity:0.4; }
+    .share-toggle { position:relative; display:inline-block; width:38px; height:22px; flex-shrink:0; }
+    .share-toggle input { position:absolute; opacity:0; width:100%; height:100%; margin:0; cursor:pointer; z-index:1; }
+    .share-toggle-track { position:absolute; inset:0; background:#ddd; border-radius:12px; transition:background 0.15s; pointer-events:none; }
+    .share-toggle-thumb { position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.3); transition:transform 0.15s; }
+    .share-toggle input:checked + .share-toggle-track { background:#1e3a5f; }
+    .share-toggle input:checked + .share-toggle-track .share-toggle-thumb { transform:translateX(16px); }
+
+    .shared-with-row { display:flex; align-items:center; gap:8px; padding:6px 8px; border:1.5px solid #f0f0f0; border-radius:10px; }
+    .perm-chip { font-size:10px; font-weight:700; padding:3px 8px; border-radius:10px; white-space:nowrap; flex-shrink:0; }
+    .perm-chip.view { background:#f3f4f6; color:#555; }
+    .perm-chip.edit { background:#dcfce7; color:#15803d; }
+    .shared-with-remove { width:22px; height:22px; border-radius:50%; border:none; background:#f0f0f0; color:#999; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
+    .shared-with-remove:hover { background:#fee2e2; color:#dc2626; }
   </style>
 </head>
 <body>
@@ -1118,45 +1226,106 @@
   </svg>
 </button>
 
-<!-- SETTINGS SHEET (mobile) -->
-<div id="settingsBackdrop" onclick="closeSettings()"></div>
-<div id="settingsSheet">
-  <div id="settingsSheetHeader">
-    <div id="settingsSheetTitle">Settings</div>
-    <button id="settingsCloseBtn" onclick="closeSettings()" aria-label="Close">×</button>
-  </div>
-  <div id="settingsBody">
-    <div>
-      <div class="settings-section-label">Account</div>
-      <div id="settingsAccountRow">
-        <div id="settingsAvatar">?</div>
-        <div style="min-width:0;">
-          <div id="settingsEmail">—</div>
-          <div id="settingsEmailSub">signed in</div>
+<!-- SETTINGS SHEET -->
+<!-- SETTINGS SHEET — same bottom-sheet pattern as Customize Avatar / Builders / Sidebar -->
+<div id="settingsOverlay">
+
+  <!-- PAGE: main -->
+  <div class="so-page active" id="soMain">
+    <div class="so-header">
+      <span class="so-header-title">Settings</span>
+      <button class="so-close-btn" onclick="closeSettings()">×</button>
+    </div>
+    <div class="so-body">
+      <div class="so-section">
+        <div class="so-section-label">Account</div>
+        <div class="so-card">
+          <div class="so-row">
+            <div class="so-avatar" id="settingsAvatar">?</div>
+            <div style="min-width:0;">
+              <div class="so-email" id="settingsEmail">—</div>
+              <div class="so-email-sub" id="settingsEmailSub">signed in</div>
+            </div>
+          </div>
+          <button class="so-row so-row-nav" onclick="soGoTo('soProfile')">
+            <span class="so-row-label">Edit profile</span>
+            <span class="so-row-chevron">›</span>
+          </button>
+          <button class="so-row so-row-nav" id="adminSettingsRow" onclick="soGoTo('soAdmin')" style="display:none;">
+            <span class="so-row-label">Admin panel</span>
+            <span class="so-row-chevron">›</span>
+          </button>
+        </div>
+        <button class="so-danger-btn" onclick="logout()">Sign out</button>
+      </div>
+      <div class="so-section">
+        <div class="so-section-label">App</div>
+        <div class="so-card">
+          <button class="so-row so-row-nav" onclick="openChangelog()">
+            <span class="so-row-label">Version</span>
+            <span class="so-row-value" style="color:#7c3aed;">v109</span>
+            <span class="so-row-chevron">›</span>
+          </button>
         </div>
       </div>
-      <button id="settingsSignOutBtn" onclick="logout()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        Sign out
-      </button>
-      <div id="editProfileRow" style="display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-top:1px solid #f0f0f0;cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="openEditProfile()">
-        <span style="font-size:14px;color:#111;font-weight:500;">Edit profile</span>
-        <span style="color:#bbb;font-size:16px;">›</span>
-      </div>
-      <div id="adminSettingsRow" onclick="openAdminPanel()">
-        <span class="admin-settings-label">Admin panel</span>
-        <span class="admin-settings-chevron">›</span>
-      </div>
     </div>
-    <div>
-      <div class="settings-section-label">App</div>
-      <div class="settings-info-row" style="cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="openChangelog()">
-        <span class="settings-info-label">Version</span>
-        <span class="settings-info-value" style="background:#f0eeff;color:#7c3aed;">v99 · What's new ›</span>
+  </div>
+
+  <!-- PAGE: edit profile -->
+  <div class="so-page" id="soProfile">
+    <div class="so-header">
+      <div class="so-header-left">
+        <button class="so-back-btn" onclick="soGoTo('soMain')">‹ Back</button>
+        <span class="so-header-title">Edit Profile</span>
+      </div>
+      <button class="so-close-btn" onclick="closeSettings()">×</button>
+    </div>
+    <div class="so-body">
+      <div id="profileHero">
+        <img id="profileCurrentAvatar" src="" alt="Your avatar">
+        <div id="profileHeroName">—</div>
+        <button id="profileCustomizeBtn" onclick="openCharacterCreator()">Customize profile picture</button>
+      </div>
+      <div id="profileUsernameSection">
+        <div class="profile-section-label">Username</div>
+        <input id="usernameInput" type="text" placeholder="yourname" autocomplete="off" autocapitalize="off" maxlength="20">
+        <div id="usernameHint">Letters, numbers, underscores only. Must be unique.</div>
+        <div id="usernameStatus" class="username-status"></div>
+        <button id="usernameSaveBtn" onclick="saveProfile()">Save profile</button>
       </div>
     </div>
   </div>
+
+  <!-- PAGE: admin -->
+  <div class="so-page" id="soAdmin">
+    <div class="so-header">
+      <div class="so-header-left">
+        <button class="so-back-btn" onclick="soGoTo('soMain')">‹ Back</button>
+        <span class="so-header-title">Admin</span>
+      </div>
+      <button class="so-close-btn" onclick="closeSettings()">×</button>
+    </div>
+    <div class="admin-tabs">
+      <button class="admin-tab-btn active" data-tab="users" onclick="switchAdminTab('users')">Users</button>
+      <button class="admin-tab-btn" data-tab="transfer" onclick="switchAdminTab('transfer')">Data Transfer</button>
+    </div>
+    <div id="adminBody">
+      <div id="adminTabUsers">
+        <div id="adminUserList"><div class="admin-loading">Loading…</div></div>
+      </div>
+      <div id="adminTabTransfer">
+        <div class="admin-transfer-label">From (source account email)</div>
+        <input id="adminFromEmail" class="admin-transfer-input" type="email" placeholder="source@example.com" autocomplete="off" autocapitalize="off">
+        <div class="admin-transfer-label">To (destination account email)</div>
+        <input id="adminToEmail" class="admin-transfer-input" type="email" placeholder="destination@example.com" autocomplete="off" autocapitalize="off">
+        <button id="adminTransferBtn" onclick="runDataTransfer()">Transfer data</button>
+        <div id="adminTransferStatus" class="admin-transfer-status"></div>
+      </div>
+    </div>
+  </div>
+
 </div>
+
 
 <!-- PASSWORD RESET SHEET -->
 <div id="pwResetBackdrop"></div>
@@ -1172,31 +1341,6 @@
 </div>
 
 <!-- ADMIN SHEET -->
-<div id="adminBackdrop" onclick="closeAdminPanel()"></div>
-<div id="adminSheet">
-  <div id="adminSheetHeader">
-    <div id="adminSheetTitle">Admin</div>
-    <button id="adminSheetCloseBtn" onclick="closeAdminPanel()" aria-label="Close">×</button>
-  </div>
-  <div class="admin-tabs">
-    <button class="admin-tab-btn active" data-tab="users" onclick="switchAdminTab('users')">Users</button>
-    <button class="admin-tab-btn" data-tab="transfer" onclick="switchAdminTab('transfer')">Data Transfer</button>
-  </div>
-  <div id="adminBody">
-    <div id="adminTabUsers">
-      <div id="adminUserList"><div class="admin-loading">Loading…</div></div>
-    </div>
-    <div id="adminTabTransfer">
-      <div class="admin-transfer-label">From (source account email)</div>
-      <input id="adminFromEmail" class="admin-transfer-input" type="email" placeholder="source@example.com" autocomplete="off" autocapitalize="off">
-      <div class="admin-transfer-label">To (destination account email)</div>
-      <input id="adminToEmail" class="admin-transfer-input" type="email" placeholder="destination@example.com" autocomplete="off" autocapitalize="off">
-      <button id="adminTransferBtn" onclick="runDataTransfer()">Transfer data</button>
-      <div id="adminTransferStatus" class="admin-transfer-status"></div>
-    </div>
-  </div>
-</div>
-
 <!-- CHANGELOG MODAL -->
 <div id="changelogBackdrop" onclick="closeChangelog()"></div>
 <div id="changelogModal">
@@ -1208,7 +1352,95 @@
 
         <div class="cl-version">
       <div class="cl-version-header">
-        <span class="cl-version-badge current">v99</span>
+        <span class="cl-version-badge current">v109</span>
+        <span class="cl-version-label">Fixed Share sheet peeking on desktop</span>
+      </div>
+      <div class="cl-item">The Share picker's desktop floating-card layout was using the same percentage-based slide-away transform as the full-width mobile sheet. For a short card anchored by fixed bottom/right offsets, that math doesn't always travel far enough to fully clear the viewport, so it could stay visibly peeking in the bottom-right corner even when "closed." Switched it to a fade + scale hide with pointer-events disabled while closed, which is reliably fully hidden regardless of content height.</div>
+    </div>
+        <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v108</span>
+        <span class="cl-version-label">Friends + pin/shape sharing</span>
+      </div>
+      <div class="cl-item">Added Friends: search other users by username, send/accept/decline friend requests from a new Requests tab, and remove friends. Added a Share button on pins and shapes so owners can share individual items with friends as View-only or Can-edit, see who a pin/shape is shared with from its info sheet, and remove access with one tap. Shared pins show a small link badge on the map and shared shapes render with a dashed outline; opening one shows who shared it and your permission level.</div>
+    </div>
+        <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v107</span>
+        <span class="cl-version-label">Settings redesigned as a sheet</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Settings now opens as the same bottom sheet used everywhere else in the app (Customize Avatar, Builders, Pin/Shape details) instead of a separate full-screen page — same drag handle, same close button, same slide animation, same shared backdrop.</div>
+        <div class="cl-item">Fixed a layering bug where the Customize Avatar sheet could render invisibly behind Settings when opened from Edit Profile.</div>
+      </div>
+    </div>
+        <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v106</span>
+        <span class="cl-version-label">Cache-busting for script files</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">All JS files now load with a version query string so iOS home-screen installs pick up new code right after a deploy instead of serving a stale cached copy — this was the likely cause of Edit Profile / Admin panel appearing to do nothing on some phones.</div>
+        <div class="cl-item">Settings page navigation now logs a clear error to the console if a page fails to switch, to make this easier to diagnose in the future.</div>
+      </div>
+    </div>
+        <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v105</span>
+        <span class="cl-version-label">Settings rebuilt as full-screen overlay</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Settings is now a full-screen page like a native app — no sheets, no backdrops, no z-index conflicts. Edit Profile and Admin are sub-pages within the same overlay.</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v104</span>
+        <span class="cl-version-label">Settings sub-pages rebuilt from scratch</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Edit Profile and Admin now open as dedicated sheets using the exact same pattern as the changelog — the only approach proven to work universally across Safari, Chrome, and iOS PWA</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v103</span>
+        <span class="cl-version-label">Fixed settings navigation in Safari</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Edit Profile and Admin rows were divs — Safari doesn't fire click events on divs. Converted to buttons. Also fixed a CSS typo that kept the back button always visible.</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v102</span>
+        <span class="cl-version-label">Settings navigation fixed for real</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Edit Profile and Admin are now simple show/hide pages inside the settings sheet — no sliding, no stacking, nothing that can break on mobile</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v101</span>
+        <span class="cl-version-label">Settings rebuilt as single sheet</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Edit Profile and Admin panel now live inside the settings sheet as sub-pages — tap the row to slide in, tap the back arrow to return. No more separate sheets stacking on top of each other, no more transparent overlay bug.</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v100</span>
+        <span class="cl-version-label">Fixed Edit Profile and Admin panel not opening on mobile</span>
+      </div>
+      <div class="cl-items">
+        <div class="cl-item">Settings sheet now hard-hides instantly when you tap Edit Profile or Admin, so it can no longer intercept touches on the sheet opening behind it</div>
+      </div>
+    </div>
+          <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v99</span>
         <span class="cl-version-label">Fixed confirm dialogs on mobile + toolbar overlap</span>
       </div>
       <div class="cl-items">
@@ -1761,7 +1993,7 @@
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v99</span>
+  <span id="badgeVersion">v109</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
@@ -1806,6 +2038,11 @@
   <button class="desk-nav-btn" id="deskFeedBtn" onclick="toggleFeed()">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
     Feed
+  </button>
+  <button class="desk-nav-btn" id="deskFriendsBtn" onclick="openFriendsSheet('find')" style="position:relative;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Friends
+    <span class="friends-req-badge ovf-badge" style="display:none;"></span>
   </button>
   <button class="desk-nav-btn" id="deskBuildersBtn" onclick="toggleBuilders()">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="18" height="11" rx="1"/><path d="M3 10l9-7 9 7"/><line x1="12" y1="10" x2="12" y2="21"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
@@ -1874,6 +2111,11 @@
   <div class="overflow-item" id="mobFeedBtn" onclick="closeOverflowMenu();toggleFeed()">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
     Feed
+  </div>
+  <div class="overflow-item" id="mobFriendsBtn" onclick="closeOverflowMenu();openFriendsSheet('find')" style="position:relative;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Friends
+    <span class="friends-req-badge ovf-badge" style="display:none;"></span>
   </div>
   <div class="overflow-item" id="mobBuildersBtn" onclick="closeOverflowMenu();toggleBuilders()">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="18" height="11" rx="1"/><path d="M3 10l9-7 9 7"/><line x1="12" y1="10" x2="12" y2="21"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
@@ -2008,31 +2250,6 @@
   </div>
   <div id="pinListCount"></div>
   <div id="pinListBody"></div>
-</div>
-
-<!-- BUILDERS SHEET -->
-<!-- PROFILE SHEET -->
-<!-- PROFILE SHEET -->
-<div id="profileBackdrop" onclick="closeEditProfile()"></div>
-<div id="profileSheet">
-  <div id="profileSheetHeader">
-    <div id="profileSheetTitle">Edit Profile</div>
-    <button id="profileCloseBtn" onclick="closeEditProfile()">×</button>
-  </div>
-  <div id="profileBody">
-    <div id="profileHero">
-      <img id="profileCurrentAvatar" src="" alt="Your avatar">
-      <div id="profileHeroName">—</div>
-      <button id="profileCustomizeBtn" onclick="openCharacterCreator()">Customize Profile Picture</button>
-    </div>
-    <div id="profileUsernameSection">
-      <div class="profile-section-label">Username</div>
-      <input id="usernameInput" type="text" placeholder="yourname" autocomplete="off" autocapitalize="off" maxlength="20">
-      <div id="usernameHint">Letters, numbers, underscores only. Must be unique.</div>
-      <div id="usernameStatus" class="username-status"></div>
-      <button id="usernameSaveBtn" onclick="saveProfile()">Save profile</button>
-    </div>
-  </div>
 </div>
 
 <!-- CHARACTER CREATOR SHEET -->
@@ -2175,6 +2392,9 @@
     <button id="shapeCloseBtn" onclick="closeShapeSidebar()" aria-label="Close">×</button>
   </div>
   <div id="shapeSidebarBody">
+    <!-- SHARED BANNER (shown only when viewing a shape a friend shared with you) -->
+    <div id="shapeSharedBanner" class="shared-banner" style="display:none;"></div>
+
     <div>
       <div class="section-label">Name</div>
       <input type="text" id="shapeName" placeholder="e.g. Walking route, Sales zone…" autocomplete="off" />
@@ -2213,11 +2433,18 @@
         <span id="shapeStatusText" style="font-size:12px;color:#999;font-family:'DM Mono',monospace;">Unsaved</span>
       </div>
     </div>
+
+    <!-- SHARED WITH (owner only) -->
+    <div id="shapeSharedWithSection" style="display:none;">
+      <div class="section-label">Shared With</div>
+      <div id="shapeSharedWithList" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
   </div>
   <div id="shapeSidebarFooter">
     <button class="btn btn-primary" onclick="saveShape()">Save</button>
     <button class="btn btn-ghost" onclick="closeShapeSidebar()">Cancel</button>
-    <button class="btn btn-danger" onclick="deleteShape()">Delete</button>
+    <button class="btn btn-share" id="shapeShareBtn">Share</button>
+    <button class="btn btn-danger" id="shapeDeleteBtn" onclick="deleteShape()">Delete</button>
   </div>
 </div>
 
@@ -2231,6 +2458,8 @@
     <button id="pinCloseBtn" onclick="closePinSidebar()" aria-label="Close">×</button>
   </div>
   <div id="pinSidebarBody">
+    <!-- SHARED BANNER (shown only when viewing a pin a friend shared with you) -->
+    <div id="pinSharedBanner" class="shared-banner" style="display:none;"></div>
 
     <!-- PIN TYPE GRID -->
     <div>
@@ -2277,11 +2506,62 @@
       <div class="section-label">Visit History</div>
       <div id="pinVisitHistoryList" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
+
+    <!-- SHARED WITH (owner only) -->
+    <div id="pinSharedWithSection" style="display:none;">
+      <div class="section-label">Shared With</div>
+      <div id="pinSharedWithList" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
   </div>
   <div id="pinSidebarFooter">
     <button class="btn btn-primary" onclick="savePin()">Save</button>
     <button class="btn btn-ghost" onclick="closePinSidebar()">Cancel</button>
-    <button class="btn btn-danger" onclick="deletePin()">Delete</button>
+    <button class="btn btn-share" id="pinShareBtn">Share</button>
+    <button class="btn btn-danger" id="pinDeleteBtn" onclick="deletePin()">Delete</button>
+  </div>
+</div>
+
+
+<!-- FRIENDS SHEET -->
+<div id="friendsSheet">
+  <div id="friendsHeader">
+    <div id="friendsTitle">Friends</div>
+    <button id="friendsCloseBtn" onclick="closeFriendsSheet()" aria-label="Close">×</button>
+  </div>
+  <div class="cal-filter-row" id="friendsTabs">
+    <button class="cal-chip active" data-ftab="find" onclick="setFriendsTab('find')">Find</button>
+    <button class="cal-chip" data-ftab="list" onclick="setFriendsTab('list')">Friends</button>
+    <button class="cal-chip" data-ftab="requests" onclick="setFriendsTab('requests')">Requests <span class="friends-req-badge" style="display:none;"></span></button>
+  </div>
+
+  <div id="friendsFindBody" class="friends-body-scroll" style="display:flex;">
+    <div id="friendsSearchWrap">
+      <span class="friends-search-icon">⌕</span>
+      <input id="friendsSearchInput" type="search" placeholder="Search by username…" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" oninput="onFriendsSearchInput()" />
+    </div>
+    <div id="friendsFindResults" class="friends-list"><div class="friends-empty">Type at least 2 characters to search usernames.</div></div>
+  </div>
+
+  <div id="friendsListBody" class="friends-body-scroll" style="display:none;">
+    <div id="friendsListResults" class="friends-list"></div>
+  </div>
+
+  <div id="friendsRequestsBody" class="friends-body-scroll" style="display:none;">
+    <div id="friendsRequestsResults" class="friends-list"></div>
+  </div>
+</div>
+
+<!-- SHARE PICKER SHEET -->
+<div id="sharePickerSheet">
+  <div id="sharePickerHeader">
+    <div id="sharePickerTitle">Share</div>
+    <button id="sharePickerCloseBtn" onclick="closeSharePicker()" aria-label="Close">×</button>
+  </div>
+  <div id="sharePickerBody" class="friends-list"></div>
+  <div id="sharePickerStatus"></div>
+  <div id="sharePickerFooter">
+    <button class="btn btn-primary" onclick="saveSharePicker()">Save</button>
+    <button class="btn btn-ghost" onclick="closeSharePicker()">Cancel</button>
   </div>
 </div>
 
@@ -2356,15 +2636,15 @@
      ═══════════════════════════════════════ -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/auth.js"></script>
-<script src="js/utilities.js"></script>
-<script src="js/map.js"></script>
-<script src="js/search.js"></script>
-<script src="js/notes.js"></script>
-<script src="js/shapes.js"></script>
-<script src="js/pins.js"></script>
-<script src="js/calendar.js"></script>
-<script src="js/builders.js"></script>
+<script src="js/auth.js?v=109"></script>
+<script src="js/utilities.js?v=109"></script>
+<script src="js/map.js?v=109"></script>
+<script src="js/search.js?v=109"></script>
+<script src="js/notes.js?v=109"></script>
+<script src="js/shapes.js?v=109"></script>
+<script src="js/pins.js?v=109"></script>
+<script src="js/calendar.js?v=109"></script>
+<script src="js/builders.js?v=109"></script>
 <script type="module">
   import { createAvatar } from 'https://esm.sh/@dicebear/core@9';
   import * as avataaars from 'https://esm.sh/@dicebear/avataaars@9';
@@ -2373,9 +2653,10 @@
   window.__dicebearReady = true;
   window.dispatchEvent(new Event('dicebear-ready'));
 </script>
-<script src="js/feed.js"></script>
-<script src="js/admin.js"></script>
-<script src="js/ui.js"></script>
+<script src="js/feed.js?v=109"></script>
+<script src="js/friends.js?v=109"></script>
+<script src="js/admin.js?v=109"></script>
+<script src="js/ui.js?v=109"></script>
 
 
 </body>

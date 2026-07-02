@@ -173,8 +173,12 @@ async function logout() {
   if(!(await appConfirm('Sign out?', { confirmLabel: 'Sign out', danger: true })))return;
   await sb.auth.signOut();
   currentUser=null; noteCache={}; adminRole=null;
+  friendStatusMap={}; friendsListCache=[];
+  if(typeof _setFriendsBadge==='function')_setFriendsBadge(0);
   if(document.getElementById('adminSettingsRow')) document.getElementById('adminSettingsRow').style.display='none';
   closeSidebar(); closeSettings(); closeLayersPanel();
+  if(typeof closeFriendsSheet==='function')closeFriendsSheet();
+  if(typeof closeSharePicker==='function')closeSharePicker();
   cancelDrawing(); cancelPinMode();
   shapesLayerGroup.clearLayers(); shapesCache={};
   pinsLayerGroup.clearLayers(); pinsCache={};
@@ -241,6 +245,7 @@ async function loadAllNotesFromSupabase(){
   await loadPinsFromSupabase();
   await loadStandaloneCallbacks();
   updateOverdueBadge();
+  if (typeof refreshFriendsBadge === 'function') refreshFriendsBadge();
 }
 
 // ═══════════════════════════════════════

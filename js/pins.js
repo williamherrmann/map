@@ -50,7 +50,9 @@ function getPinIcon(type) {
 
 async function loadPinsFromSupabase() {
   if(!currentUser)return;
-  const{data,error}=await sb.from('custom_pins').select('*').eq('user_id',currentUser.id);
+  // No .eq('user_id',...) filter here on purpose — RLS now returns both pins
+  // I own AND pins friends have shared with me. We tag each row below.
+  const{data,error}=await sb.from('custom_pins').select('*');
   if(error){console.error('Pins load error:',error);return;}
   pinsCache={};pinsLayerGroup.clearLayers();
   (data||[]).forEach(row=>{
@@ -65,24 +67,45 @@ async function loadPinsFromSupabase() {
       notes:row.notes||'', address:row.address||null,
       phone:row.phone||null, email:row.email||null,
       first_name:row.first_name||null, last_name:row.last_name||null,
-      last_visited:row.last_visited||null, _visits:[]
+      last_visited:row.last_visited||null, _visits:[],
+      _ownerId:row.user_id, _shared:row.user_id!==currentUser.id,
+      _permission:row.user_id===currentUser.id?null:'view', _ownerProfile:null
     };
     renderSavedPin(pinsCache[row.id]);
   });
   const{data:visits}=await sb.from('pin_visits').select('*').eq('user_id',currentUser.id).order('visited_at',{ascending:false});
   (visits||[]).forEach(v=>{if(pinsCache[v.pin_id])pinsCache[v.pin_id]._visits.push(v);});
+
+  // Hydrate permission + owner info for pins shared with me
+  const sharedIds = Object.values(pinsCache).filter(p=>p._shared).map(p=>p.id);
+  if(sharedIds.length && typeof fetchIncomingSharesFor==='function'){
+    const incoming = await fetchIncomingSharesFor('pin', sharedIds);
+    Object.keys(incoming).forEach(id=>{
+      if(!pinsCache[id])return;
+      pinsCache[id]._permission = incoming[id].permission;
+      pinsCache[id]._ownerProfile = incoming[id].ownerProfile;
+    });
+    reRenderAllPins();
+  }
 }
 
 async function upsertPinDB(pinData) {
   if(!currentUser)return;
   const payload={
-    user_id:currentUser.id, name:pinData.name, type:pinData.type,
+    name:pinData.name, type:pinData.type,
     color:pinData.color, lat:pinData.lat, lng:pinData.lng, notes:pinData.notes,
     first_name:pinData.first_name||null, last_name:pinData.last_name||null,
     address:pinData.address||null, phone:pinData.phone||null, email:pinData.email||null,
     updated_at:new Date().toISOString()
   };
-  if(pinData.id)payload.id=pinData.id;
+  if(pinData.id){
+    // Updating an existing pin — never touch user_id here. Doing so would
+    // reassign ownership away from the original owner when an edit-access
+    // friend saves changes to a pin shared with them.
+    payload.id=pinData.id;
+  } else {
+    payload.user_id=currentUser.id;
+  }
   const{data,error}=await sb.from('custom_pins').upsert(payload,{onConflict:'id'}).select().single();
   if(error){console.error('Pin save error:',error);throw error;}
   return data;
@@ -103,12 +126,16 @@ function buildPinIcon(pin) {
   const svgIcon = getPinIcon(pin.type);
   // Inject color into svg stroke
   const coloredSvg = svgIcon.replace('stroke="currentColor"', `stroke="#fff"`);
+  const sharedBadge = pin._shared ? `<span class="shared-badge" title="Shared with you">
+      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </span>` : '';
   return L.divIcon({
     className:'',
-    html:`<div class="map-pin-wrapper" style="pointer-events:auto;">
+    html:`<div class="map-pin-wrapper${pin._shared?' shared-pin':''}" style="pointer-events:auto;">
       <div class="map-pin-head" style="background:${color};">
         <span class="map-pin-icon" style="display:flex;align-items:center;justify-content:center;width:16px;height:16px;">${coloredSvg}</span>
       </div>
+      ${sharedBadge}
       <div class="map-pin-tail" style="background:${color};"></div>
     </div>`,
     iconSize:[32,46],
@@ -125,6 +152,7 @@ function buildPinPopup(pin) {
     <div class="popup-header" style="background:${pin.color||meta.defaultColor};">
       <div class="popup-name">${escHtml(fullName||pin.name||meta.label)}</div>
     </div>
+    ${pin._shared?`<div class="popup-shared-banner">Shared by @${escHtml(pin._ownerProfile?.username||'unknown')} · ${pin._permission==='edit'?'Can edit':'View only'}</div>`:''}
     <table class="popup-table">
       <tr><td>Type</td><td>${escHtml(meta.label)}</td></tr>
       ${pin.address?`<tr><td>Address</td><td>${escHtml(pin.address)}</td></tr>`:''}
@@ -376,18 +404,54 @@ function openPinSidebarFor(id) {
     document.getElementById('pinSidebarTitle').textContent = [pin.first_name,pin.last_name].filter(Boolean).join(' ') || pin.name || meta.label;
     document.getElementById('pinSidebarSub').textContent = meta.label;
     pinMarkStatus('saved','Saved');
+    _applyPinPermissionUI(pin);
   } else {
     currentPinId = null;
     _populatePinSidebar(null);
     document.getElementById('pinSidebarTitle').textContent = 'New Pin';
     document.getElementById('pinSidebarSub').textContent = '';
     pinMarkStatus('','Unsaved');
+    _applyPinPermissionUI(null);
   }
   const sidebar = document.getElementById('pinSidebar'), backdrop = document.getElementById('sheetBackdrop');
   sidebar.classList.add('open'); backdrop.classList.add('visible');
   requestAnimationFrame(() => backdrop.classList.add('show'));
   if(!isMobile()) { document.getElementById('legend').classList.add('shifted'); document.getElementById('layersPanel').classList.add('shifted'); }
-  setTimeout(() => document.getElementById('cbFullName').focus(), 400);
+  setTimeout(() => { if(!document.getElementById('cbFullName').disabled) document.getElementById('cbFullName').focus(); }, 400);
+}
+
+// Locks the sidebar to read-only when viewing a pin someone else shared
+// with view-only access, shows the "shared by" banner, and toggles the
+// Share button / Shared-with list which only make sense for the owner.
+function _applyPinPermissionUI(pin) {
+  const body = document.getElementById('pinSidebarBody');
+  const banner = document.getElementById('pinSharedBanner');
+  const shareBtn = document.getElementById('pinShareBtn');
+  const deleteBtn = document.getElementById('pinDeleteBtn');
+  const sharedSection = document.getElementById('pinSharedWithSection');
+  const isSharedWithMe = !!(pin && pin._shared);
+  const readOnly = isSharedWithMe && pin._permission !== 'edit';
+
+  if (isSharedWithMe) {
+    banner.style.display = 'flex';
+    banner.textContent = `Shared by @${pin._ownerProfile?.username || 'unknown'} · ${pin._permission === 'edit' ? 'You can edit' : 'View only'}`;
+  } else {
+    banner.style.display = 'none';
+  }
+
+  body.classList.toggle('sidebar-readonly', readOnly);
+  body.querySelectorAll('input, textarea, select').forEach(el => { el.disabled = readOnly; });
+
+  // Share / Delete are owner-only actions
+  shareBtn.style.display = (pin && !isSharedWithMe) ? '' : 'none';
+  deleteBtn.style.display = (pin && !isSharedWithMe) ? '' : 'none';
+
+  if (pin && !isSharedWithMe) {
+    shareBtn.onclick = () => openSharePicker('pin', pin.id, [pin.first_name,pin.last_name].filter(Boolean).join(' ') || pin.name, () => renderSharedWithSection('pin', pin.id, 'pinSharedWithSection', 'pinSharedWithList'));
+    renderSharedWithSection('pin', pin.id, 'pinSharedWithSection', 'pinSharedWithList');
+  } else {
+    sharedSection.style.display = 'none';
+  }
 }
 
 function closePinSidebar() {
@@ -401,6 +465,8 @@ function closePinSidebar() {
 
 async function savePin() {
   if(!currentPinId && !pendingPinLatLng) { alert('No location set for pin.'); return; }
+  const existing = currentPinId ? pinsCache[currentPinId] : null;
+  if (existing && existing._shared && existing._permission !== 'edit') { return; } // view-only, defensive guard
   pinMarkStatus('saving','Saving…');
 
   let lat, lng;
@@ -446,6 +512,8 @@ async function savePin() {
 
 async function deletePin() {
   if(!currentPinId) { closePinSidebar(); return; }
+  const existing = pinsCache[currentPinId];
+  if (existing && existing._shared) { return; } // delete is always owner-only
   if(!(await appConfirm('Delete this pin?', { confirmLabel: 'Delete', danger: true }))) return;
   try {
     await deletePinFromDB(currentPinId);

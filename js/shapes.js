@@ -7,20 +7,39 @@ let shapesVisible = true;
 
 async function loadShapesFromSupabase() {
   if(!currentUser)return;
-  const{data,error}=await sb.from('custom_shapes').select('*').eq('user_id',currentUser.id);
+  // No .eq('user_id',...) filter here on purpose — RLS now returns both shapes
+  // I own AND shapes friends have shared with me. We tag each row below.
+  const{data,error}=await sb.from('custom_shapes').select('*');
   if(error){console.error('Shapes load error:',error);return;}
   shapesCache={};
   shapesLayerGroup.clearLayers();
   (data||[]).forEach(row=>{
-    shapesCache[row.id]={id:row.id,name:row.name,color:row.color||'#3b82f6',vertices:row.vertices||[],is_polygon:row.is_polygon,rating:row.rating||0,notes:row.notes||'',last_knocked:row.last_knocked||null,scheduled_at:row.scheduled_at||null};
+    shapesCache[row.id]={id:row.id,name:row.name,color:row.color||'#3b82f6',vertices:row.vertices||[],is_polygon:row.is_polygon,rating:row.rating||0,notes:row.notes||'',last_knocked:row.last_knocked||null,scheduled_at:row.scheduled_at||null,
+      _ownerId:row.user_id,_shared:row.user_id!==currentUser.id,_permission:row.user_id===currentUser.id?null:'view',_ownerProfile:null};
     renderSavedShape(shapesCache[row.id]);
   });
+  const sharedIds = Object.values(shapesCache).filter(s=>s._shared).map(s=>s.id);
+  if(sharedIds.length && typeof fetchIncomingSharesFor==='function'){
+    const incoming = await fetchIncomingSharesFor('shape', sharedIds);
+    Object.keys(incoming).forEach(id=>{
+      if(!shapesCache[id])return;
+      shapesCache[id]._permission = incoming[id].permission;
+      shapesCache[id]._ownerProfile = incoming[id].ownerProfile;
+    });
+    reRenderAllShapes();
+  }
 }
 
 async function upsertShape(shapeData) {
   if(!currentUser)return;
-  const payload={user_id:currentUser.id,name:shapeData.name,color:shapeData.color,vertices:shapeData.vertices,is_polygon:shapeData.is_polygon,rating:shapeData.rating,notes:shapeData.notes,last_knocked:shapeData.last_knocked||null,scheduled_at:shapeData.scheduled_at||null,updated_at:new Date().toISOString()};
-  if(shapeData.id)payload.id=shapeData.id;
+  const payload={name:shapeData.name,color:shapeData.color,vertices:shapeData.vertices,is_polygon:shapeData.is_polygon,rating:shapeData.rating,notes:shapeData.notes,last_knocked:shapeData.last_knocked||null,scheduled_at:shapeData.scheduled_at||null,updated_at:new Date().toISOString()};
+  if(shapeData.id){
+    // Updating an existing shape — never touch user_id here, so edit-access
+    // friends can save changes without stealing ownership of the shape.
+    payload.id=shapeData.id;
+  } else {
+    payload.user_id=currentUser.id;
+  }
   const{data,error}=await sb.from('custom_shapes').upsert(payload,{onConflict:'id'}).select().single();
   if(error){console.error('Shape save error:',error);throw error;}
   return data;
@@ -45,10 +64,12 @@ function buildShapePopup(shape) {
     scheduledStr=`<tr><td>Scheduled</td><td style="font-weight:600;color:${isOverdue?'#dc2626':'#1e3a5f'};">${scheduledStr}${isOverdue?' <span style="font-size:10px;background:#fee2e2;color:#dc2626;padding:1px 5px;border-radius:4px;">Overdue</span>':''}</td></tr>`;
   }
   const noteText=shape.notes?shape.notes.substring(0,80)+(shape.notes.length>80?'…':''):'—';
+  const sharedBanner=shape._shared?`<div class="popup-shared-banner">Shared by @${escHtml(shape._ownerProfile?.username||'unknown')} · ${shape._permission==='edit'?'Can edit':'View only'}</div>`:'';
   return `<div class="popup-inner">
     <div class="popup-header" style="background:${shape.color||'#3b82f6'};">
       <div class="popup-name">${escHtml(shape.name||'Untitled')}</div>
     </div>
+    ${sharedBanner}
     <table class="popup-table">
       <tr><td>Rating</td><td><span class="popup-stars-sm">${starsHtml}</span></td></tr>
       <tr><td>Last knocked</td><td style="font-weight:600;color:#111;">${lastKnockedStr}</td></tr>
@@ -60,6 +81,7 @@ function buildShapePopup(shape) {
         style="flex:1;padding:13px 8px;background:#fff;border:none;border-right:1px solid #eee;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#1e3a5f;cursor:pointer;border-radius:0 0 0 11px;-webkit-tap-highlight-color:transparent;">
         View
       </button>
+      ${(!shape._shared||shape._permission==='edit')?`
       <button onclick="logShapeVisit('${escJs(shape.id)}');map.closePopup();"
         style="flex:1;padding:13px 8px;background:#fff;border:none;border-right:1px solid #eee;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#10b981;cursor:pointer;-webkit-tap-highlight-color:transparent;">
         Log Visit
@@ -67,7 +89,7 @@ function buildShapePopup(shape) {
       <button onclick="enterShapeEditMode('${escJs(shape.id)}');map.closePopup();"
         style="flex:1;padding:13px 8px;background:#fff;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#f59e0b;cursor:pointer;border-radius:0 0 11px 0;-webkit-tap-highlight-color:transparent;">
         Edit
-      </button>
+      </button>`:''}
     </div>
   </div>`;
 }
@@ -78,8 +100,9 @@ function renderSavedShape(shape) {
   if(verts.length<2)return;
   const latlngs=verts.map(v=>L.latLng(v[0],v[1]));
   let layer;
-  if(shape.is_polygon&&verts.length>=3){layer=L.polygon(latlngs,{color:shape.color,weight:2.5,fillColor:shape.color,fillOpacity:0.18,interactive:true,pane:'shapesPane'});}
-  else{layer=L.polyline(latlngs,{color:shape.color,weight:3,interactive:true,pane:'shapesPane'});}
+  const sharedStyle=shape._shared?{dashArray:'7 5'}:{};
+  if(shape.is_polygon&&verts.length>=3){layer=L.polygon(latlngs,Object.assign({color:shape.color,weight:2.5,fillColor:shape.color,fillOpacity:shape._shared?0.10:0.18,interactive:true,pane:'shapesPane'},sharedStyle));}
+  else{layer=L.polyline(latlngs,Object.assign({color:shape.color,weight:3,interactive:true,pane:'shapesPane'},sharedStyle));}
   layer._shapeId=shape.id;
   layer.on('click', function(e){
     if(drawMode||pinMode)return;
@@ -92,7 +115,8 @@ function renderSavedShape(shape) {
   const labelPt=shape.is_polygon&&verts.length>=3?layer.getBounds().getCenter():latlngs[Math.floor(latlngs.length/2)];
   const labelName=(shape.name||'').trim();
   const showLabel=labelName&&labelName.toLowerCase()!=='untitled';
-  const labelMarker=showLabel?L.marker(labelPt,{icon:L.divIcon({className:'shape-label',html:escHtml(labelName),iconAnchor:[0,0]}),interactive:false,zIndexOffset:200}):null;
+  const labelText=(shape._shared?'🔗 ':'')+labelName;
+  const labelMarker=showLabel?L.marker(labelPt,{icon:L.divIcon({className:'shape-label',html:escHtml(labelText),iconAnchor:[0,0]}),interactive:false,zIndexOffset:200}):null;
   layer._labelMarker=labelMarker;
   layer._labelPt=showLabel?labelPt:null;
   shapesLayerGroup.addLayer(layer);
@@ -258,7 +282,8 @@ function openShapeSidebarFor(id, focusSchedule, verts, isPolygon) {
     if(shape.scheduled_at){const dt=new Date(shape.scheduled_at);document.getElementById('shapeScheduledAt').value=`${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;}else{document.getElementById('shapeScheduledAt').value='';}
     setShapeStars(shape.rating||0);renderShapeSwatches(currentShapeColor);selectShapeColor(currentShapeColor);
     document.getElementById('shapeSidebarTitle').textContent=shape.name||'Shape';document.getElementById('shapeSidebarSub').textContent=shape.is_polygon?'Polygon':'Line';
-    startEditHandles(id);
+    if(!shape._shared||shape._permission==='edit')startEditHandles(id);
+    _applyShapePermissionUI(shape);
   } else {
     currentShapeId=null;currentShapeVertices=verts||[];currentShapeIsPolygon=isPolygon||false;currentShapeColor='#3b82f6';
     document.getElementById('shapeName').value='';document.getElementById('shapeNoteTextarea').value='';
@@ -267,6 +292,7 @@ function openShapeSidebarFor(id, focusSchedule, verts, isPolygon) {
     setShapeStars(0);renderShapeSwatches('#3b82f6');selectShapeColor('#3b82f6');
     document.getElementById('shapeSidebarTitle').textContent='New Shape';document.getElementById('shapeSidebarSub').textContent=isPolygon?'Polygon':'Line';
     showNewShapePreview(verts,isPolygon);
+    _applyShapePermissionUI(null);
   }
   shapeMarkStatus('','Unsaved');
   const sidebar=document.getElementById('shapeSidebar'),backdrop=document.getElementById('sheetBackdrop');
@@ -276,6 +302,40 @@ function openShapeSidebarFor(id, focusSchedule, verts, isPolygon) {
     setTimeout(()=>document.getElementById('shapeScheduledAt').focus(),400);
   } else {
     setTimeout(()=>document.getElementById('shapeName').focus(),400);
+  }
+}
+
+// Locks the sidebar to read-only when viewing a shape someone else shared
+// with view-only access, shows the "shared by" banner, and toggles the
+// Share button / Shared-with list which only make sense for the owner.
+function _applyShapePermissionUI(shape) {
+  const body = document.getElementById('shapeSidebarBody');
+  const banner = document.getElementById('shapeSharedBanner');
+  const shareBtn = document.getElementById('shapeShareBtn');
+  const deleteBtn = document.getElementById('shapeDeleteBtn');
+  const sharedSection = document.getElementById('shapeSharedWithSection');
+  const isSharedWithMe = !!(shape && shape._shared);
+  const readOnly = isSharedWithMe && shape._permission !== 'edit';
+
+  if (isSharedWithMe) {
+    banner.style.display = 'flex';
+    banner.textContent = `Shared by @${shape._ownerProfile?.username || 'unknown'} · ${shape._permission === 'edit' ? 'You can edit' : 'View only'}`;
+  } else {
+    banner.style.display = 'none';
+  }
+
+  body.classList.toggle('sidebar-readonly', readOnly);
+  body.querySelectorAll('input, textarea, select').forEach(el => { el.disabled = readOnly; });
+  document.querySelectorAll('#shapeColorSwatches .swatch, #shapeStarRating .shape-star').forEach(el => { el.style.pointerEvents = readOnly ? 'none' : ''; });
+
+  shareBtn.style.display = (shape && !isSharedWithMe) ? '' : 'none';
+  deleteBtn.style.display = (shape && !isSharedWithMe) ? '' : 'none';
+
+  if (shape && !isSharedWithMe) {
+    shareBtn.onclick = () => openSharePicker('shape', shape.id, shape.name || 'Shape', () => renderSharedWithSection('shape', shape.id, 'shapeSharedWithSection', 'shapeSharedWithList'));
+    renderSharedWithSection('shape', shape.id, 'shapeSharedWithSection', 'shapeSharedWithList');
+  } else {
+    sharedSection.style.display = 'none';
   }
 }
 
@@ -308,12 +368,14 @@ function makeEditHandleDraggable(marker,shapeId,idx){
 
 function enterShapeEditMode(id){
   if(!shapesCache[id])return;
+  const shape=shapesCache[id];
+  if(shape._shared&&shape._permission!=='edit')return; // view-only, defensive guard
   map.closePopup();
   startEditHandles(id);
   currentShapeId=id;
-  currentShapeVertices=shapesCache[id].vertices.map(v=>[...v]);
-  currentShapeIsPolygon=shapesCache[id].is_polygon;
-  currentShapeColor=shapesCache[id].color||'#3b82f6';
+  currentShapeVertices=shape.vertices.map(v=>[...v]);
+  currentShapeIsPolygon=shape.is_polygon;
+  currentShapeColor=shape.color||'#3b82f6';
   showShapeEditToolbar(id);
 }
 
@@ -359,6 +421,8 @@ function closeShapeSidebar(){
 }
 
 async function saveShape(){
+  const existing = currentShapeId ? shapesCache[currentShapeId] : null;
+  if (existing && existing._shared && existing._permission !== 'edit') { return; } // view-only, defensive guard
   const name=document.getElementById('shapeName').value.trim()||'Untitled';
   const notes=document.getElementById('shapeNoteTextarea').value.trim();
   const lkVal=document.getElementById('shapeLastKnocked').value;
@@ -368,7 +432,9 @@ async function saveShape(){
   shapeMarkStatus('saving','Saving…');
   const shapeData={id:currentShapeId,name,color:currentShapeColor,vertices:currentShapeVertices,is_polygon:currentShapeIsPolygon,rating:currentShapeRating,notes,last_knocked:lastKnocked,scheduled_at:scheduledAt};
   try{
-    const saved=await upsertShape(shapeData);shapeData.id=saved.id;shapesCache[saved.id]=shapeData;reRenderAllShapes();
+    const saved=await upsertShape(shapeData);shapeData.id=saved.id;
+    shapesCache[saved.id]=Object.assign({},shapesCache[saved.id],shapeData);
+    reRenderAllShapes();
     if(newShapePreviewLayer){map.removeLayer(newShapePreviewLayer);newShapePreviewLayer=null;}
     clearEditHandles();currentShapeId=saved.id;closeShapeSidebar();
     updateOverdueBadge();
@@ -377,6 +443,8 @@ async function saveShape(){
 
 async function deleteShape(){
   if(!currentShapeId){closeShapeSidebar();return;}
+  const existing = shapesCache[currentShapeId];
+  if (existing && existing._shared) { return; } // delete is always owner-only
   if(!(await appConfirm('Delete this shape?', { confirmLabel: 'Delete', danger: true })))return;
   try{await deleteShapeFromDB(currentShapeId);delete shapesCache[currentShapeId];reRenderAllShapes();closeShapeSidebar();}
   catch(e){alert('Delete failed — check connection.');}
