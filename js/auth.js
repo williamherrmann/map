@@ -157,6 +157,7 @@ function startSession(user) {
   if(isMobile()){document.getElementById('gearBtn').style.display='flex';document.getElementById('mobSignBtn').style.display='none';}
   loadAllNotesFromSupabase();
   if (typeof checkAdminRole === 'function') checkAdminRole();
+  if (typeof subscribeItemShareRealtime === 'function') subscribeItemShareRealtime();
 }
 
 function resetAuthUI() {
@@ -172,6 +173,8 @@ function resetAuthUI() {
 async function logout() {
   if(!(await appConfirm('Sign out?', { confirmLabel: 'Sign out', danger: true })))return;
   await sb.auth.signOut();
+  if(typeof unsubscribeItemShareRealtime==='function')unsubscribeItemShareRealtime();
+  if(typeof unsubscribeFeedRealtime==='function')unsubscribeFeedRealtime();
   currentUser=null; noteCache={}; adminRole=null;
   friendStatusMap={}; friendsListCache=[];
   if(typeof _setFriendsBadge==='function')_setFriendsBadge(0);

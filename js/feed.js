@@ -234,8 +234,10 @@ function toggleFeed() {
   if (feedOpen) {
     renderFeed();
     document.getElementById('feedSheet').classList.add('open');
+    subscribeFeedRealtime();
   } else {
     document.getElementById('feedSheet').classList.remove('open');
+    unsubscribeFeedRealtime();
   }
   document.getElementById('deskFeedBtn')?.classList.toggle('active', feedOpen);
   document.getElementById('mobFeedBtn')?.classList.toggle('active', feedOpen);
@@ -247,12 +249,22 @@ function closeFeed() {
   document.getElementById('deskFeedBtn')?.classList.remove('active');
   document.getElementById('mobFeedBtn')?.classList.remove('active');
   _stopFeedTick();
+  unsubscribeFeedRealtime();
 }
 
 // ═══════════════════════════════════════
 //  VOTES (upvote / downvote — cosmetic only, never re-sorts the feed)
 // ═══════════════════════════════════════
 let _feedVotesCache = {}; // postId -> { score, myVote }
+
+// ═══════════════════════════════════════
+//  REPLIES — one level deep only (no replies-to-replies), own up/down
+//  votes, collapsed by default with a show/hide toggle per post.
+// ═══════════════════════════════════════
+let _feedRepliesCache = {};   // postId -> array of raw reply rows (most recently loaded)
+let _replyVotesCache = {};    // replyId -> { score, myVote }
+let _repliesVisible = new Set(); // postIds whose replies section is currently expanded
+let _replyCounts = {};        // postId -> reply count
 
 function _voteButtonsInner(postId, score, myVote) {
   return `
@@ -354,6 +366,15 @@ async function renderFeed() {
   }
   _feedVotesCache = votesByPost;
 
+  // Reply counts (cheap — just ids, not full rows) so the toggle can show "Show N replies".
+  _replyCounts = {};
+  if (postIds.length) {
+    try {
+      const { data: replyRows } = await sb.from('feed_replies').select('id, post_id').in('post_id', postIds);
+      (replyRows || []).forEach(r => { _replyCounts[r.post_id] = (_replyCounts[r.post_id] || 0) + 1; });
+    } catch (e) { console.warn('Failed to load reply counts for feed:', e); }
+  }
+
   const isAdmin = adminRole === 'admin';
 
   body.innerHTML = data.map(post => {
@@ -378,13 +399,320 @@ async function renderFeed() {
           ${(isAdmin || (currentUser && post.user_id === currentUser.id)) ? `<button class="feed-delete-btn" onclick="deletePost('${post.id}')">×</button>` : ''}
         </div>
         <div class="feed-post-content">${escHtml(post.content)}</div>
-        <div class="feed-votes" data-id="${post.id}">${_voteButtonsInner(post.id, v.score, v.myVote)}</div>
+        <div class="feed-post-actions-row">
+          <div class="feed-votes" data-id="${post.id}">${_voteButtonsInner(post.id, v.score, v.myVote)}</div>
+          <button class="feed-reply-toggle-btn" data-post-id="${post.id}" onclick="toggleReplies('${post.id}')">${_repliesToggleLabel(post.id)}</button>
+        </div>
+        <div class="feed-replies-section" data-post-id="${post.id}" style="display:${_repliesVisible.has(post.id) ? 'block' : 'none'};"></div>
       </div>
     </div>
   `;
   }).join('');
 
+  // Re-populate any reply sections that were already expanded before this refresh.
+  _repliesVisible.forEach(postId => {
+    if (document.querySelector(`.feed-post[data-id="${postId}"]`)) loadReplies(postId);
+    else _repliesVisible.delete(postId);
+  });
+
   _scheduleFeedTick();
+}
+
+function _repliesToggleLabel(postId) {
+  if (_repliesVisible.has(postId)) return 'Hide replies';
+  const n = _replyCounts[postId] || 0;
+  return n > 0 ? `Show ${n} repl${n === 1 ? 'y' : 'ies'}` : 'Reply';
+}
+
+function _updateRepliesToggleLabel(postId) {
+  const btn = document.querySelector(`.feed-reply-toggle-btn[data-post-id="${postId}"]`);
+  if (btn) btn.textContent = _repliesToggleLabel(postId);
+}
+
+async function toggleReplies(postId) {
+  const section = document.querySelector(`.feed-replies-section[data-post-id="${postId}"]`);
+  if (!section) return;
+  if (_repliesVisible.has(postId)) {
+    _repliesVisible.delete(postId);
+    section.style.display = 'none';
+    section.innerHTML = '';
+  } else {
+    _repliesVisible.add(postId);
+    section.style.display = 'block';
+    await loadReplies(postId);
+  }
+  _updateRepliesToggleLabel(postId);
+}
+
+async function loadReplies(postId) {
+  const section = document.querySelector(`.feed-replies-section[data-post-id="${postId}"]`);
+  if (!section) return;
+  section.innerHTML = '<div class="feed-replies-loading">Loading…</div>';
+
+  const { data, error } = await sb.from('feed_replies').select('*').eq('post_id', postId).order('created_at', { ascending: true });
+  if (error) {
+    console.error('Failed to load replies (is the feed_replies table set up in Supabase?):', error);
+    section.innerHTML = `
+      <div class="feed-replies-empty">Couldn't load replies — check connection.</div>
+      <div class="feed-reply-composer">
+        <textarea class="feed-reply-textarea" data-post-id="${postId}" placeholder="Write a reply…" rows="1" maxlength="500"></textarea>
+        <button class="feed-reply-send-btn" onclick="submitReply('${postId}')">Reply</button>
+      </div>`;
+    return;
+  }
+
+  _feedRepliesCache[postId] = data || [];
+  _replyCounts[postId] = (data || []).length;
+
+  const userIds = [...new Set((data || []).map(r => r.user_id).filter(Boolean))];
+  let profilesMap = {};
+  if (userIds.length) {
+    try {
+      const { data: profs } = await sb.from('profiles').select('id, username, avatar_seed, avatar_options').in('id', userIds);
+      (profs || []).forEach(p => { profilesMap[p.id] = p; });
+    } catch (e) { console.warn('Failed to load live profiles for replies:', e); }
+  }
+
+  const replyIds = (data || []).map(r => r.id);
+  const votesByReply = {};
+  if (replyIds.length) {
+    try {
+      const { data: rvotes } = await sb.from('reply_votes').select('reply_id, user_id, vote').in('reply_id', replyIds);
+      (rvotes || []).forEach(v => {
+        if (!votesByReply[v.reply_id]) votesByReply[v.reply_id] = { score: 0, myVote: 0 };
+        votesByReply[v.reply_id].score += v.vote;
+        if (currentUser && v.user_id === currentUser.id) votesByReply[v.reply_id].myVote = v.vote;
+      });
+    } catch (e) { console.warn('Failed to load reply votes for feed:', e); }
+  }
+  Object.assign(_replyVotesCache, votesByReply);
+
+  const isAdmin = adminRole === 'admin';
+  const listHtml = (data || []).map(r => _replyRowHtml(r, profilesMap, votesByReply, isAdmin)).join('');
+
+  section.innerHTML = `
+    <div class="feed-replies-list">${listHtml || '<div class="feed-replies-empty">No replies yet.</div>'}</div>
+    <div class="feed-reply-composer">
+      <textarea class="feed-reply-textarea" data-post-id="${postId}" placeholder="Write a reply…" rows="1" maxlength="500"></textarea>
+      <button class="feed-reply-send-btn" onclick="submitReply('${postId}')">Reply</button>
+    </div>
+  `;
+  _updateRepliesToggleLabel(postId);
+  _scheduleFeedTick();
+}
+
+function _replyRowHtml(r, profilesMap, votesByReply, isAdmin) {
+  const liveProfile = profilesMap[r.user_id];
+  let avatarSrc;
+  if (liveProfile) {
+    avatarSrc = resolveAvatarUrl(liveProfile);
+  } else if (r.avatar_options) {
+    try { avatarSrc = buildAvatarUri(JSON.parse(r.avatar_options)); } catch (e) { avatarSrc = avatarUrl(r.avatar_seed || r.username); }
+  } else {
+    avatarSrc = avatarUrl(r.avatar_seed || r.username);
+  }
+  const displayUsername = liveProfile?.username || r.username;
+  const v = votesByReply[r.id] || { score: 0, myVote: 0 };
+  const canDelete = isAdmin || (currentUser && r.user_id === currentUser.id);
+  return `
+    <div class="feed-reply" data-id="${r.id}">
+      <img class="feed-reply-avatar" src="${avatarSrc}" alt="${escHtml(displayUsername)}" loading="lazy">
+      <div class="feed-reply-body">
+        <div class="feed-reply-header">
+          <span class="feed-username">@${escHtml(displayUsername)}</span>
+          <span class="feed-time" data-ts="${r.created_at}">${timeAgo(r.created_at)}</span>
+          ${canDelete ? `<button class="feed-delete-btn" onclick="deleteReply('${r.id}','${r.post_id}')">×</button>` : ''}
+        </div>
+        <div class="feed-reply-content">${escHtml(r.content)}</div>
+        <div class="feed-votes feed-reply-votes" data-reply-id="${r.id}">${_replyVoteButtonsInner(r.id, v.score, v.myVote)}</div>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════
+//  REPLY POST / DELETE
+// ═══════════════════════════════════════
+async function submitReply(postId) {
+  const textarea = document.querySelector(`.feed-reply-textarea[data-post-id="${postId}"]`);
+  if (!textarea) return;
+  const content = textarea.value.trim();
+  if (!content) return;
+
+  const profile = await getMyProfile();
+  if (!profile?.username) { alert('Set a username in Settings > Edit Profile first.'); return; }
+
+  const composer = textarea.closest('.feed-reply-composer');
+  const sendBtn = composer ? composer.querySelector('.feed-reply-send-btn') : null;
+  if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = 'Posting…'; }
+
+  const { error } = await sb.from('feed_replies').insert({
+    post_id: postId,
+    user_id: currentUser.id,
+    username: profile.username,
+    avatar_seed: profile.avatar_seed || profile.username,
+    avatar_options: profile.avatar_options || null,
+    content
+  });
+
+  if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = 'Reply'; }
+  if (error) { alert('Failed to reply: ' + error.message); return; }
+
+  _repliesVisible.add(postId);
+  await loadReplies(postId);
+}
+
+async function deleteReply(replyId, postId) {
+  if (!(await appConfirm('Delete this reply?', { confirmLabel: 'Delete', danger: true }))) return;
+  await sb.from('feed_replies').delete().eq('id', replyId);
+  await loadReplies(postId);
+}
+
+// ═══════════════════════════════════════
+//  REPLY VOTES
+// ═══════════════════════════════════════
+function _replyVoteButtonsInner(replyId, score, myVote) {
+  return `
+    <button class="feed-vote-btn up${myVote === 1 ? ' active' : ''}" onclick="voteReply('${replyId}',1)" aria-label="Upvote">▲</button>
+    <span class="feed-vote-score">${score}</span>
+    <button class="feed-vote-btn down${myVote === -1 ? ' active' : ''}" onclick="voteReply('${replyId}',-1)" aria-label="Downvote">▼</button>
+  `;
+}
+
+function _renderReplyVoteWidget(replyId) {
+  const el = document.querySelector(`.feed-reply-votes[data-reply-id="${replyId}"]`);
+  if (!el) return;
+  const v = _replyVotesCache[replyId] || { score: 0, myVote: 0 };
+  el.innerHTML = _replyVoteButtonsInner(replyId, v.score, v.myVote);
+}
+
+async function voteReply(replyId, value) {
+  if (!currentUser) { alert('Sign in to vote.'); return; }
+  const prev = _replyVotesCache[replyId] || { score: 0, myVote: 0 };
+  const newVote = (prev.myVote === value) ? 0 : value;
+  const newScore = prev.score - prev.myVote + newVote;
+
+  _replyVotesCache[replyId] = { score: newScore, myVote: newVote };
+  _renderReplyVoteWidget(replyId);
+
+  try {
+    if (newVote === 0) {
+      const { error } = await sb.from('reply_votes').delete().eq('reply_id', replyId).eq('user_id', currentUser.id);
+      if (error) throw error;
+    } else {
+      const { error } = await sb.from('reply_votes').upsert(
+        { reply_id: replyId, user_id: currentUser.id, vote: newVote },
+        { onConflict: 'reply_id,user_id' }
+      );
+      if (error) throw error;
+    }
+  } catch (e) {
+    console.error('Reply vote failed:', e);
+    _replyVotesCache[replyId] = prev;
+    _renderReplyVoteWidget(replyId);
+  }
+}
+
+// ═══════════════════════════════════════
+//  FEED REALTIME — live posts, replies, and votes while the sheet is open.
+// ═══════════════════════════════════════
+let _feedRealtimeChannel = null;
+
+function subscribeFeedRealtime() {
+  if (_feedRealtimeChannel) return;
+  _feedRealtimeChannel = sb.channel('feed_realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'feed_posts' }, () => {
+      if (feedOpen) renderFeed();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'feed_replies' }, payload => {
+      if (!feedOpen) return;
+      const postId = (payload.new && payload.new.post_id) || (payload.old && payload.old.post_id);
+      if (postId) {
+        if (_repliesVisible.has(postId)) {
+          loadReplies(postId);
+        } else {
+          _refreshReplyCount(postId);
+        }
+      } else {
+        // DELETE payloads only include the row's primary key unless the
+        // table has REPLICA IDENTITY FULL set in Supabase, so post_id can
+        // come back empty — fall back to refreshing everything visible so
+        // a deleted reply still disappears live either way.
+        _refreshAllReplyStates();
+      }
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'post_votes' }, () => {
+      if (feedOpen) _refreshVisiblePostVotes();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'reply_votes' }, () => {
+      if (feedOpen) _refreshVisibleReplyVotes();
+    })
+    .subscribe(status => {
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        console.warn('Feed realtime subscription problem:', status, '— live updates will not work until this resolves. Check that Realtime replication is enabled for feed_posts, feed_replies, post_votes, and reply_votes in Supabase (Database > Replication).');
+      }
+    });
+}
+
+function unsubscribeFeedRealtime() {
+  if (_feedRealtimeChannel) { sb.removeChannel(_feedRealtimeChannel); _feedRealtimeChannel = null; }
+}
+
+async function _refreshReplyCount(postId) {
+  try {
+    const { count } = await sb.from('feed_replies').select('id', { count: 'exact', head: true }).eq('post_id', postId);
+    _replyCounts[postId] = count || 0;
+    _updateRepliesToggleLabel(postId);
+  } catch (e) { /* non-critical */ }
+}
+
+// Used when a realtime payload doesn't tell us which post a reply change
+// belongs to (typically a DELETE without REPLICA IDENTITY FULL). Refreshes
+// every currently-expanded replies list, plus the toggle count/label for
+// every collapsed post currently on screen, so deletes still disappear live.
+async function _refreshAllReplyStates() {
+  for (const postId of Array.from(_repliesVisible)) {
+    if (document.querySelector(`.feed-replies-section[data-post-id="${postId}"]`)) {
+      await loadReplies(postId);
+    } else {
+      _repliesVisible.delete(postId);
+    }
+  }
+  const collapsedIds = [...document.querySelectorAll('.feed-post[data-id]')]
+    .map(el => el.dataset.id)
+    .filter(id => !_repliesVisible.has(id));
+  if (!collapsedIds.length) return;
+  try {
+    const { data } = await sb.from('feed_replies').select('id, post_id').in('post_id', collapsedIds);
+    const counts = {};
+    (data || []).forEach(r => { counts[r.post_id] = (counts[r.post_id] || 0) + 1; });
+    collapsedIds.forEach(id => { _replyCounts[id] = counts[id] || 0; _updateRepliesToggleLabel(id); });
+  } catch (e) { /* non-critical */ }
+}
+
+async function _refreshVisiblePostVotes() {
+  const ids = [...document.querySelectorAll('.feed-votes[data-id]')].map(el => el.dataset.id);
+  if (!ids.length) return;
+  const { data: votes } = await sb.from('post_votes').select('post_id, user_id, vote').in('post_id', ids);
+  const map = {};
+  (votes || []).forEach(v => {
+    if (!map[v.post_id]) map[v.post_id] = { score: 0, myVote: 0 };
+    map[v.post_id].score += v.vote;
+    if (currentUser && v.user_id === currentUser.id) map[v.post_id].myVote = v.vote;
+  });
+  ids.forEach(id => { _feedVotesCache[id] = map[id] || { score: 0, myVote: 0 }; _renderVoteWidget(id); });
+}
+
+async function _refreshVisibleReplyVotes() {
+  const ids = [...document.querySelectorAll('.feed-reply-votes[data-reply-id]')].map(el => el.dataset.replyId);
+  if (!ids.length) return;
+  const { data: votes } = await sb.from('reply_votes').select('reply_id, user_id, vote').in('reply_id', ids);
+  const map = {};
+  (votes || []).forEach(v => {
+    if (!map[v.reply_id]) map[v.reply_id] = { score: 0, myVote: 0 };
+    map[v.reply_id].score += v.vote;
+    if (currentUser && v.user_id === currentUser.id) map[v.reply_id].myVote = v.vote;
+  });
+  ids.forEach(id => { _replyVotesCache[id] = map[id] || { score: 0, myVote: 0 }; _renderReplyVoteWidget(id); });
 }
 
 // ═══════════════════════════════════════
@@ -608,6 +936,10 @@ window.toggleFeed = toggleFeed;
 window.closeFeed = closeFeed;
 window.submitPost = submitPost;
 window.deletePost = deletePost;
+window.toggleReplies = toggleReplies;
+window.submitReply = submitReply;
+window.deleteReply = deleteReply;
+window.voteReply = voteReply;
 window.openEditProfile = openEditProfile;
 window.closeEditProfile = closeEditProfile;
 window.openCharacterCreator = openCharacterCreator;

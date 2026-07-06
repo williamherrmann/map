@@ -489,6 +489,77 @@ async function _removeSharedWithRow(shareId, itemType, itemId, sectionElId, list
   await removeShare(shareId, () => renderSharedWithSection(itemType, itemId, sectionElId, listElId));
 }
 
+// ═══════════════════════════════════════
+//  LEAVE A SHARE — lets the person a pin/shape was shared WITH remove
+//  their own access, instead of waiting for the owner to unshare it.
+//  Same end result either way: gone from this device immediately, and
+//  gone from the other person's device immediately too via realtime.
+// ═══════════════════════════════════════
+async function leaveSharedItem(itemType, itemId) {
+  if (!currentUser) return;
+  const ok = await appConfirm('Remove this from your map? You will need to be shared with again to see it.', { confirmLabel: 'Remove', danger: true });
+  if (!ok) return;
+  const { error } = await sb.from('item_shares').delete()
+    .eq('item_type', itemType).eq('item_id', itemId).eq('shared_with_id', currentUser.id);
+  if (error) { alert('Could not remove — check connection.'); return; }
+  if (map.closePopup) map.closePopup();
+  if (itemType === 'pin') {
+    delete pinsCache[itemId];
+    reRenderAllPins();
+    if (currentPinId === itemId) closePinSidebar();
+  } else if (itemType === 'shape') {
+    delete shapesCache[itemId];
+    reRenderAllShapes();
+    if (currentShapeId === itemId) closeShapeSidebar();
+  }
+}
+
+// ═══════════════════════════════════════
+//  ITEM SHARE REALTIME
+//  Any insert/update/delete on item_shares involving me — whether I'm the
+//  owner unsharing or the person removing my own access — reloads pins
+//  and shapes instantly on every affected device, instead of waiting for
+//  the next manual refresh.
+// ═══════════════════════════════════════
+let _itemSharesChannel = null;
+
+function subscribeItemShareRealtime() {
+  if (!currentUser) return;
+  if (_itemSharesChannel) { console.log('[realtime] item_shares channel already active, skipping re-subscribe'); return; }
+  console.log('[realtime] subscribing to item_shares for user', currentUser.id);
+  _itemSharesChannel = sb.channel('item_shares_' + currentUser.id)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'item_shares', filter: `shared_with_id=eq.${currentUser.id}` }, payload => {
+      console.log('[realtime] item_shares change (shared_with_id filter):', payload.eventType, payload);
+      _onItemShareChange();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'item_shares', filter: `owner_id=eq.${currentUser.id}` }, payload => {
+      console.log('[realtime] item_shares change (owner_id filter):', payload.eventType, payload);
+      _onItemShareChange();
+    })
+    .subscribe(status => {
+      console.log('[realtime] item_shares channel status:', status);
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        console.warn('Item-share realtime subscription problem:', status, '— shared pins/shapes will only update on manual refresh until this resolves. Check that Realtime replication is enabled for item_shares in Supabase (Database > Replication), and that item_shares has REPLICA IDENTITY FULL set.');
+      }
+    });
+}
+
+function unsubscribeItemShareRealtime() {
+  if (_itemSharesChannel) { sb.removeChannel(_itemSharesChannel); _itemSharesChannel = null; }
+}
+
+function _onItemShareChange() {
+  if (typeof loadPinsFromSupabase === 'function') loadPinsFromSupabase();
+  if (typeof loadShapesFromSupabase === 'function') loadShapesFromSupabase();
+  // Keep an open owner "Shared with" list current too.
+  if (currentPinId && document.getElementById('pinSidebar')?.classList.contains('open')) {
+    renderSharedWithSection('pin', currentPinId, 'pinSharedWithSection', 'pinSharedWithList');
+  }
+  if (currentShapeId && document.getElementById('shapeSidebar')?.classList.contains('open')) {
+    renderSharedWithSection('shape', currentShapeId, 'shapeSharedWithSection', 'shapeSharedWithList');
+  }
+}
+
 
 // ═══════════════════════════════════════
 //  FRIEND DETAIL SHEET

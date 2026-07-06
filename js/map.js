@@ -81,6 +81,17 @@ fetch('pa_municipalities.geojson')
   })
   .catch(err=>console.error('GeoJSON load failed:',err));
 
+// When a municipality popup closes (via the × button, "Edit notes", clicking
+// elsewhere, or clicking another municipality), drop the temporary red
+// "selected" highlight and restore whatever the Layers panel currently has
+// selected (saved note color / default color, current opacity + borders).
+map.on('popupclose', e => {
+  const layer = e.popup && e.popup._source;
+  if(layer && layer.feature && geoLayer && geoLayer.hasLayer(layer)){
+    layer.setStyle(styleForLayer(layer.feature));
+  }
+});
+
 function buildPopup(p, muniLayer) {
   const d=getNoteForMuni(p.MUNICIPAL1);
   let permitHtml;

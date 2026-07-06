@@ -12,21 +12,33 @@ async function loadShapesFromSupabase() {
   const{data,error}=await sb.from('custom_shapes').select('*');
   if(error){console.error('Shapes load error:',error);return;}
   shapesCache={};
-  shapesLayerGroup.clearLayers();
   (data||[]).forEach(row=>{
     shapesCache[row.id]={id:row.id,name:row.name,color:row.color||'#3b82f6',vertices:row.vertices||[],is_polygon:row.is_polygon,rating:row.rating||0,notes:row.notes||'',last_knocked:row.last_knocked||null,scheduled_at:row.scheduled_at||null,
       _ownerId:row.user_id,_shared:row.user_id!==currentUser.id,_permission:row.user_id===currentUser.id?null:'view',_ownerProfile:null};
-    renderSavedShape(shapesCache[row.id]);
+    // Deliberately not rendered yet — shared shapes are hydrated/filtered
+    // below first, so a just-unshared shape never flashes on screen before
+    // it's dropped. Everything renders once, in reRenderAllShapes() at the end.
   });
+  // If a shared shape has no matching incoming share row, the share was
+  // revoked but the row still came back from the query (stale cache) —
+  // drop it entirely instead of showing a "Shared by @unknown" ghost shape.
   const sharedIds = Object.values(shapesCache).filter(s=>s._shared).map(s=>s.id);
   if(sharedIds.length && typeof fetchIncomingSharesFor==='function'){
     const incoming = await fetchIncomingSharesFor('shape', sharedIds);
-    Object.keys(incoming).forEach(id=>{
+    sharedIds.forEach(id=>{
       if(!shapesCache[id])return;
-      shapesCache[id]._permission = incoming[id].permission;
-      shapesCache[id]._ownerProfile = incoming[id].ownerProfile;
+      if(incoming[id]){
+        shapesCache[id]._permission = incoming[id].permission;
+        shapesCache[id]._ownerProfile = incoming[id].ownerProfile;
+      } else {
+        delete shapesCache[id];
+      }
     });
-    reRenderAllShapes();
+  }
+  reRenderAllShapes();
+  // If the sidebar is open on a shape that just disappeared (unshared with me), close it instantly.
+  if (currentShapeId && !shapesCache[currentShapeId] && document.getElementById('shapeSidebar')?.classList.contains('open')) {
+    closeShapeSidebar();
   }
 }
 
@@ -70,7 +82,7 @@ function buildShapePopup(shape) {
     scheduledStr=`<tr><td>Scheduled</td><td style="font-weight:600;color:${isOverdue?'#dc2626':'#1e3a5f'};">${scheduledStr}${isOverdue?' <span style="font-size:10px;background:#fee2e2;color:#dc2626;padding:1px 5px;border-radius:4px;">Overdue</span>':''}</td></tr>`;
   }
   const noteText=shape.notes?shape.notes.substring(0,80)+(shape.notes.length>80?'…':''):'—';
-  const sharedBanner=shape._shared?`<div class="popup-shared-banner">Shared by @${escHtml(shape._ownerProfile?.username||'unknown')} · ${shape._permission==='edit'?'Can edit':'View only'}</div>`:'';
+  const sharedBanner=shape._shared?`<div class="popup-shared-banner"><span>Shared by @${escHtml(shape._ownerProfile?.username||'unknown')} · ${shape._permission==='edit'?'Can edit':'View only'}</span><button class="popup-shared-leave" onclick="leaveSharedItem('shape','${escJs(shape.id)}');event.stopPropagation();">Remove</button></div>`:'';
   return `<div class="popup-inner">
     <div class="popup-header" style="background:${shape.color||'#3b82f6'};">
       <div class="popup-name">${escHtml(shape.name||'Untitled')}</div>
@@ -325,7 +337,10 @@ function _applyShapePermissionUI(shape) {
 
   if (isSharedWithMe) {
     banner.style.display = 'flex';
-    banner.textContent = `Shared by @${shape._ownerProfile?.username || 'unknown'} · ${shape._permission === 'edit' ? 'You can edit' : 'View only'}`;
+    const textEl = document.getElementById('shapeSharedBannerText');
+    if (textEl) textEl.textContent = `Shared by @${shape._ownerProfile?.username || 'unknown'} · ${shape._permission === 'edit' ? 'You can edit' : 'View only'}`;
+    const leaveBtn = document.getElementById('shapeSharedLeaveBtn');
+    if (leaveBtn) { leaveBtn.style.display = ''; leaveBtn.onclick = () => leaveSharedItem('shape', shape.id); }
   } else {
     banner.style.display = 'none';
   }

@@ -1092,7 +1092,26 @@
     .friends-req-badge.ovf-badge { position:absolute; top:4px; right:10px; margin-left:0; border:2px solid #fff; }
 
     .shared-banner { background:#eff6ff; border:1.5px solid #bfdbfe; color:#1d4ed8; font-size:12px; font-weight:600; border-radius:10px; padding:10px 12px; display:flex; align-items:center; gap:6px; }
-    .popup-shared-banner { background:#eff6ff; color:#1d4ed8; font-size:11px; font-weight:600; padding:6px 12px; border-bottom:1px solid #dbeafe; }
+    .shared-banner-leave { margin-left:auto; background:none; border:1px solid #93c5fd; color:#1d4ed8; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:700; padding:4px 9px; border-radius:6px; cursor:pointer; -webkit-tap-highlight-color:transparent; white-space:nowrap; flex-shrink:0; }
+    .shared-banner-leave:active { background:#dbeafe; }
+    .popup-shared-banner { background:#eff6ff; color:#1d4ed8; font-size:11px; font-weight:600; padding:6px 12px; border-bottom:1px solid #dbeafe; display:flex; align-items:center; gap:6px; }
+    .popup-shared-leave { margin-left:auto; background:none; border:1px solid #93c5fd; color:#1d4ed8; font-family:'DM Sans',sans-serif; font-size:10px; font-weight:700; padding:3px 7px; border-radius:5px; cursor:pointer; -webkit-tap-highlight-color:transparent; white-space:nowrap; flex-shrink:0; }
+
+    .feed-post-actions-row { display:flex; align-items:center; gap:14px; margin-top:8px; }
+    .feed-post-actions-row .feed-votes { margin-top:0; }
+    .feed-reply-toggle-btn { background:none; border:none; color:#888; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:700; cursor:pointer; padding:0; -webkit-tap-highlight-color:transparent; }
+    .feed-reply-toggle-btn:active { color:#555; }
+    .feed-replies-section { margin-top:10px; padding-top:10px; border-top:1px solid #f5f5f5; }
+    .feed-replies-loading, .feed-replies-empty { color:#bbb; font-size:12px; padding:6px 0; }
+    .feed-reply { display:flex; gap:8px; padding:8px 0; }
+    .feed-reply-avatar { width:28px; height:28px; border-radius:50%; flex-shrink:0; background:#f0f0f0; }
+    .feed-reply-body { flex:1; min-width:0; }
+    .feed-reply-header { display:flex; align-items:center; gap:6px; margin-bottom:2px; }
+    .feed-reply-content { font-size:13px; color:#333; line-height:1.45; word-break:break-word; white-space:pre-wrap; }
+    .feed-reply-composer { display:flex; gap:8px; align-items:flex-end; margin-top:8px; }
+    .feed-reply-textarea { flex:1; resize:none; border:1.5px solid #e5e7eb; border-radius:8px; padding:8px 10px; font-family:'DM Sans',sans-serif; font-size:13px; color:#333; }
+    .feed-reply-send-btn { background:#1e3a5f; color:#fff; border:none; border-radius:8px; padding:8px 14px; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
+    .feed-reply-send-btn:disabled { opacity:0.6; }
 
     #pinSidebarBody.sidebar-readonly, #shapeSidebarBody.sidebar-readonly { opacity:0.88; }
     #pinSidebarBody.sidebar-readonly input, #pinSidebarBody.sidebar-readonly textarea,
@@ -1292,7 +1311,7 @@
         <div class="so-card">
           <button class="so-row so-row-nav" onclick="openChangelog()">
             <span class="so-row-label">Version</span>
-            <span class="so-row-value" style="color:#7c3aed;">v112</span>
+            <span class="so-row-value" style="color:#7c3aed;">v116</span>
             <span class="so-row-chevron">›</span>
           </button>
         </div>
@@ -1381,7 +1400,36 @@
 
         <div class="cl-version">
       <div class="cl-version-header">
-        <span class="cl-version-badge current">v112</span>
+        <span class="cl-version-badge current">v116</span>
+        <span class="cl-version-label">Realtime debug logging for share sync</span>
+      </div>
+      <div class="cl-item">Sharing/unsharing a pin or shape still requires a refresh to show up for the other person on some setups — that points to a Supabase configuration step, not the app code, so this release adds detailed console logging around the item_shares realtime channel: whether it subscribes successfully, and every insert/update/delete event it receives. Open the browser console after sharing or unsharing something to see exactly what's happening.</div>
+    </div>
+        <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v115</span>
+        <span class="cl-version-label">Fixed unshare flash + reply delete sync</span>
+      </div>
+      <div class="cl-item">Pins/shapes shared with you were briefly flashing on screen for a moment on page load even after being unshared — the map was rendering every row the instant it came back from Supabase, then removing the unshared ones only after a slower follow-up check finished. Reordered it so nothing renders until that check is done, so a revoked share never appears at all. Also fixed deleted feed replies not disappearing for other people without a manual refresh — the realtime delete event doesn't always include which post it belonged to, so a fallback now refreshes every reply list currently on screen when that happens.</div>
+    </div>
+        <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v114</span>
+        <span class="cl-version-label">Reply loading fix + realtime debug logging</span>
+      </div>
+      <div class="cl-item">Replies now always show a composer even if the list of existing replies fails to load, instead of silently blocking you from replying. If posts, replies, or shares still aren't appearing live without a manual refresh, check the browser console — realtime subscriptions now log a warning there naming exactly which Supabase tables need Realtime replication turned on (Database → Replication in the Supabase dashboard).</div>
+    </div>
+        <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v113</span>
+        <span class="cl-version-label">Instant unshare, muni highlight fix, feed replies</span>
+      </div>
+      <div class="cl-item">Unshared pins/shapes now disappear instantly for whoever they were shared with — no more "Shared by @unknown" ghost pins, and both sides sync live over realtime the moment a share is added or removed. Added a "Remove" option so the person a pin/shape was shared with can drop their own access without waiting on the owner. Fixed a municipality staying highlighted and filled after closing its popup — it now reverts to whatever the Layers panel currently has selected. Added replies to feed posts, with their own up/down votes and a show/hide toggle per post (no replies-to-replies). The feed now updates live too — new posts, replies, and votes show up immediately while it's open, no refresh needed.</div>
+    </div>
+
+        <div class="cl-version">
+      <div class="cl-version-header">
+        <span class="cl-version-badge">v112</span>
         <span class="cl-version-label">Share Today's Schedule</span>
       </div>
       <div class="cl-item">Tap a friend in the Friends tab to open their settings and flip on "Share Today's Schedule" — instead of sharing shapes one at a time, this keeps whichever shapes you have scheduled_at set to today automatically shared with that friend, view-only. It stays in sync: saving a shape, unscheduling one, or opening the app re-checks what's "today" and adds/removes shares to match. Turning it off removes those auto-shared shapes immediately; it never touches anything shared manually from a pin/shape's own Share button. Friends with it turned on show a small calendar icon next to their name in the Friends list.</div>
@@ -2036,7 +2084,7 @@
 
 <!-- DESKTOP ELEMENTS -->
 <div id="sessionBadge" class="hidden">
-  <span id="badgeVersion">v112</span>
+  <span id="badgeVersion">v116</span>
   <span id="badgeEmail">—</span>
   <button id="badgeLogout" onclick="logout()">sign out</button>
 </div>
@@ -2436,7 +2484,10 @@
   </div>
   <div id="shapeSidebarBody">
     <!-- SHARED BANNER (shown only when viewing a shape a friend shared with you) -->
-    <div id="shapeSharedBanner" class="shared-banner" style="display:none;"></div>
+    <div id="shapeSharedBanner" class="shared-banner" style="display:none;">
+      <span id="shapeSharedBannerText"></span>
+      <button id="shapeSharedLeaveBtn" class="shared-banner-leave" style="display:none;">Remove</button>
+    </div>
 
     <div>
       <div class="section-label">Name</div>
@@ -2502,7 +2553,10 @@
   </div>
   <div id="pinSidebarBody">
     <!-- SHARED BANNER (shown only when viewing a pin a friend shared with you) -->
-    <div id="pinSharedBanner" class="shared-banner" style="display:none;"></div>
+    <div id="pinSharedBanner" class="shared-banner" style="display:none;">
+      <span id="pinSharedBannerText"></span>
+      <button id="pinSharedLeaveBtn" class="shared-banner-leave" style="display:none;">Remove</button>
+    </div>
 
     <!-- PIN TYPE GRID -->
     <div>
@@ -2706,15 +2760,15 @@
      ═══════════════════════════════════════ -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/auth.js?v=112"></script>
-<script src="js/utilities.js?v=112"></script>
-<script src="js/map.js?v=112"></script>
-<script src="js/search.js?v=112"></script>
-<script src="js/notes.js?v=112"></script>
-<script src="js/shapes.js?v=112"></script>
-<script src="js/pins.js?v=112"></script>
-<script src="js/calendar.js?v=112"></script>
-<script src="js/builders.js?v=112"></script>
+<script src="js/auth.js?v=116"></script>
+<script src="js/utilities.js?v=116"></script>
+<script src="js/map.js?v=116"></script>
+<script src="js/search.js?v=116"></script>
+<script src="js/notes.js?v=116"></script>
+<script src="js/shapes.js?v=116"></script>
+<script src="js/pins.js?v=116"></script>
+<script src="js/calendar.js?v=116"></script>
+<script src="js/builders.js?v=116"></script>
 <script type="module">
   import { createAvatar } from 'https://esm.sh/@dicebear/core@9';
   import * as avataaars from 'https://esm.sh/@dicebear/avataaars@9';
@@ -2723,10 +2777,10 @@
   window.__dicebearReady = true;
   window.dispatchEvent(new Event('dicebear-ready'));
 </script>
-<script src="js/feed.js?v=112"></script>
-<script src="js/friends.js?v=112"></script>
-<script src="js/admin.js?v=112"></script>
-<script src="js/ui.js?v=112"></script>
+<script src="js/feed.js?v=116"></script>
+<script src="js/friends.js?v=116"></script>
+<script src="js/admin.js?v=116"></script>
+<script src="js/ui.js?v=116"></script>
 
 
 </body>

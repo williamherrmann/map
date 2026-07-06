@@ -54,7 +54,7 @@ async function loadPinsFromSupabase() {
   // I own AND pins friends have shared with me. We tag each row below.
   const{data,error}=await sb.from('custom_pins').select('*');
   if(error){console.error('Pins load error:',error);return;}
-  pinsCache={};pinsLayerGroup.clearLayers();
+  pinsCache={};
   (data||[]).forEach(row=>{
     let type = row.type || 'note';
     const legacyMap = { warmtransfer:'callback', appointmentrun:'callback', contractsigned:'solar', installed:'solar', priorinstall:'solar', notinterested:'donotknock', newconstruction_old:'newconstruction' };
@@ -71,21 +71,34 @@ async function loadPinsFromSupabase() {
       _ownerId:row.user_id, _shared:row.user_id!==currentUser.id,
       _permission:row.user_id===currentUser.id?null:'view', _ownerProfile:null
     };
-    renderSavedPin(pinsCache[row.id]);
+    // Deliberately not rendered yet — shared pins are hydrated/filtered
+    // below first, so a just-unshared pin never flashes on screen before
+    // it's dropped. Everything renders once, in reRenderAllPins() at the end.
   });
   const{data:visits}=await sb.from('pin_visits').select('*').eq('user_id',currentUser.id).order('visited_at',{ascending:false});
   (visits||[]).forEach(v=>{if(pinsCache[v.pin_id])pinsCache[v.pin_id]._visits.push(v);});
 
-  // Hydrate permission + owner info for pins shared with me
+  // Hydrate permission + owner info for pins shared with me. If a shared
+  // pin has no matching incoming share row, the share was revoked but the
+  // row still came back from the query (stale cache) — drop it entirely
+  // instead of showing a "Shared by @unknown" ghost pin.
   const sharedIds = Object.values(pinsCache).filter(p=>p._shared).map(p=>p.id);
   if(sharedIds.length && typeof fetchIncomingSharesFor==='function'){
     const incoming = await fetchIncomingSharesFor('pin', sharedIds);
-    Object.keys(incoming).forEach(id=>{
+    sharedIds.forEach(id=>{
       if(!pinsCache[id])return;
-      pinsCache[id]._permission = incoming[id].permission;
-      pinsCache[id]._ownerProfile = incoming[id].ownerProfile;
+      if(incoming[id]){
+        pinsCache[id]._permission = incoming[id].permission;
+        pinsCache[id]._ownerProfile = incoming[id].ownerProfile;
+      } else {
+        delete pinsCache[id];
+      }
     });
-    reRenderAllPins();
+  }
+  reRenderAllPins();
+  // If the sidebar is open on a pin that just disappeared (unshared with me), close it instantly.
+  if (currentPinId && !pinsCache[currentPinId] && document.getElementById('pinSidebar')?.classList.contains('open')) {
+    closePinSidebar();
   }
 }
 
@@ -157,7 +170,7 @@ function buildPinPopup(pin) {
     <div class="popup-header" style="background:${pin.color||meta.defaultColor};">
       <div class="popup-name">${escHtml(fullName||pin.name||meta.label)}</div>
     </div>
-    ${pin._shared?`<div class="popup-shared-banner">Shared by @${escHtml(pin._ownerProfile?.username||'unknown')} · ${pin._permission==='edit'?'Can edit':'View only'}</div>`:''}
+    ${pin._shared?`<div class="popup-shared-banner"><span>Shared by @${escHtml(pin._ownerProfile?.username||'unknown')} · ${pin._permission==='edit'?'Can edit':'View only'}</span><button class="popup-shared-leave" onclick="leaveSharedItem('pin','${escJs(pin.id)}');event.stopPropagation();">Remove</button></div>`:''}
     <table class="popup-table">
       <tr><td>Type</td><td>${escHtml(meta.label)}</td></tr>
       ${pin.address?`<tr><td>Address</td><td>${escHtml(pin.address)}</td></tr>`:''}
@@ -439,7 +452,10 @@ function _applyPinPermissionUI(pin) {
 
   if (isSharedWithMe) {
     banner.style.display = 'flex';
-    banner.textContent = `Shared by @${pin._ownerProfile?.username || 'unknown'} · ${pin._permission === 'edit' ? 'You can edit' : 'View only'}`;
+    const textEl = document.getElementById('pinSharedBannerText');
+    if (textEl) textEl.textContent = `Shared by @${pin._ownerProfile?.username || 'unknown'} · ${pin._permission === 'edit' ? 'You can edit' : 'View only'}`;
+    const leaveBtn = document.getElementById('pinSharedLeaveBtn');
+    if (leaveBtn) { leaveBtn.style.display = ''; leaveBtn.onclick = () => leaveSharedItem('pin', pin.id); }
   } else {
     banner.style.display = 'none';
   }
